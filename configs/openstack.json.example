@@ -1,0 +1,11 @@
+{
+  "auth_url": "https://localhost:5000",
+  "identify_version": "v3",
+  "username": "",
+  "password": "",
+  "project_id": "",
+  "project_name": "",
+  "region_name": "",
+  "domain_name": "Default",
+  "domain_id": "default"
+}
