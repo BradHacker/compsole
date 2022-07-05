@@ -19,20 +19,25 @@ type CompsoleProviderOpenstack struct {
 }
 
 type OpenstackConfig struct {
-	FilePath        string `json:"-"`
-	AuthUrl         string `json:"auth_url"`
-	IdentityVersion string `json:"identify_version"`
-	Username        string `json:"username"`
-	Password        string `json:"password"`
-	ProjectID       string `json:"project_id"`
-	ProjectName     string `json:"project_name"`
-	RegionName      string `json:"region_name"`
-	DomainName      string `json:"domain_name"`
-	DomainId        string `json:"domain_id"`
+	FilePath         string `json:"-"`
+	AuthUrl          string `json:"auth_url"`
+	IdentityVersion  string `json:"identify_version"`
+	NovaMicroversion string `json:"nova_microversion,omitempty"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	ProjectID        string `json:"project_id"`
+	ProjectName      string `json:"project_name"`
+	RegionName       string `json:"region_name"`
+	DomainName       string `json:"domain_name"`
+	DomainId         string `json:"domain_id"`
 }
 
 const (
-	NOVNC utils.ConsoleType = "NOVNC"
+	NOVNC  utils.ConsoleType = "NOVNC"
+	SPICE  utils.ConsoleType = "SPICE"
+	RDP    utils.ConsoleType = "RDP"
+	SERIAL utils.ConsoleType = "SERIAL"
+	MKS    utils.ConsoleType = "MKS"
 )
 
 // ############
@@ -100,6 +105,11 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, console
 	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
 		Region: provider.Config.RegionName,
 	})
+	if provider.Config.NovaMicroversion != "" {
+		computeClient.Microversion = provider.Config.NovaMicroversion
+	} else {
+		computeClient.Microversion = "2.8"
+	}
 
 	// Determine the type of console we want to generate
 	var remoteConsoleProtocol remoteconsoles.ConsoleProtocol
@@ -108,6 +118,18 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, console
 	case NOVNC:
 		remoteConsoleProtocol = remoteconsoles.ConsoleProtocolVNC
 		remoteConsoleType = remoteconsoles.ConsoleTypeNoVNC
+	case SPICE:
+		remoteConsoleProtocol = remoteconsoles.ConsoleProtocolSPICE
+		remoteConsoleType = remoteconsoles.ConsoleTypeSPICEHTML5
+	case RDP:
+		remoteConsoleProtocol = remoteconsoles.ConsoleProtocolRDP
+		remoteConsoleType = remoteconsoles.ConsoleTypeRDPHTML5
+	case SERIAL:
+		remoteConsoleProtocol = remoteconsoles.ConsoleProtocolSerial
+		remoteConsoleType = remoteconsoles.ConsoleTypeSerial
+	case MKS:
+		remoteConsoleProtocol = remoteconsoles.ConsoleProtocolMKS
+		remoteConsoleType = remoteconsoles.ConsoleTypeWebMKS
 	default:
 		remoteConsoleProtocol = remoteconsoles.ConsoleProtocolVNC
 		remoteConsoleType = remoteconsoles.ConsoleTypeNoVNC

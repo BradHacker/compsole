@@ -1,6 +1,7 @@
 {
   "auth_url": "https://localhost:5000",
   "identify_version": "v3",
+  "nova_microversion": "", // optional
   "username": "",
   "password": "",
   "project_id": "",
