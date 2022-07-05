@@ -8,6 +8,12 @@ import (
 
 type ConsoleType string
 
+type VmObject struct {
+	ID          string
+	Name        string
+	IpAddresses []string
+}
+
 // LoadProviderConfig is a helper function which loads the config file into a provider
 func LoadProviderConfig(configFilePath string, config interface{}) error {
 	// Read in the config file

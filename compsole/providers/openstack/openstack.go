@@ -9,6 +9,8 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/pagination"
 )
 
 // #########
@@ -96,19 +98,31 @@ func (provider CompsoleProviderOpenstack) newAuthProvider() (*gophercloud.Provid
 	return openstack.AuthenticatedClient(authOpts)
 }
 
-func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, consoleType utils.ConsoleType) (string, error) {
+func (provider CompsoleProviderOpenstack) newComputeClient() (*gophercloud.ServiceClient, error) {
 	// Generate authenticated compute client for Openstack
 	gopherProvider, err := provider.newAuthProvider()
 	if err != nil {
-		return "", fmt.Errorf("failed to authenticate with Openstack: %v", err)
+		return nil, fmt.Errorf("failed to authenticate with Openstack: %v", err)
 	}
 	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
 		Region: provider.Config.RegionName,
 	})
+	if err != nil {
+		return nil, err
+	}
 	if provider.Config.NovaMicroversion != "" {
 		computeClient.Microversion = provider.Config.NovaMicroversion
 	} else {
 		computeClient.Microversion = "2.8"
+	}
+	return computeClient, nil
+}
+
+func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, consoleType utils.ConsoleType) (string, error) {
+	// Create Openstack compute client
+	computeClient, err := provider.newComputeClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
 	}
 
 	// Determine the type of console we want to generate
@@ -144,4 +158,33 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, console
 		return "", fmt.Errorf("failed to create Openstack remote console: %v", err)
 	}
 	return remoteConsole.URL, nil
+}
+
+func (provider CompsoleProviderOpenstack) ListVMs() ([]utils.VmObject, error) {
+	// Create Openstack compute client
+	computeClient, err := provider.newComputeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	}
+
+	serverPager := servers.List(computeClient, servers.ListOpts{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get list of Openstack instances: %v", err)
+	}
+	serverList := make([]utils.VmObject, 0)
+	err = serverPager.EachPage(func(page pagination.Page) (bool, error) {
+		list, err := servers.ExtractServers(page)
+		if err != nil {
+			return false, fmt.Errorf("failed to extract servers from page: %v", err)
+		}
+
+		for _, s := range list {
+			serverList = append(serverList, utils.VmObject{
+				ID:   s.ID,
+				Name: s.Name,
+			})
+		}
+		return true, nil
+	})
+	return serverList, nil
 }

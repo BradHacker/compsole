@@ -13,6 +13,7 @@ type CompsoleProvider interface {
 	Author() string
 	Version() string
 	GetConsoleUrl(vmIdentifier string, consoleType utils.ConsoleType) (string, error)
+	ListVMs() ([]utils.VmObject, error)
 }
 
 func NewProvider(providerType string, configFilePath string) (provider CompsoleProvider, err error) {
