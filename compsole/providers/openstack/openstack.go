@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/BradHacker/compsole/compsole/utils"
+	"github.com/BradHacker/compsole/ent"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
@@ -160,7 +161,7 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, console
 	return remoteConsole.URL, nil
 }
 
-func (provider CompsoleProviderOpenstack) ListVMs() ([]utils.VmObject, error) {
+func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 	// Create Openstack compute client
 	computeClient, err := provider.newComputeClient()
 	if err != nil {
@@ -171,7 +172,7 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]utils.VmObject, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list of Openstack instances: %v", err)
 	}
-	serverList := make([]utils.VmObject, 0)
+	serverList := make([]*ent.VmObject, 0)
 	err = serverPager.EachPage(func(page pagination.Page) (bool, error) {
 		list, err := servers.ExtractServers(page)
 		if err != nil {
@@ -179,12 +180,35 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]utils.VmObject, error) {
 		}
 
 		for _, s := range list {
-			serverList = append(serverList, utils.VmObject{
-				ID:   s.ID,
-				Name: s.Name,
+			addressPager := servers.ListAddresses(computeClient, s.ID)
+
+			ipAddresses := make([]string, 0)
+			err = addressPager.EachPage(func(p pagination.Page) (bool, error) {
+				addressList, err := servers.ExtractAddresses(p)
+				if err != nil {
+					return false, fmt.Errorf("failed to extract ip addresses from page: %v", err)
+				}
+
+				for _, addresses := range addressList {
+					for _, address := range addresses {
+						ipAddresses = append(ipAddresses, address.Address)
+					}
+				}
+				return true, nil
+			})
+			if err != nil {
+				return false, fmt.Errorf("failed to iterate over ip addresses: %v", err)
+			}
+			serverList = append(serverList, &ent.VmObject{
+				Identifier:  s.ID,
+				Name:        s.Name,
+				IPAddresses: ipAddresses,
 			})
 		}
 		return true, nil
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to iterate over servers: %v", err)
+	}
 	return serverList, nil
 }

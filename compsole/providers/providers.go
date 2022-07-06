@@ -5,6 +5,7 @@ import (
 
 	"github.com/BradHacker/compsole/compsole/providers/openstack"
 	"github.com/BradHacker/compsole/compsole/utils"
+	"github.com/BradHacker/compsole/ent"
 )
 
 type CompsoleProvider interface {
@@ -13,7 +14,7 @@ type CompsoleProvider interface {
 	Author() string
 	Version() string
 	GetConsoleUrl(vmIdentifier string, consoleType utils.ConsoleType) (string, error)
-	ListVMs() ([]utils.VmObject, error)
+	ListVMs() ([]*ent.VmObject, error)
 }
 
 func NewProvider(providerType string, configFilePath string) (provider CompsoleProvider, err error) {
