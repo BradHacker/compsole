@@ -17,15 +17,17 @@ const (
 	FieldIdentifier = "identifier"
 	// FieldIPAddresses holds the string denoting the ip_addresses field in the database.
 	FieldIPAddresses = "ip_addresses"
-	// EdgeToTeam holds the string denoting the toteam edge name in mutations.
-	EdgeToTeam = "ToTeam"
+	// EdgeVmObjectToTeam holds the string denoting the vmobjecttoteam edge name in mutations.
+	EdgeVmObjectToTeam = "VmObjectToTeam"
 	// Table holds the table name of the vmobject in the database.
 	Table = "vm_objects"
-	// ToTeamTable is the table that holds the ToTeam relation/edge. The primary key declared below.
-	ToTeamTable = "vm_object_ToTeam"
-	// ToTeamInverseTable is the table name for the Team entity.
+	// VmObjectToTeamTable is the table that holds the VmObjectToTeam relation/edge.
+	VmObjectToTeamTable = "vm_objects"
+	// VmObjectToTeamInverseTable is the table name for the Team entity.
 	// It exists in this package in order to avoid circular dependency with the "team" package.
-	ToTeamInverseTable = "teams"
+	VmObjectToTeamInverseTable = "teams"
+	// VmObjectToTeamColumn is the table column denoting the VmObjectToTeam relation/edge.
+	VmObjectToTeamColumn = "vm_object_vm_object_to_team"
 )
 
 // Columns holds all SQL columns for vmobject fields.
@@ -36,16 +38,21 @@ var Columns = []string{
 	FieldIPAddresses,
 }
 
-var (
-	// ToTeamPrimaryKey and ToTeamColumn2 are the table columns denoting the
-	// primary key for the ToTeam relation (M2M).
-	ToTeamPrimaryKey = []string{"vm_object_id", "team_id"}
-)
+// ForeignKeys holds the SQL foreign-keys that are owned by the "vm_objects"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"vm_object_vm_object_to_team",
+}
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}

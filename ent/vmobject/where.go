@@ -342,25 +342,25 @@ func IPAddressesNotNil() predicate.VmObject {
 	})
 }
 
-// HasToTeam applies the HasEdge predicate on the "ToTeam" edge.
-func HasToTeam() predicate.VmObject {
+// HasVmObjectToTeam applies the HasEdge predicate on the "VmObjectToTeam" edge.
+func HasVmObjectToTeam() predicate.VmObject {
 	return predicate.VmObject(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ToTeamTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, ToTeamTable, ToTeamPrimaryKey...),
+			sqlgraph.To(VmObjectToTeamTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, VmObjectToTeamTable, VmObjectToTeamColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasToTeamWith applies the HasEdge predicate on the "ToTeam" edge with a given conditions (other predicates).
-func HasToTeamWith(preds ...predicate.Team) predicate.VmObject {
+// HasVmObjectToTeamWith applies the HasEdge predicate on the "VmObjectToTeam" edge with a given conditions (other predicates).
+func HasVmObjectToTeamWith(preds ...predicate.Team) predicate.VmObject {
 	return predicate.VmObject(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ToTeamInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, ToTeamTable, ToTeamPrimaryKey...),
+			sqlgraph.To(VmObjectToTeamInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, VmObjectToTeamTable, VmObjectToTeamColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

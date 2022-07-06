@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -13,13 +14,26 @@ import (
 	"github.com/BradHacker/compsole/compsole/providers/openstack"
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
+	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/team"
+	"github.com/BradHacker/compsole/ent/vmobject"
+	"github.com/sirupsen/logrus"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	printMainMenu()
-}
+	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+	if err != nil {
+		log.Fatalf("failed opening connection to sqlite: %v", err)
+	}
+	defer client.Close()
+	// Run the auto migration tool.
+	if err := client.Schema.Create(context.Background()); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
+	}
+	ctx := context.Background()
 
-func printMainMenu() {
 	for {
 		// Print banner and menu
 		utils.PrintBanner()
@@ -45,7 +59,7 @@ compsole:~$ `)
 		}
 		switch choice {
 		case 1:
-			ingestVms()
+			ingestVms(ctx, client)
 			break
 		case 2:
 			// TODO: get a vm console
@@ -61,11 +75,11 @@ compsole:~$ `)
 	}
 }
 
-func ingestVms() {
+func ingestVms(ctx context.Context, client *ent.Client) {
 	for {
 		// Print banner and menu
 		utils.PrintBanner()
-		fmt.Print("Select your \033[36;1mprovider\033[0;1m:\n",
+		fmt.Print("Select your\033[36;1m provider\033[0;1m:\n",
 			`
 1) Openstack
 Q/q) Exit to main menu
@@ -155,92 +169,117 @@ compsole:~$ `)
 		// Wait for modification so we can ingest the dump
 		fmt.Printf("\n\033[0;1mWrote dump to \033[31m%s\033[0;1m. Please modify this file to reflect the proper ingest format and then press [ENTER]...", filename)
 		fmt.Scanln()
-	}
-}
-
-const (
-	FieldNAME      int = 1
-	FieldIPADDRESS int = 2
-)
-
-func filterVmList(vmObjects []*ent.VmObject) []*ent.VmObject {
-	filteredVms := make([]*ent.VmObject, len(vmObjects))
-	copy(filteredVms, vmObjects)
-	for {
-		fmt.Println("\033[0;1mVMs to Ingest:")
-		for i, vmObject := range filteredVms {
-			fmt.Printf("\033[0;1m%d) \033[33m%s \033[35m(%s) \033[34m%s\n", i, vmObject.Name, vmObject.Identifier, strings.Join(vmObject.IPAddresses, ","))
-		}
-		fmt.Print("\n\033[0;1mIs this list correct [Y/n/(r)eset]? ")
-		var selection string
-		fmt.Scanln(&selection)
-		if strings.ToLower(selection) == "y" {
-			break
-		}
-		if strings.ToLower(selection) == "r" {
-			filteredVms = make([]*ent.VmObject, len(vmObjects))
-			copy(filteredVms, vmObjects)
-			continue
-		}
-		fmt.Print("\n\033[0;1mWhat would you like to filter on?\n", `
-1) Name
-2) IP Address
-`)
-		fmt.Scanln(&selection)
-		fieldChoice, err := strconv.Atoi(selection)
+		vmIngestBytes, err := os.ReadFile(filename)
 		if err != nil {
-			fmt.Println("\033[1;31mError: That was not a number\nPress [ENTER] to continue...\033[0m")
+			fmt.Printf("\033[1;31mError: failed to ingest dump file: %v\nPress [ENTER] to continue...\033[0m\n", err)
 			fmt.Scanln()
 			continue
 		}
-		fmt.Print("\n\033[0;1mEnter regex for filter: \033[0m")
-		var filterRegex string
-		fmt.Scanln(&filterRegex)
-		// Filter the VMs
-		filterVms := make([]*ent.VmObject, 0)
-		for _, vm := range filteredVms {
-			switch fieldChoice {
-			case FieldNAME:
-				if matched, _ := regexp.MatchString(filterRegex, vm.Name); matched {
-					filterVms = append(filterVms, vm)
+		var vmIngest map[string][]*ent.VmObject
+		err = json.Unmarshal(vmIngestBytes, &vmIngest)
+		if err != nil {
+			fmt.Printf("\033[1;31mError: failed to unmarshal ingest: %v\nPress [ENTER] to continue...\033[0m\n", err)
+			fmt.Scanln()
+			continue
+		}
+		tx, err := client.Tx(ctx)
+		if err != nil {
+			fmt.Printf("\033[1;31mError: failed to create ent transaction client: %v\nPress [ENTER] to continue...\033[0m\n", err)
+			fmt.Scanln()
+			continue
+		}
+		// Find or create the competition
+		entCompetition, err := tx.Competition.Query().Where(competition.NameEQ(competitionName)).Only(ctx)
+		if err != nil && ent.IsNotFound(err) {
+			logrus.Infof("Creating competition \"%s\"", competitionName)
+			entCompetition, err = tx.Competition.Create().SetName(competitionName).Save(ctx)
+			if err != nil {
+				fmt.Printf("\033[1;31mError: failed to create competition \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", competitionName, err)
+				fmt.Scanln()
+				continue
+			}
+		} else if err != nil {
+			fmt.Printf("\033[1;31mError: failed to query competition: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", err)
+			fmt.Scanln()
+			continue
+		} else {
+
+			logrus.Infof("Found competition \"%s\"", competitionName)
+		}
+		for i := 0; i <= teamCount; i++ {
+			// Find or create the teams
+			entTeam, err := tx.Team.Query().Where(team.TeamNumberEQ(i)).Only(ctx)
+			if err != nil && ent.IsNotFound(err) {
+				logrus.Infof("Creating team %d", i)
+				entTeam, err = tx.Team.Create().SetTeamNumber(i).SetTeamToCompetition(entCompetition).Save(ctx)
+				if err != nil {
+					fmt.Printf("\033[1;31mError: failed to create team %d: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", i, err)
+					fmt.Scanln()
+					continue
 				}
-				break
-			case FieldIPADDRESS:
-				for _, ip := range vm.IPAddresses {
-					if matched, _ := regexp.MatchString(filterRegex, ip); matched {
-						filterVms = append(filterVms, vm)
-						break
+			} else if err != nil {
+				fmt.Printf("\033[1;31mError: failed to query team: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", err)
+				fmt.Scanln()
+				continue
+			} else {
+				logrus.Infof("Found team \"%s\"", competitionName)
+			}
+			key := "team" + strconv.Itoa(i)
+			name := ""
+			if i == 0 {
+				// Place unsorted vms under team 0
+				key = "unsorted"
+				name = "unsorted"
+				logrus.Info("Team is being labelled as \"unsorted\"")
+			}
+			for _, vm := range vmIngest[key] { // Find or create the teams
+				entVmObject, err := tx.VmObject.Query().Where(vmobject.IdentifierEQ(vm.Identifier)).Only(ctx)
+				if err != nil && ent.IsNotFound(err) {
+					logrus.Infof("Creating vm %d", i)
+					err = tx.VmObject.Create().
+						SetName(vm.Name).
+						SetIdentifier(vm.Identifier).
+						SetIPAddresses(vm.IPAddresses).
+						SetVmObjectToTeam(entTeam).
+						SetName(name).
+						Exec(ctx)
+					if err != nil {
+						fmt.Printf("\033[1;31mError: failed to create vm \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", vm.Name, err)
+						fmt.Scanln()
+						continue
+					}
+				} else if err != nil {
+					fmt.Printf("\033[1;31mError: failed to query team: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", err)
+					fmt.Scanln()
+					continue
+				} else {
+					logrus.Infof("found vm %d", i)
+					err = entVmObject.Update().SetVmObjectToTeam(entTeam).Exec(ctx)
+					if err != nil {
+						fmt.Printf("\033[1;31mError: failed to update vm \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", vm.Name, err)
+						fmt.Scanln()
+						continue
 					}
 				}
-				break
 			}
 		}
-		fmt.Println("\n\033[0;1mVMs selected by filter: ")
-		for i, vmObject := range filterVms {
-			fmt.Printf("\033[0;1m%d) \033[33m%s \033[35m(%s) \033[34m%s\n", i, vmObject.Name, vmObject.Identifier, strings.Join(vmObject.IPAddresses, ","))
-		}
-		fmt.Print("\n\033[0;1mDo you want to \033[35mINCLUDE (I)\033[0;1m or \033[36mEXCLUDE (E)\033[0;1m these vms: \033[0m")
-		var includeExcludeSelection string
-		fmt.Scanln(&includeExcludeSelection)
-		filterMap := make(map[string]*ent.VmObject, len(filterVms))
-		for _, vmObject := range filterVms {
-			filterMap[vmObject.Identifier] = vmObject
-		}
-		if strings.ToLower(includeExcludeSelection) == "e" {
-			tempVms := make([]*ent.VmObject, 0)
-			for _, vmObject := range filteredVms {
-				if _, exists := filterMap[vmObject.Identifier]; !exists {
-					tempVms = append(tempVms, vmObject)
-				}
-			}
-			filteredVms = tempVms
+		logrus.Info("Deleteing dump file")
+		err = os.Remove(filename)
+		if err != nil {
+			fmt.Printf("\033[1;31mError: failed to delete dump file: %v\nPress [ENTER] to continue...\033[0m\n", err)
+			fmt.Scanln()
 			continue
 		}
-		if strings.ToLower(includeExcludeSelection) == "i" {
-			filteredVms = filterVms
+		logrus.Info("Committing changes to database")
+		// Try committing database changes
+		err = tx.Commit()
+		if err != nil {
+			fmt.Printf("\033[1;31mError: failed to commit db changes: %v\nPress [ENTER] to continue...\033[0m\n", err)
+			fmt.Scanln()
 			continue
 		}
+		fmt.Printf("\033[1;32mSuccess: ingested all vms from dump\nPress [ENTER] to continue...\033[0m\n")
+		fmt.Scanln()
+		continue
 	}
-
-	return filteredVms
 }

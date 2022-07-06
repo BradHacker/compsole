@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -28,7 +27,8 @@ type VmObjectQuery struct {
 	fields     []string
 	predicates []predicate.VmObject
 	// eager-loading edges.
-	withToTeam *TeamQuery
+	withVmObjectToTeam *TeamQuery
+	withFKs            bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,8 +65,8 @@ func (voq *VmObjectQuery) Order(o ...OrderFunc) *VmObjectQuery {
 	return voq
 }
 
-// QueryToTeam chains the current query on the "ToTeam" edge.
-func (voq *VmObjectQuery) QueryToTeam() *TeamQuery {
+// QueryVmObjectToTeam chains the current query on the "VmObjectToTeam" edge.
+func (voq *VmObjectQuery) QueryVmObjectToTeam() *TeamQuery {
 	query := &TeamQuery{config: voq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := voq.prepareQuery(ctx); err != nil {
@@ -79,7 +79,7 @@ func (voq *VmObjectQuery) QueryToTeam() *TeamQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(vmobject.Table, vmobject.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, vmobject.ToTeamTable, vmobject.ToTeamPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, false, vmobject.VmObjectToTeamTable, vmobject.VmObjectToTeamColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(voq.driver.Dialect(), step)
 		return fromU, nil
@@ -263,12 +263,12 @@ func (voq *VmObjectQuery) Clone() *VmObjectQuery {
 		return nil
 	}
 	return &VmObjectQuery{
-		config:     voq.config,
-		limit:      voq.limit,
-		offset:     voq.offset,
-		order:      append([]OrderFunc{}, voq.order...),
-		predicates: append([]predicate.VmObject{}, voq.predicates...),
-		withToTeam: voq.withToTeam.Clone(),
+		config:             voq.config,
+		limit:              voq.limit,
+		offset:             voq.offset,
+		order:              append([]OrderFunc{}, voq.order...),
+		predicates:         append([]predicate.VmObject{}, voq.predicates...),
+		withVmObjectToTeam: voq.withVmObjectToTeam.Clone(),
 		// clone intermediate query.
 		sql:    voq.sql.Clone(),
 		path:   voq.path,
@@ -276,14 +276,14 @@ func (voq *VmObjectQuery) Clone() *VmObjectQuery {
 	}
 }
 
-// WithToTeam tells the query-builder to eager-load the nodes that are connected to
-// the "ToTeam" edge. The optional arguments are used to configure the query builder of the edge.
-func (voq *VmObjectQuery) WithToTeam(opts ...func(*TeamQuery)) *VmObjectQuery {
+// WithVmObjectToTeam tells the query-builder to eager-load the nodes that are connected to
+// the "VmObjectToTeam" edge. The optional arguments are used to configure the query builder of the edge.
+func (voq *VmObjectQuery) WithVmObjectToTeam(opts ...func(*TeamQuery)) *VmObjectQuery {
 	query := &TeamQuery{config: voq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	voq.withToTeam = query
+	voq.withVmObjectToTeam = query
 	return voq
 }
 
@@ -351,11 +351,18 @@ func (voq *VmObjectQuery) prepareQuery(ctx context.Context) error {
 func (voq *VmObjectQuery) sqlAll(ctx context.Context) ([]*VmObject, error) {
 	var (
 		nodes       = []*VmObject{}
+		withFKs     = voq.withFKs
 		_spec       = voq.querySpec()
 		loadedTypes = [1]bool{
-			voq.withToTeam != nil,
+			voq.withVmObjectToTeam != nil,
 		}
 	)
+	if voq.withVmObjectToTeam != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, vmobject.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &VmObject{config: voq.config}
 		nodes = append(nodes, node)
@@ -376,67 +383,31 @@ func (voq *VmObjectQuery) sqlAll(ctx context.Context) ([]*VmObject, error) {
 		return nodes, nil
 	}
 
-	if query := voq.withToTeam; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[uuid.UUID]*VmObject, len(nodes))
-		for _, node := range nodes {
-			ids[node.ID] = node
-			fks = append(fks, node.ID)
-			node.Edges.ToTeam = []*Team{}
+	if query := voq.withVmObjectToTeam; query != nil {
+		ids := make([]uuid.UUID, 0, len(nodes))
+		nodeids := make(map[uuid.UUID][]*VmObject)
+		for i := range nodes {
+			if nodes[i].vm_object_vm_object_to_team == nil {
+				continue
+			}
+			fk := *nodes[i].vm_object_vm_object_to_team
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
-		var (
-			edgeids []uuid.UUID
-			edges   = make(map[uuid.UUID][]*VmObject)
-		)
-		_spec := &sqlgraph.EdgeQuerySpec{
-			Edge: &sqlgraph.EdgeSpec{
-				Inverse: false,
-				Table:   vmobject.ToTeamTable,
-				Columns: vmobject.ToTeamPrimaryKey,
-			},
-			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(vmobject.ToTeamPrimaryKey[0], fks...))
-			},
-			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
-			},
-			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*uuid.UUID)
-				if !ok || eout == nil {
-					return fmt.Errorf("unexpected id value for edge-out")
-				}
-				ein, ok := in.(*uuid.UUID)
-				if !ok || ein == nil {
-					return fmt.Errorf("unexpected id value for edge-in")
-				}
-				outValue := *eout
-				inValue := *ein
-				node, ok := ids[outValue]
-				if !ok {
-					return fmt.Errorf("unexpected node id in edges: %v", outValue)
-				}
-				if _, ok := edges[inValue]; !ok {
-					edgeids = append(edgeids, inValue)
-				}
-				edges[inValue] = append(edges[inValue], node)
-				return nil
-			},
-		}
-		if err := sqlgraph.QueryEdges(ctx, voq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "ToTeam": %w`, err)
-		}
-		query.Where(team.IDIn(edgeids...))
+		query.Where(team.IDIn(ids...))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			nodes, ok := edges[n.ID]
+			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected "ToTeam" node returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "vm_object_vm_object_to_team" returned %v`, n.ID)
 			}
 			for i := range nodes {
-				nodes[i].Edges.ToTeam = append(nodes[i].Edges.ToTeam, n)
+				nodes[i].Edges.VmObjectToTeam = n
 			}
 		}
 	}

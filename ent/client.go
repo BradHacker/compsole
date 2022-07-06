@@ -10,6 +10,7 @@ import (
 	"github.com/BradHacker/compsole/ent/migrate"
 	"github.com/google/uuid"
 
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
 
@@ -23,6 +24,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Competition is the client for interacting with the Competition builders.
+	Competition *CompetitionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// VmObject is the client for interacting with the VmObject builders.
@@ -40,6 +43,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Competition = NewCompetitionClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.VmObject = NewVmObjectClient(c.config)
 }
@@ -73,10 +77,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Team:     NewTeamClient(cfg),
-		VmObject: NewVmObjectClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Competition: NewCompetitionClient(cfg),
+		Team:        NewTeamClient(cfg),
+		VmObject:    NewVmObjectClient(cfg),
 	}, nil
 }
 
@@ -94,17 +99,18 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Team:     NewTeamClient(cfg),
-		VmObject: NewVmObjectClient(cfg),
+		ctx:         ctx,
+		config:      cfg,
+		Competition: NewCompetitionClient(cfg),
+		Team:        NewTeamClient(cfg),
+		VmObject:    NewVmObjectClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Team.
+//		Competition.
 //		Query().
 //		Count(ctx)
 //
@@ -127,8 +133,115 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Competition.Use(hooks...)
 	c.Team.Use(hooks...)
 	c.VmObject.Use(hooks...)
+}
+
+// CompetitionClient is a client for the Competition schema.
+type CompetitionClient struct {
+	config
+}
+
+// NewCompetitionClient returns a client for the Competition from the given config.
+func NewCompetitionClient(c config) *CompetitionClient {
+	return &CompetitionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `competition.Hooks(f(g(h())))`.
+func (c *CompetitionClient) Use(hooks ...Hook) {
+	c.hooks.Competition = append(c.hooks.Competition, hooks...)
+}
+
+// Create returns a create builder for Competition.
+func (c *CompetitionClient) Create() *CompetitionCreate {
+	mutation := newCompetitionMutation(c.config, OpCreate)
+	return &CompetitionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Competition entities.
+func (c *CompetitionClient) CreateBulk(builders ...*CompetitionCreate) *CompetitionCreateBulk {
+	return &CompetitionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Competition.
+func (c *CompetitionClient) Update() *CompetitionUpdate {
+	mutation := newCompetitionMutation(c.config, OpUpdate)
+	return &CompetitionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CompetitionClient) UpdateOne(co *Competition) *CompetitionUpdateOne {
+	mutation := newCompetitionMutation(c.config, OpUpdateOne, withCompetition(co))
+	return &CompetitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CompetitionClient) UpdateOneID(id uuid.UUID) *CompetitionUpdateOne {
+	mutation := newCompetitionMutation(c.config, OpUpdateOne, withCompetitionID(id))
+	return &CompetitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Competition.
+func (c *CompetitionClient) Delete() *CompetitionDelete {
+	mutation := newCompetitionMutation(c.config, OpDelete)
+	return &CompetitionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *CompetitionClient) DeleteOne(co *Competition) *CompetitionDeleteOne {
+	return c.DeleteOneID(co.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *CompetitionClient) DeleteOneID(id uuid.UUID) *CompetitionDeleteOne {
+	builder := c.Delete().Where(competition.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CompetitionDeleteOne{builder}
+}
+
+// Query returns a query builder for Competition.
+func (c *CompetitionClient) Query() *CompetitionQuery {
+	return &CompetitionQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Competition entity by its id.
+func (c *CompetitionClient) Get(ctx context.Context, id uuid.UUID) (*Competition, error) {
+	return c.Query().Where(competition.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CompetitionClient) GetX(ctx context.Context, id uuid.UUID) *Competition {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCompetitionToTeams queries the CompetitionToTeams edge of a Competition.
+func (c *CompetitionClient) QueryCompetitionToTeams(co *Competition) *TeamQuery {
+	query := &TeamQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := co.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(competition.Table, competition.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, competition.CompetitionToTeamsTable, competition.CompetitionToTeamsColumn),
+		)
+		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CompetitionClient) Hooks() []Hook {
+	return c.hooks.Competition
 }
 
 // TeamClient is a client for the Team schema.
@@ -216,15 +329,31 @@ func (c *TeamClient) GetX(ctx context.Context, id uuid.UUID) *Team {
 	return obj
 }
 
-// QueryToVmObjects queries the ToVmObjects edge of a Team.
-func (c *TeamClient) QueryToVmObjects(t *Team) *VmObjectQuery {
+// QueryTeamToCompetition queries the TeamToCompetition edge of a Team.
+func (c *TeamClient) QueryTeamToCompetition(t *Team) *CompetitionQuery {
+	query := &CompetitionQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(competition.Table, competition.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTeamToVmObjects queries the TeamToVmObjects edge of a Team.
+func (c *TeamClient) QueryTeamToVmObjects(t *Team) *VmObjectQuery {
 	query := &VmObjectQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(vmobject.Table, vmobject.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, team.ToVmObjectsTable, team.ToVmObjectsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -322,15 +451,15 @@ func (c *VmObjectClient) GetX(ctx context.Context, id uuid.UUID) *VmObject {
 	return obj
 }
 
-// QueryToTeam queries the ToTeam edge of a VmObject.
-func (c *VmObjectClient) QueryToTeam(vo *VmObject) *TeamQuery {
+// QueryVmObjectToTeam queries the VmObjectToTeam edge of a VmObject.
+func (c *VmObjectClient) QueryVmObjectToTeam(vo *VmObject) *TeamQuery {
 	query := &TeamQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := vo.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(vmobject.Table, vmobject.FieldID, id),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, vmobject.ToTeamTable, vmobject.ToTeamPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, false, vmobject.VmObjectToTeamTable, vmobject.VmObjectToTeamColumn),
 		)
 		fromV = sqlgraph.Neighbors(vo.driver.Dialect(), step)
 		return fromV, nil

@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/google/uuid"
@@ -55,19 +56,30 @@ func (tc *TeamCreate) SetNillableID(u *uuid.UUID) *TeamCreate {
 	return tc
 }
 
-// AddToVmObjectIDs adds the "ToVmObjects" edge to the VmObject entity by IDs.
-func (tc *TeamCreate) AddToVmObjectIDs(ids ...uuid.UUID) *TeamCreate {
-	tc.mutation.AddToVmObjectIDs(ids...)
+// SetTeamToCompetitionID sets the "TeamToCompetition" edge to the Competition entity by ID.
+func (tc *TeamCreate) SetTeamToCompetitionID(id uuid.UUID) *TeamCreate {
+	tc.mutation.SetTeamToCompetitionID(id)
 	return tc
 }
 
-// AddToVmObjects adds the "ToVmObjects" edges to the VmObject entity.
-func (tc *TeamCreate) AddToVmObjects(v ...*VmObject) *TeamCreate {
+// SetTeamToCompetition sets the "TeamToCompetition" edge to the Competition entity.
+func (tc *TeamCreate) SetTeamToCompetition(c *Competition) *TeamCreate {
+	return tc.SetTeamToCompetitionID(c.ID)
+}
+
+// AddTeamToVmObjectIDs adds the "TeamToVmObjects" edge to the VmObject entity by IDs.
+func (tc *TeamCreate) AddTeamToVmObjectIDs(ids ...uuid.UUID) *TeamCreate {
+	tc.mutation.AddTeamToVmObjectIDs(ids...)
+	return tc
+}
+
+// AddTeamToVmObjects adds the "TeamToVmObjects" edges to the VmObject entity.
+func (tc *TeamCreate) AddTeamToVmObjects(v ...*VmObject) *TeamCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return tc.AddToVmObjectIDs(ids...)
+	return tc.AddTeamToVmObjectIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -152,6 +164,9 @@ func (tc *TeamCreate) check() error {
 	if _, ok := tc.mutation.TeamNumber(); !ok {
 		return &ValidationError{Name: "team_number", err: errors.New(`ent: missing required field "Team.team_number"`)}
 	}
+	if _, ok := tc.mutation.TeamToCompetitionID(); !ok {
+		return &ValidationError{Name: "TeamToCompetition", err: errors.New(`ent: missing required edge "Team.TeamToCompetition"`)}
+	}
 	return nil
 }
 
@@ -204,12 +219,32 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		})
 		_node.Name = value
 	}
-	if nodes := tc.mutation.ToVmObjectsIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.TeamToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   team.TeamToCompetitionTable,
+			Columns: []string{team.TeamToCompetitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: competition.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.team_team_to_competition = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.TeamToVmObjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

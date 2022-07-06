@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/google/uuid"
 )
@@ -28,25 +29,31 @@ type VmObject struct {
 	IPAddresses []string `json:"ip_addresses,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VmObjectQuery when eager-loading is set.
-	Edges VmObjectEdges `json:"edges"`
+	Edges                       VmObjectEdges `json:"edges"`
+	vm_object_vm_object_to_team *uuid.UUID
 }
 
 // VmObjectEdges holds the relations/edges for other nodes in the graph.
 type VmObjectEdges struct {
-	// ToTeam holds the value of the ToTeam edge.
-	ToTeam []*Team `json:"ToTeam,omitempty"`
+	// VmObjectToTeam holds the value of the VmObjectToTeam edge.
+	VmObjectToTeam *Team `json:"VmObjectToTeam,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// ToTeamOrErr returns the ToTeam value or an error if the edge
-// was not loaded in eager-loading.
-func (e VmObjectEdges) ToTeamOrErr() ([]*Team, error) {
+// VmObjectToTeamOrErr returns the VmObjectToTeam value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e VmObjectEdges) VmObjectToTeamOrErr() (*Team, error) {
 	if e.loadedTypes[0] {
-		return e.ToTeam, nil
+		if e.VmObjectToTeam == nil {
+			// The edge VmObjectToTeam was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: team.Label}
+		}
+		return e.VmObjectToTeam, nil
 	}
-	return nil, &NotLoadedError{edge: "ToTeam"}
+	return nil, &NotLoadedError{edge: "VmObjectToTeam"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -60,6 +67,8 @@ func (*VmObject) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case vmobject.FieldID:
 			values[i] = new(uuid.UUID)
+		case vmobject.ForeignKeys[0]: // vm_object_vm_object_to_team
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type VmObject", columns[i])
 		}
@@ -101,14 +110,21 @@ func (vo *VmObject) assignValues(columns []string, values []interface{}) error {
 					return fmt.Errorf("unmarshal field ip_addresses: %w", err)
 				}
 			}
+		case vmobject.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field vm_object_vm_object_to_team", values[i])
+			} else if value.Valid {
+				vo.vm_object_vm_object_to_team = new(uuid.UUID)
+				*vo.vm_object_vm_object_to_team = *value.S.(*uuid.UUID)
+			}
 		}
 	}
 	return nil
 }
 
-// QueryToTeam queries the "ToTeam" edge of the VmObject entity.
-func (vo *VmObject) QueryToTeam() *TeamQuery {
-	return (&VmObjectClient{config: vo.config}).QueryToTeam(vo)
+// QueryVmObjectToTeam queries the "VmObjectToTeam" edge of the VmObject entity.
+func (vo *VmObject) QueryVmObjectToTeam() *TeamQuery {
+	return (&VmObjectClient{config: vo.config}).QueryVmObjectToTeam(vo)
 }
 
 // Update returns a builder for updating this VmObject.

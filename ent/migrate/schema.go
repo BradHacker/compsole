@@ -8,17 +8,37 @@ import (
 )
 
 var (
+	// CompetitionsColumns holds the columns for the "competitions" table.
+	CompetitionsColumns = []*schema.Column{
+		{Name: "oid", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Unique: true},
+	}
+	// CompetitionsTable holds the schema information for the "competitions" table.
+	CompetitionsTable = &schema.Table{
+		Name:       "competitions",
+		Columns:    CompetitionsColumns,
+		PrimaryKey: []*schema.Column{CompetitionsColumns[0]},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
 		{Name: "team_number", Type: field.TypeInt},
 		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "team_team_to_competition", Type: field.TypeUUID},
 	}
 	// TeamsTable holds the schema information for the "teams" table.
 	TeamsTable = &schema.Table{
 		Name:       "teams",
 		Columns:    TeamsColumns,
 		PrimaryKey: []*schema.Column{TeamsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "teams_competitions_TeamToCompetition",
+				Columns:    []*schema.Column{TeamsColumns[3]},
+				RefColumns: []*schema.Column{CompetitionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// VMObjectsColumns holds the columns for the "vm_objects" table.
 	VMObjectsColumns = []*schema.Column{
@@ -26,47 +46,31 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "identifier", Type: field.TypeString},
 		{Name: "ip_addresses", Type: field.TypeJSON, Nullable: true},
+		{Name: "vm_object_vm_object_to_team", Type: field.TypeUUID, Nullable: true},
 	}
 	// VMObjectsTable holds the schema information for the "vm_objects" table.
 	VMObjectsTable = &schema.Table{
 		Name:       "vm_objects",
 		Columns:    VMObjectsColumns,
 		PrimaryKey: []*schema.Column{VMObjectsColumns[0]},
-	}
-	// VMObjectToTeamColumns holds the columns for the "vm_object_ToTeam" table.
-	VMObjectToTeamColumns = []*schema.Column{
-		{Name: "vm_object_id", Type: field.TypeUUID},
-		{Name: "team_id", Type: field.TypeUUID},
-	}
-	// VMObjectToTeamTable holds the schema information for the "vm_object_ToTeam" table.
-	VMObjectToTeamTable = &schema.Table{
-		Name:       "vm_object_ToTeam",
-		Columns:    VMObjectToTeamColumns,
-		PrimaryKey: []*schema.Column{VMObjectToTeamColumns[0], VMObjectToTeamColumns[1]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "vm_object_ToTeam_vm_object_id",
-				Columns:    []*schema.Column{VMObjectToTeamColumns[0]},
-				RefColumns: []*schema.Column{VMObjectsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "vm_object_ToTeam_team_id",
-				Columns:    []*schema.Column{VMObjectToTeamColumns[1]},
+				Symbol:     "vm_objects_teams_VmObjectToTeam",
+				Columns:    []*schema.Column{VMObjectsColumns[4]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
-				OnDelete:   schema.Cascade,
+				OnDelete:   schema.SetNull,
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CompetitionsTable,
 		TeamsTable,
 		VMObjectsTable,
-		VMObjectToTeamTable,
 	}
 )
 
 func init() {
-	VMObjectToTeamTable.ForeignKeys[0].RefTable = VMObjectsTable
-	VMObjectToTeamTable.ForeignKeys[1].RefTable = TeamsTable
+	TeamsTable.ForeignKeys[0].RefTable = CompetitionsTable
+	VMObjectsTable.ForeignKeys[0].RefTable = TeamsTable
 }

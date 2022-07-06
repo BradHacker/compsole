@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -28,7 +29,9 @@ type TeamQuery struct {
 	fields     []string
 	predicates []predicate.Team
 	// eager-loading edges.
-	withToVmObjects *VmObjectQuery
+	withTeamToCompetition *CompetitionQuery
+	withTeamToVmObjects   *VmObjectQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,8 +68,30 @@ func (tq *TeamQuery) Order(o ...OrderFunc) *TeamQuery {
 	return tq
 }
 
-// QueryToVmObjects chains the current query on the "ToVmObjects" edge.
-func (tq *TeamQuery) QueryToVmObjects() *VmObjectQuery {
+// QueryTeamToCompetition chains the current query on the "TeamToCompetition" edge.
+func (tq *TeamQuery) QueryTeamToCompetition() *CompetitionQuery {
+	query := &CompetitionQuery{config: tq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.To(competition.Table, competition.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTeamToVmObjects chains the current query on the "TeamToVmObjects" edge.
+func (tq *TeamQuery) QueryTeamToVmObjects() *VmObjectQuery {
 	query := &VmObjectQuery{config: tq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -79,7 +104,7 @@ func (tq *TeamQuery) QueryToVmObjects() *VmObjectQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(vmobject.Table, vmobject.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, team.ToVmObjectsTable, team.ToVmObjectsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -263,12 +288,13 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		return nil
 	}
 	return &TeamQuery{
-		config:          tq.config,
-		limit:           tq.limit,
-		offset:          tq.offset,
-		order:           append([]OrderFunc{}, tq.order...),
-		predicates:      append([]predicate.Team{}, tq.predicates...),
-		withToVmObjects: tq.withToVmObjects.Clone(),
+		config:                tq.config,
+		limit:                 tq.limit,
+		offset:                tq.offset,
+		order:                 append([]OrderFunc{}, tq.order...),
+		predicates:            append([]predicate.Team{}, tq.predicates...),
+		withTeamToCompetition: tq.withTeamToCompetition.Clone(),
+		withTeamToVmObjects:   tq.withTeamToVmObjects.Clone(),
 		// clone intermediate query.
 		sql:    tq.sql.Clone(),
 		path:   tq.path,
@@ -276,14 +302,25 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 	}
 }
 
-// WithToVmObjects tells the query-builder to eager-load the nodes that are connected to
-// the "ToVmObjects" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithToVmObjects(opts ...func(*VmObjectQuery)) *TeamQuery {
+// WithTeamToCompetition tells the query-builder to eager-load the nodes that are connected to
+// the "TeamToCompetition" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithTeamToCompetition(opts ...func(*CompetitionQuery)) *TeamQuery {
+	query := &CompetitionQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withTeamToCompetition = query
+	return tq
+}
+
+// WithTeamToVmObjects tells the query-builder to eager-load the nodes that are connected to
+// the "TeamToVmObjects" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithTeamToVmObjects(opts ...func(*VmObjectQuery)) *TeamQuery {
 	query := &VmObjectQuery{config: tq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withToVmObjects = query
+	tq.withTeamToVmObjects = query
 	return tq
 }
 
@@ -351,11 +388,19 @@ func (tq *TeamQuery) prepareQuery(ctx context.Context) error {
 func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 	var (
 		nodes       = []*Team{}
+		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [1]bool{
-			tq.withToVmObjects != nil,
+		loadedTypes = [2]bool{
+			tq.withTeamToCompetition != nil,
+			tq.withTeamToVmObjects != nil,
 		}
 	)
+	if tq.withTeamToCompetition != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, team.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Team{config: tq.config}
 		nodes = append(nodes, node)
@@ -376,68 +421,61 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		return nodes, nil
 	}
 
-	if query := tq.withToVmObjects; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[uuid.UUID]*Team, len(nodes))
-		for _, node := range nodes {
-			ids[node.ID] = node
-			fks = append(fks, node.ID)
-			node.Edges.ToVmObjects = []*VmObject{}
+	if query := tq.withTeamToCompetition; query != nil {
+		ids := make([]uuid.UUID, 0, len(nodes))
+		nodeids := make(map[uuid.UUID][]*Team)
+		for i := range nodes {
+			if nodes[i].team_team_to_competition == nil {
+				continue
+			}
+			fk := *nodes[i].team_team_to_competition
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
-		var (
-			edgeids []uuid.UUID
-			edges   = make(map[uuid.UUID][]*Team)
-		)
-		_spec := &sqlgraph.EdgeQuerySpec{
-			Edge: &sqlgraph.EdgeSpec{
-				Inverse: true,
-				Table:   team.ToVmObjectsTable,
-				Columns: team.ToVmObjectsPrimaryKey,
-			},
-			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(team.ToVmObjectsPrimaryKey[1], fks...))
-			},
-			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
-			},
-			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*uuid.UUID)
-				if !ok || eout == nil {
-					return fmt.Errorf("unexpected id value for edge-out")
-				}
-				ein, ok := in.(*uuid.UUID)
-				if !ok || ein == nil {
-					return fmt.Errorf("unexpected id value for edge-in")
-				}
-				outValue := *eout
-				inValue := *ein
-				node, ok := ids[outValue]
-				if !ok {
-					return fmt.Errorf("unexpected node id in edges: %v", outValue)
-				}
-				if _, ok := edges[inValue]; !ok {
-					edgeids = append(edgeids, inValue)
-				}
-				edges[inValue] = append(edges[inValue], node)
-				return nil
-			},
-		}
-		if err := sqlgraph.QueryEdges(ctx, tq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "ToVmObjects": %w`, err)
-		}
-		query.Where(vmobject.IDIn(edgeids...))
+		query.Where(competition.IDIn(ids...))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			nodes, ok := edges[n.ID]
+			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected "ToVmObjects" node returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_competition" returned %v`, n.ID)
 			}
 			for i := range nodes {
-				nodes[i].Edges.ToVmObjects = append(nodes[i].Edges.ToVmObjects, n)
+				nodes[i].Edges.TeamToCompetition = n
 			}
+		}
+	}
+
+	if query := tq.withTeamToVmObjects; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[uuid.UUID]*Team)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.TeamToVmObjects = []*VmObject{}
+		}
+		query.withFKs = true
+		query.Where(predicate.VmObject(func(s *sql.Selector) {
+			s.Where(sql.InValues(team.TeamToVmObjectsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.vm_object_vm_object_to_team
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "vm_object_vm_object_to_team" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "vm_object_vm_object_to_team" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.TeamToVmObjects = append(node.Edges.TeamToVmObjects, n)
 		}
 	}
 

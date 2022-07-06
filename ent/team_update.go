@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -62,19 +63,30 @@ func (tu *TeamUpdate) ClearName() *TeamUpdate {
 	return tu
 }
 
-// AddToVmObjectIDs adds the "ToVmObjects" edge to the VmObject entity by IDs.
-func (tu *TeamUpdate) AddToVmObjectIDs(ids ...uuid.UUID) *TeamUpdate {
-	tu.mutation.AddToVmObjectIDs(ids...)
+// SetTeamToCompetitionID sets the "TeamToCompetition" edge to the Competition entity by ID.
+func (tu *TeamUpdate) SetTeamToCompetitionID(id uuid.UUID) *TeamUpdate {
+	tu.mutation.SetTeamToCompetitionID(id)
 	return tu
 }
 
-// AddToVmObjects adds the "ToVmObjects" edges to the VmObject entity.
-func (tu *TeamUpdate) AddToVmObjects(v ...*VmObject) *TeamUpdate {
+// SetTeamToCompetition sets the "TeamToCompetition" edge to the Competition entity.
+func (tu *TeamUpdate) SetTeamToCompetition(c *Competition) *TeamUpdate {
+	return tu.SetTeamToCompetitionID(c.ID)
+}
+
+// AddTeamToVmObjectIDs adds the "TeamToVmObjects" edge to the VmObject entity by IDs.
+func (tu *TeamUpdate) AddTeamToVmObjectIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.AddTeamToVmObjectIDs(ids...)
+	return tu
+}
+
+// AddTeamToVmObjects adds the "TeamToVmObjects" edges to the VmObject entity.
+func (tu *TeamUpdate) AddTeamToVmObjects(v ...*VmObject) *TeamUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return tu.AddToVmObjectIDs(ids...)
+	return tu.AddTeamToVmObjectIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -82,25 +94,31 @@ func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
 }
 
-// ClearToVmObjects clears all "ToVmObjects" edges to the VmObject entity.
-func (tu *TeamUpdate) ClearToVmObjects() *TeamUpdate {
-	tu.mutation.ClearToVmObjects()
+// ClearTeamToCompetition clears the "TeamToCompetition" edge to the Competition entity.
+func (tu *TeamUpdate) ClearTeamToCompetition() *TeamUpdate {
+	tu.mutation.ClearTeamToCompetition()
 	return tu
 }
 
-// RemoveToVmObjectIDs removes the "ToVmObjects" edge to VmObject entities by IDs.
-func (tu *TeamUpdate) RemoveToVmObjectIDs(ids ...uuid.UUID) *TeamUpdate {
-	tu.mutation.RemoveToVmObjectIDs(ids...)
+// ClearTeamToVmObjects clears all "TeamToVmObjects" edges to the VmObject entity.
+func (tu *TeamUpdate) ClearTeamToVmObjects() *TeamUpdate {
+	tu.mutation.ClearTeamToVmObjects()
 	return tu
 }
 
-// RemoveToVmObjects removes "ToVmObjects" edges to VmObject entities.
-func (tu *TeamUpdate) RemoveToVmObjects(v ...*VmObject) *TeamUpdate {
+// RemoveTeamToVmObjectIDs removes the "TeamToVmObjects" edge to VmObject entities by IDs.
+func (tu *TeamUpdate) RemoveTeamToVmObjectIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.RemoveTeamToVmObjectIDs(ids...)
+	return tu
+}
+
+// RemoveTeamToVmObjects removes "TeamToVmObjects" edges to VmObject entities.
+func (tu *TeamUpdate) RemoveTeamToVmObjects(v ...*VmObject) *TeamUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return tu.RemoveToVmObjectIDs(ids...)
+	return tu.RemoveTeamToVmObjectIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -110,12 +128,18 @@ func (tu *TeamUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(tu.hooks) == 0 {
+		if err = tu.check(); err != nil {
+			return 0, err
+		}
 		affected, err = tu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*TeamMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tu.check(); err != nil {
+				return 0, err
 			}
 			tu.mutation = mutation
 			affected, err = tu.sqlSave(ctx)
@@ -155,6 +179,14 @@ func (tu *TeamUpdate) ExecX(ctx context.Context) {
 	if err := tu.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (tu *TeamUpdate) check() error {
+	if _, ok := tu.mutation.TeamToCompetitionID(); tu.mutation.TeamToCompetitionCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Team.TeamToCompetition"`)
+	}
+	return nil
 }
 
 func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -202,12 +234,47 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: team.FieldName,
 		})
 	}
-	if tu.mutation.ToVmObjectsCleared() {
+	if tu.mutation.TeamToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   team.TeamToCompetitionTable,
+			Columns: []string{team.TeamToCompetitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: competition.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.TeamToCompetitionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   team.TeamToCompetitionTable,
+			Columns: []string{team.TeamToCompetitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: competition.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.TeamToVmObjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -218,12 +285,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedToVmObjectsIDs(); len(nodes) > 0 && !tu.mutation.ToVmObjectsCleared() {
+	if nodes := tu.mutation.RemovedTeamToVmObjectsIDs(); len(nodes) > 0 && !tu.mutation.TeamToVmObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -237,12 +304,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.ToVmObjectsIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.TeamToVmObjectsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -308,19 +375,30 @@ func (tuo *TeamUpdateOne) ClearName() *TeamUpdateOne {
 	return tuo
 }
 
-// AddToVmObjectIDs adds the "ToVmObjects" edge to the VmObject entity by IDs.
-func (tuo *TeamUpdateOne) AddToVmObjectIDs(ids ...uuid.UUID) *TeamUpdateOne {
-	tuo.mutation.AddToVmObjectIDs(ids...)
+// SetTeamToCompetitionID sets the "TeamToCompetition" edge to the Competition entity by ID.
+func (tuo *TeamUpdateOne) SetTeamToCompetitionID(id uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.SetTeamToCompetitionID(id)
 	return tuo
 }
 
-// AddToVmObjects adds the "ToVmObjects" edges to the VmObject entity.
-func (tuo *TeamUpdateOne) AddToVmObjects(v ...*VmObject) *TeamUpdateOne {
+// SetTeamToCompetition sets the "TeamToCompetition" edge to the Competition entity.
+func (tuo *TeamUpdateOne) SetTeamToCompetition(c *Competition) *TeamUpdateOne {
+	return tuo.SetTeamToCompetitionID(c.ID)
+}
+
+// AddTeamToVmObjectIDs adds the "TeamToVmObjects" edge to the VmObject entity by IDs.
+func (tuo *TeamUpdateOne) AddTeamToVmObjectIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.AddTeamToVmObjectIDs(ids...)
+	return tuo
+}
+
+// AddTeamToVmObjects adds the "TeamToVmObjects" edges to the VmObject entity.
+func (tuo *TeamUpdateOne) AddTeamToVmObjects(v ...*VmObject) *TeamUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return tuo.AddToVmObjectIDs(ids...)
+	return tuo.AddTeamToVmObjectIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -328,25 +406,31 @@ func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
 }
 
-// ClearToVmObjects clears all "ToVmObjects" edges to the VmObject entity.
-func (tuo *TeamUpdateOne) ClearToVmObjects() *TeamUpdateOne {
-	tuo.mutation.ClearToVmObjects()
+// ClearTeamToCompetition clears the "TeamToCompetition" edge to the Competition entity.
+func (tuo *TeamUpdateOne) ClearTeamToCompetition() *TeamUpdateOne {
+	tuo.mutation.ClearTeamToCompetition()
 	return tuo
 }
 
-// RemoveToVmObjectIDs removes the "ToVmObjects" edge to VmObject entities by IDs.
-func (tuo *TeamUpdateOne) RemoveToVmObjectIDs(ids ...uuid.UUID) *TeamUpdateOne {
-	tuo.mutation.RemoveToVmObjectIDs(ids...)
+// ClearTeamToVmObjects clears all "TeamToVmObjects" edges to the VmObject entity.
+func (tuo *TeamUpdateOne) ClearTeamToVmObjects() *TeamUpdateOne {
+	tuo.mutation.ClearTeamToVmObjects()
 	return tuo
 }
 
-// RemoveToVmObjects removes "ToVmObjects" edges to VmObject entities.
-func (tuo *TeamUpdateOne) RemoveToVmObjects(v ...*VmObject) *TeamUpdateOne {
+// RemoveTeamToVmObjectIDs removes the "TeamToVmObjects" edge to VmObject entities by IDs.
+func (tuo *TeamUpdateOne) RemoveTeamToVmObjectIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.RemoveTeamToVmObjectIDs(ids...)
+	return tuo
+}
+
+// RemoveTeamToVmObjects removes "TeamToVmObjects" edges to VmObject entities.
+func (tuo *TeamUpdateOne) RemoveTeamToVmObjects(v ...*VmObject) *TeamUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return tuo.RemoveToVmObjectIDs(ids...)
+	return tuo.RemoveTeamToVmObjectIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -363,12 +447,18 @@ func (tuo *TeamUpdateOne) Save(ctx context.Context) (*Team, error) {
 		node *Team
 	)
 	if len(tuo.hooks) == 0 {
+		if err = tuo.check(); err != nil {
+			return nil, err
+		}
 		node, err = tuo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*TeamMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tuo.check(); err != nil {
+				return nil, err
 			}
 			tuo.mutation = mutation
 			node, err = tuo.sqlSave(ctx)
@@ -408,6 +498,14 @@ func (tuo *TeamUpdateOne) ExecX(ctx context.Context) {
 	if err := tuo.Exec(ctx); err != nil {
 		panic(err)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (tuo *TeamUpdateOne) check() error {
+	if _, ok := tuo.mutation.TeamToCompetitionID(); tuo.mutation.TeamToCompetitionCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Team.TeamToCompetition"`)
+	}
+	return nil
 }
 
 func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) {
@@ -472,12 +570,47 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 			Column: team.FieldName,
 		})
 	}
-	if tuo.mutation.ToVmObjectsCleared() {
+	if tuo.mutation.TeamToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   team.TeamToCompetitionTable,
+			Columns: []string{team.TeamToCompetitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: competition.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.TeamToCompetitionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   team.TeamToCompetitionTable,
+			Columns: []string{team.TeamToCompetitionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: competition.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.TeamToVmObjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -488,12 +621,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedToVmObjectsIDs(); len(nodes) > 0 && !tuo.mutation.ToVmObjectsCleared() {
+	if nodes := tuo.mutation.RemovedTeamToVmObjectsIDs(); len(nodes) > 0 && !tuo.mutation.TeamToVmObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -507,12 +640,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.ToVmObjectsIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.TeamToVmObjectsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   team.ToVmObjectsTable,
-			Columns: team.ToVmObjectsPrimaryKey,
+			Table:   team.TeamToVmObjectsTable,
+			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

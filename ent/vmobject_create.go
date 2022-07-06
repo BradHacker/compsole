@@ -53,19 +53,23 @@ func (voc *VmObjectCreate) SetNillableID(u *uuid.UUID) *VmObjectCreate {
 	return voc
 }
 
-// AddToTeamIDs adds the "ToTeam" edge to the Team entity by IDs.
-func (voc *VmObjectCreate) AddToTeamIDs(ids ...uuid.UUID) *VmObjectCreate {
-	voc.mutation.AddToTeamIDs(ids...)
+// SetVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID.
+func (voc *VmObjectCreate) SetVmObjectToTeamID(id uuid.UUID) *VmObjectCreate {
+	voc.mutation.SetVmObjectToTeamID(id)
 	return voc
 }
 
-// AddToTeam adds the "ToTeam" edges to the Team entity.
-func (voc *VmObjectCreate) AddToTeam(t ...*Team) *VmObjectCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetNillableVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID if the given value is not nil.
+func (voc *VmObjectCreate) SetNillableVmObjectToTeamID(id *uuid.UUID) *VmObjectCreate {
+	if id != nil {
+		voc = voc.SetVmObjectToTeamID(*id)
 	}
-	return voc.AddToTeamIDs(ids...)
+	return voc
+}
+
+// SetVmObjectToTeam sets the "VmObjectToTeam" edge to the Team entity.
+func (voc *VmObjectCreate) SetVmObjectToTeam(t *Team) *VmObjectCreate {
+	return voc.SetVmObjectToTeamID(t.ID)
 }
 
 // Mutation returns the VmObjectMutation object of the builder.
@@ -213,12 +217,12 @@ func (voc *VmObjectCreate) createSpec() (*VmObject, *sqlgraph.CreateSpec) {
 		})
 		_node.IPAddresses = value
 	}
-	if nodes := voc.mutation.ToTeamIDs(); len(nodes) > 0 {
+	if nodes := voc.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
+			Table:   vmobject.VmObjectToTeamTable,
+			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -230,6 +234,7 @@ func (voc *VmObjectCreate) createSpec() (*VmObject, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.vm_object_vm_object_to_team = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

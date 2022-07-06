@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/google/uuid"
 )
@@ -22,25 +23,42 @@ type Team struct {
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.
-	Edges TeamEdges `json:"edges"`
+	Edges                    TeamEdges `json:"edges"`
+	team_team_to_competition *uuid.UUID
 }
 
 // TeamEdges holds the relations/edges for other nodes in the graph.
 type TeamEdges struct {
-	// ToVmObjects holds the value of the ToVmObjects edge.
-	ToVmObjects []*VmObject `json:"ToVmObjects,omitempty"`
+	// TeamToCompetition holds the value of the TeamToCompetition edge.
+	TeamToCompetition *Competition `json:"TeamToCompetition,omitempty"`
+	// TeamToVmObjects holds the value of the TeamToVmObjects edge.
+	TeamToVmObjects []*VmObject `json:"TeamToVmObjects,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
-// ToVmObjectsOrErr returns the ToVmObjects value or an error if the edge
-// was not loaded in eager-loading.
-func (e TeamEdges) ToVmObjectsOrErr() ([]*VmObject, error) {
+// TeamToCompetitionOrErr returns the TeamToCompetition value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TeamEdges) TeamToCompetitionOrErr() (*Competition, error) {
 	if e.loadedTypes[0] {
-		return e.ToVmObjects, nil
+		if e.TeamToCompetition == nil {
+			// The edge TeamToCompetition was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: competition.Label}
+		}
+		return e.TeamToCompetition, nil
 	}
-	return nil, &NotLoadedError{edge: "ToVmObjects"}
+	return nil, &NotLoadedError{edge: "TeamToCompetition"}
+}
+
+// TeamToVmObjectsOrErr returns the TeamToVmObjects value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) TeamToVmObjectsOrErr() ([]*VmObject, error) {
+	if e.loadedTypes[1] {
+		return e.TeamToVmObjects, nil
+	}
+	return nil, &NotLoadedError{edge: "TeamToVmObjects"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -54,6 +72,8 @@ func (*Team) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case team.FieldID:
 			values[i] = new(uuid.UUID)
+		case team.ForeignKeys[0]: // team_team_to_competition
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Team", columns[i])
 		}
@@ -87,14 +107,26 @@ func (t *Team) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				t.Name = value.String
 			}
+		case team.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field team_team_to_competition", values[i])
+			} else if value.Valid {
+				t.team_team_to_competition = new(uuid.UUID)
+				*t.team_team_to_competition = *value.S.(*uuid.UUID)
+			}
 		}
 	}
 	return nil
 }
 
-// QueryToVmObjects queries the "ToVmObjects" edge of the Team entity.
-func (t *Team) QueryToVmObjects() *VmObjectQuery {
-	return (&TeamClient{config: t.config}).QueryToVmObjects(t)
+// QueryTeamToCompetition queries the "TeamToCompetition" edge of the Team entity.
+func (t *Team) QueryTeamToCompetition() *CompetitionQuery {
+	return (&TeamClient{config: t.config}).QueryTeamToCompetition(t)
+}
+
+// QueryTeamToVmObjects queries the "TeamToVmObjects" edge of the Team entity.
+func (t *Team) QueryTeamToVmObjects() *VmObjectQuery {
+	return (&TeamClient{config: t.config}).QueryTeamToVmObjects(t)
 }
 
 // Update returns a builder for updating this Team.

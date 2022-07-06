@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/schema"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -13,6 +14,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	competitionFields := schema.Competition{}.Fields()
+	_ = competitionFields
+	// competitionDescID is the schema descriptor for id field.
+	competitionDescID := competitionFields[0].Descriptor()
+	// competition.DefaultID holds the default value on creation for the id field.
+	competition.DefaultID = competitionDescID.Default.(func() uuid.UUID)
 	teamFields := schema.Team{}.Fields()
 	_ = teamFields
 	// teamDescID is the schema descriptor for id field.

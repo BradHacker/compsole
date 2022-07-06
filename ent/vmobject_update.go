@@ -53,19 +53,23 @@ func (vou *VmObjectUpdate) ClearIPAddresses() *VmObjectUpdate {
 	return vou
 }
 
-// AddToTeamIDs adds the "ToTeam" edge to the Team entity by IDs.
-func (vou *VmObjectUpdate) AddToTeamIDs(ids ...uuid.UUID) *VmObjectUpdate {
-	vou.mutation.AddToTeamIDs(ids...)
+// SetVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID.
+func (vou *VmObjectUpdate) SetVmObjectToTeamID(id uuid.UUID) *VmObjectUpdate {
+	vou.mutation.SetVmObjectToTeamID(id)
 	return vou
 }
 
-// AddToTeam adds the "ToTeam" edges to the Team entity.
-func (vou *VmObjectUpdate) AddToTeam(t ...*Team) *VmObjectUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetNillableVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID if the given value is not nil.
+func (vou *VmObjectUpdate) SetNillableVmObjectToTeamID(id *uuid.UUID) *VmObjectUpdate {
+	if id != nil {
+		vou = vou.SetVmObjectToTeamID(*id)
 	}
-	return vou.AddToTeamIDs(ids...)
+	return vou
+}
+
+// SetVmObjectToTeam sets the "VmObjectToTeam" edge to the Team entity.
+func (vou *VmObjectUpdate) SetVmObjectToTeam(t *Team) *VmObjectUpdate {
+	return vou.SetVmObjectToTeamID(t.ID)
 }
 
 // Mutation returns the VmObjectMutation object of the builder.
@@ -73,25 +77,10 @@ func (vou *VmObjectUpdate) Mutation() *VmObjectMutation {
 	return vou.mutation
 }
 
-// ClearToTeam clears all "ToTeam" edges to the Team entity.
-func (vou *VmObjectUpdate) ClearToTeam() *VmObjectUpdate {
-	vou.mutation.ClearToTeam()
+// ClearVmObjectToTeam clears the "VmObjectToTeam" edge to the Team entity.
+func (vou *VmObjectUpdate) ClearVmObjectToTeam() *VmObjectUpdate {
+	vou.mutation.ClearVmObjectToTeam()
 	return vou
-}
-
-// RemoveToTeamIDs removes the "ToTeam" edge to Team entities by IDs.
-func (vou *VmObjectUpdate) RemoveToTeamIDs(ids ...uuid.UUID) *VmObjectUpdate {
-	vou.mutation.RemoveToTeamIDs(ids...)
-	return vou
-}
-
-// RemoveToTeam removes "ToTeam" edges to Team entities.
-func (vou *VmObjectUpdate) RemoveToTeam(t ...*Team) *VmObjectUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return vou.RemoveToTeamIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -193,12 +182,12 @@ func (vou *VmObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: vmobject.FieldIPAddresses,
 		})
 	}
-	if vou.mutation.ToTeamCleared() {
+	if vou.mutation.VmObjectToTeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
+			Table:   vmobject.VmObjectToTeamTable,
+			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -209,31 +198,12 @@ func (vou *VmObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := vou.mutation.RemovedToTeamIDs(); len(nodes) > 0 && !vou.mutation.ToTeamCleared() {
+	if nodes := vou.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := vou.mutation.ToTeamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
+			Table:   vmobject.VmObjectToTeamTable,
+			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -290,19 +260,23 @@ func (vouo *VmObjectUpdateOne) ClearIPAddresses() *VmObjectUpdateOne {
 	return vouo
 }
 
-// AddToTeamIDs adds the "ToTeam" edge to the Team entity by IDs.
-func (vouo *VmObjectUpdateOne) AddToTeamIDs(ids ...uuid.UUID) *VmObjectUpdateOne {
-	vouo.mutation.AddToTeamIDs(ids...)
+// SetVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID.
+func (vouo *VmObjectUpdateOne) SetVmObjectToTeamID(id uuid.UUID) *VmObjectUpdateOne {
+	vouo.mutation.SetVmObjectToTeamID(id)
 	return vouo
 }
 
-// AddToTeam adds the "ToTeam" edges to the Team entity.
-func (vouo *VmObjectUpdateOne) AddToTeam(t ...*Team) *VmObjectUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+// SetNillableVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID if the given value is not nil.
+func (vouo *VmObjectUpdateOne) SetNillableVmObjectToTeamID(id *uuid.UUID) *VmObjectUpdateOne {
+	if id != nil {
+		vouo = vouo.SetVmObjectToTeamID(*id)
 	}
-	return vouo.AddToTeamIDs(ids...)
+	return vouo
+}
+
+// SetVmObjectToTeam sets the "VmObjectToTeam" edge to the Team entity.
+func (vouo *VmObjectUpdateOne) SetVmObjectToTeam(t *Team) *VmObjectUpdateOne {
+	return vouo.SetVmObjectToTeamID(t.ID)
 }
 
 // Mutation returns the VmObjectMutation object of the builder.
@@ -310,25 +284,10 @@ func (vouo *VmObjectUpdateOne) Mutation() *VmObjectMutation {
 	return vouo.mutation
 }
 
-// ClearToTeam clears all "ToTeam" edges to the Team entity.
-func (vouo *VmObjectUpdateOne) ClearToTeam() *VmObjectUpdateOne {
-	vouo.mutation.ClearToTeam()
+// ClearVmObjectToTeam clears the "VmObjectToTeam" edge to the Team entity.
+func (vouo *VmObjectUpdateOne) ClearVmObjectToTeam() *VmObjectUpdateOne {
+	vouo.mutation.ClearVmObjectToTeam()
 	return vouo
-}
-
-// RemoveToTeamIDs removes the "ToTeam" edge to Team entities by IDs.
-func (vouo *VmObjectUpdateOne) RemoveToTeamIDs(ids ...uuid.UUID) *VmObjectUpdateOne {
-	vouo.mutation.RemoveToTeamIDs(ids...)
-	return vouo
-}
-
-// RemoveToTeam removes "ToTeam" edges to Team entities.
-func (vouo *VmObjectUpdateOne) RemoveToTeam(t ...*Team) *VmObjectUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return vouo.RemoveToTeamIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -454,12 +413,12 @@ func (vouo *VmObjectUpdateOne) sqlSave(ctx context.Context) (_node *VmObject, er
 			Column: vmobject.FieldIPAddresses,
 		})
 	}
-	if vouo.mutation.ToTeamCleared() {
+	if vouo.mutation.VmObjectToTeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
+			Table:   vmobject.VmObjectToTeamTable,
+			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -470,31 +429,12 @@ func (vouo *VmObjectUpdateOne) sqlSave(ctx context.Context) (_node *VmObject, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := vouo.mutation.RemovedToTeamIDs(); len(nodes) > 0 && !vouo.mutation.ToTeamCleared() {
+	if nodes := vouo.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: team.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := vouo.mutation.ToTeamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   vmobject.ToTeamTable,
-			Columns: vmobject.ToTeamPrimaryKey,
+			Table:   vmobject.VmObjectToTeamTable,
+			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

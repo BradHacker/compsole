@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
@@ -18,13 +19,16 @@ func (Competition) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			StorageKey("oid"),
-		field.String("name"),
+		field.String("name").Unique(),
 	}
 }
 
 // Edges of the Competition.
 func (Competition) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("ToTeams", Team.Type).Ref("ToCompetition"),
+		edge.From("CompetitionToTeams", Team.Type).Ref("TeamToCompetition").
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 	}
 }

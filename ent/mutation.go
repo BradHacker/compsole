@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -25,26 +26,439 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeTeam     = "Team"
-	TypeVmObject = "VmObject"
+	TypeCompetition = "Competition"
+	TypeTeam        = "Team"
+	TypeVmObject    = "VmObject"
 )
+
+// CompetitionMutation represents an operation that mutates the Competition nodes in the graph.
+type CompetitionMutation struct {
+	config
+	op                         Op
+	typ                        string
+	id                         *uuid.UUID
+	name                       *string
+	clearedFields              map[string]struct{}
+	_CompetitionToTeams        map[uuid.UUID]struct{}
+	removed_CompetitionToTeams map[uuid.UUID]struct{}
+	cleared_CompetitionToTeams bool
+	done                       bool
+	oldValue                   func(context.Context) (*Competition, error)
+	predicates                 []predicate.Competition
+}
+
+var _ ent.Mutation = (*CompetitionMutation)(nil)
+
+// competitionOption allows management of the mutation configuration using functional options.
+type competitionOption func(*CompetitionMutation)
+
+// newCompetitionMutation creates new mutation for the Competition entity.
+func newCompetitionMutation(c config, op Op, opts ...competitionOption) *CompetitionMutation {
+	m := &CompetitionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCompetition,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCompetitionID sets the ID field of the mutation.
+func withCompetitionID(id uuid.UUID) competitionOption {
+	return func(m *CompetitionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Competition
+		)
+		m.oldValue = func(ctx context.Context) (*Competition, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Competition.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCompetition sets the old Competition of the mutation.
+func withCompetition(node *Competition) competitionOption {
+	return func(m *CompetitionMutation) {
+		m.oldValue = func(context.Context) (*Competition, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CompetitionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CompetitionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Competition entities.
+func (m *CompetitionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CompetitionMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CompetitionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Competition.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *CompetitionMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CompetitionMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Competition entity.
+// If the Competition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitionMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CompetitionMutation) ResetName() {
+	m.name = nil
+}
+
+// AddCompetitionToTeamIDs adds the "CompetitionToTeams" edge to the Team entity by ids.
+func (m *CompetitionMutation) AddCompetitionToTeamIDs(ids ...uuid.UUID) {
+	if m._CompetitionToTeams == nil {
+		m._CompetitionToTeams = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._CompetitionToTeams[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCompetitionToTeams clears the "CompetitionToTeams" edge to the Team entity.
+func (m *CompetitionMutation) ClearCompetitionToTeams() {
+	m.cleared_CompetitionToTeams = true
+}
+
+// CompetitionToTeamsCleared reports if the "CompetitionToTeams" edge to the Team entity was cleared.
+func (m *CompetitionMutation) CompetitionToTeamsCleared() bool {
+	return m.cleared_CompetitionToTeams
+}
+
+// RemoveCompetitionToTeamIDs removes the "CompetitionToTeams" edge to the Team entity by IDs.
+func (m *CompetitionMutation) RemoveCompetitionToTeamIDs(ids ...uuid.UUID) {
+	if m.removed_CompetitionToTeams == nil {
+		m.removed_CompetitionToTeams = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._CompetitionToTeams, ids[i])
+		m.removed_CompetitionToTeams[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCompetitionToTeams returns the removed IDs of the "CompetitionToTeams" edge to the Team entity.
+func (m *CompetitionMutation) RemovedCompetitionToTeamsIDs() (ids []uuid.UUID) {
+	for id := range m.removed_CompetitionToTeams {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CompetitionToTeamsIDs returns the "CompetitionToTeams" edge IDs in the mutation.
+func (m *CompetitionMutation) CompetitionToTeamsIDs() (ids []uuid.UUID) {
+	for id := range m._CompetitionToTeams {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCompetitionToTeams resets all changes to the "CompetitionToTeams" edge.
+func (m *CompetitionMutation) ResetCompetitionToTeams() {
+	m._CompetitionToTeams = nil
+	m.cleared_CompetitionToTeams = false
+	m.removed_CompetitionToTeams = nil
+}
+
+// Where appends a list predicates to the CompetitionMutation builder.
+func (m *CompetitionMutation) Where(ps ...predicate.Competition) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *CompetitionMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Competition).
+func (m *CompetitionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CompetitionMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.name != nil {
+		fields = append(fields, competition.FieldName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CompetitionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case competition.FieldName:
+		return m.Name()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CompetitionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case competition.FieldName:
+		return m.OldName(ctx)
+	}
+	return nil, fmt.Errorf("unknown Competition field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CompetitionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case competition.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Competition field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CompetitionMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CompetitionMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CompetitionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Competition numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CompetitionMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CompetitionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CompetitionMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Competition nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CompetitionMutation) ResetField(name string) error {
+	switch name {
+	case competition.FieldName:
+		m.ResetName()
+		return nil
+	}
+	return fmt.Errorf("unknown Competition field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CompetitionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m._CompetitionToTeams != nil {
+		edges = append(edges, competition.EdgeCompetitionToTeams)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CompetitionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case competition.EdgeCompetitionToTeams:
+		ids := make([]ent.Value, 0, len(m._CompetitionToTeams))
+		for id := range m._CompetitionToTeams {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CompetitionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removed_CompetitionToTeams != nil {
+		edges = append(edges, competition.EdgeCompetitionToTeams)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CompetitionMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case competition.EdgeCompetitionToTeams:
+		ids := make([]ent.Value, 0, len(m.removed_CompetitionToTeams))
+		for id := range m.removed_CompetitionToTeams {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CompetitionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleared_CompetitionToTeams {
+		edges = append(edges, competition.EdgeCompetitionToTeams)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CompetitionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case competition.EdgeCompetitionToTeams:
+		return m.cleared_CompetitionToTeams
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CompetitionMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Competition unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CompetitionMutation) ResetEdge(name string) error {
+	switch name {
+	case competition.EdgeCompetitionToTeams:
+		m.ResetCompetitionToTeams()
+		return nil
+	}
+	return fmt.Errorf("unknown Competition edge %s", name)
+}
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.
 type TeamMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *uuid.UUID
-	team_number         *int
-	addteam_number      *int
-	name                *string
-	clearedFields       map[string]struct{}
-	_ToVmObjects        map[uuid.UUID]struct{}
-	removed_ToVmObjects map[uuid.UUID]struct{}
-	cleared_ToVmObjects bool
-	done                bool
-	oldValue            func(context.Context) (*Team, error)
-	predicates          []predicate.Team
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	team_number               *int
+	addteam_number            *int
+	name                      *string
+	clearedFields             map[string]struct{}
+	_TeamToCompetition        *uuid.UUID
+	cleared_TeamToCompetition bool
+	_TeamToVmObjects          map[uuid.UUID]struct{}
+	removed_TeamToVmObjects   map[uuid.UUID]struct{}
+	cleared_TeamToVmObjects   bool
+	done                      bool
+	oldValue                  func(context.Context) (*Team, error)
+	predicates                []predicate.Team
 }
 
 var _ ent.Mutation = (*TeamMutation)(nil)
@@ -256,58 +670,97 @@ func (m *TeamMutation) ResetName() {
 	delete(m.clearedFields, team.FieldName)
 }
 
-// AddToVmObjectIDs adds the "ToVmObjects" edge to the VmObject entity by ids.
-func (m *TeamMutation) AddToVmObjectIDs(ids ...uuid.UUID) {
-	if m._ToVmObjects == nil {
-		m._ToVmObjects = make(map[uuid.UUID]struct{})
+// SetTeamToCompetitionID sets the "TeamToCompetition" edge to the Competition entity by id.
+func (m *TeamMutation) SetTeamToCompetitionID(id uuid.UUID) {
+	m._TeamToCompetition = &id
+}
+
+// ClearTeamToCompetition clears the "TeamToCompetition" edge to the Competition entity.
+func (m *TeamMutation) ClearTeamToCompetition() {
+	m.cleared_TeamToCompetition = true
+}
+
+// TeamToCompetitionCleared reports if the "TeamToCompetition" edge to the Competition entity was cleared.
+func (m *TeamMutation) TeamToCompetitionCleared() bool {
+	return m.cleared_TeamToCompetition
+}
+
+// TeamToCompetitionID returns the "TeamToCompetition" edge ID in the mutation.
+func (m *TeamMutation) TeamToCompetitionID() (id uuid.UUID, exists bool) {
+	if m._TeamToCompetition != nil {
+		return *m._TeamToCompetition, true
+	}
+	return
+}
+
+// TeamToCompetitionIDs returns the "TeamToCompetition" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TeamToCompetitionID instead. It exists only for internal usage by the builders.
+func (m *TeamMutation) TeamToCompetitionIDs() (ids []uuid.UUID) {
+	if id := m._TeamToCompetition; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTeamToCompetition resets all changes to the "TeamToCompetition" edge.
+func (m *TeamMutation) ResetTeamToCompetition() {
+	m._TeamToCompetition = nil
+	m.cleared_TeamToCompetition = false
+}
+
+// AddTeamToVmObjectIDs adds the "TeamToVmObjects" edge to the VmObject entity by ids.
+func (m *TeamMutation) AddTeamToVmObjectIDs(ids ...uuid.UUID) {
+	if m._TeamToVmObjects == nil {
+		m._TeamToVmObjects = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m._ToVmObjects[ids[i]] = struct{}{}
+		m._TeamToVmObjects[ids[i]] = struct{}{}
 	}
 }
 
-// ClearToVmObjects clears the "ToVmObjects" edge to the VmObject entity.
-func (m *TeamMutation) ClearToVmObjects() {
-	m.cleared_ToVmObjects = true
+// ClearTeamToVmObjects clears the "TeamToVmObjects" edge to the VmObject entity.
+func (m *TeamMutation) ClearTeamToVmObjects() {
+	m.cleared_TeamToVmObjects = true
 }
 
-// ToVmObjectsCleared reports if the "ToVmObjects" edge to the VmObject entity was cleared.
-func (m *TeamMutation) ToVmObjectsCleared() bool {
-	return m.cleared_ToVmObjects
+// TeamToVmObjectsCleared reports if the "TeamToVmObjects" edge to the VmObject entity was cleared.
+func (m *TeamMutation) TeamToVmObjectsCleared() bool {
+	return m.cleared_TeamToVmObjects
 }
 
-// RemoveToVmObjectIDs removes the "ToVmObjects" edge to the VmObject entity by IDs.
-func (m *TeamMutation) RemoveToVmObjectIDs(ids ...uuid.UUID) {
-	if m.removed_ToVmObjects == nil {
-		m.removed_ToVmObjects = make(map[uuid.UUID]struct{})
+// RemoveTeamToVmObjectIDs removes the "TeamToVmObjects" edge to the VmObject entity by IDs.
+func (m *TeamMutation) RemoveTeamToVmObjectIDs(ids ...uuid.UUID) {
+	if m.removed_TeamToVmObjects == nil {
+		m.removed_TeamToVmObjects = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m._ToVmObjects, ids[i])
-		m.removed_ToVmObjects[ids[i]] = struct{}{}
+		delete(m._TeamToVmObjects, ids[i])
+		m.removed_TeamToVmObjects[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedToVmObjects returns the removed IDs of the "ToVmObjects" edge to the VmObject entity.
-func (m *TeamMutation) RemovedToVmObjectsIDs() (ids []uuid.UUID) {
-	for id := range m.removed_ToVmObjects {
+// RemovedTeamToVmObjects returns the removed IDs of the "TeamToVmObjects" edge to the VmObject entity.
+func (m *TeamMutation) RemovedTeamToVmObjectsIDs() (ids []uuid.UUID) {
+	for id := range m.removed_TeamToVmObjects {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ToVmObjectsIDs returns the "ToVmObjects" edge IDs in the mutation.
-func (m *TeamMutation) ToVmObjectsIDs() (ids []uuid.UUID) {
-	for id := range m._ToVmObjects {
+// TeamToVmObjectsIDs returns the "TeamToVmObjects" edge IDs in the mutation.
+func (m *TeamMutation) TeamToVmObjectsIDs() (ids []uuid.UUID) {
+	for id := range m._TeamToVmObjects {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetToVmObjects resets all changes to the "ToVmObjects" edge.
-func (m *TeamMutation) ResetToVmObjects() {
-	m._ToVmObjects = nil
-	m.cleared_ToVmObjects = false
-	m.removed_ToVmObjects = nil
+// ResetTeamToVmObjects resets all changes to the "TeamToVmObjects" edge.
+func (m *TeamMutation) ResetTeamToVmObjects() {
+	m._TeamToVmObjects = nil
+	m.cleared_TeamToVmObjects = false
+	m.removed_TeamToVmObjects = nil
 }
 
 // Where appends a list predicates to the TeamMutation builder.
@@ -469,9 +922,12 @@ func (m *TeamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TeamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m._ToVmObjects != nil {
-		edges = append(edges, team.EdgeToVmObjects)
+	edges := make([]string, 0, 2)
+	if m._TeamToCompetition != nil {
+		edges = append(edges, team.EdgeTeamToCompetition)
+	}
+	if m._TeamToVmObjects != nil {
+		edges = append(edges, team.EdgeTeamToVmObjects)
 	}
 	return edges
 }
@@ -480,9 +936,13 @@ func (m *TeamMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case team.EdgeToVmObjects:
-		ids := make([]ent.Value, 0, len(m._ToVmObjects))
-		for id := range m._ToVmObjects {
+	case team.EdgeTeamToCompetition:
+		if id := m._TeamToCompetition; id != nil {
+			return []ent.Value{*id}
+		}
+	case team.EdgeTeamToVmObjects:
+		ids := make([]ent.Value, 0, len(m._TeamToVmObjects))
+		for id := range m._TeamToVmObjects {
 			ids = append(ids, id)
 		}
 		return ids
@@ -492,9 +952,9 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TeamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.removed_ToVmObjects != nil {
-		edges = append(edges, team.EdgeToVmObjects)
+	edges := make([]string, 0, 2)
+	if m.removed_TeamToVmObjects != nil {
+		edges = append(edges, team.EdgeTeamToVmObjects)
 	}
 	return edges
 }
@@ -503,9 +963,9 @@ func (m *TeamMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case team.EdgeToVmObjects:
-		ids := make([]ent.Value, 0, len(m.removed_ToVmObjects))
-		for id := range m.removed_ToVmObjects {
+	case team.EdgeTeamToVmObjects:
+		ids := make([]ent.Value, 0, len(m.removed_TeamToVmObjects))
+		for id := range m.removed_TeamToVmObjects {
 			ids = append(ids, id)
 		}
 		return ids
@@ -515,9 +975,12 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TeamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
-	if m.cleared_ToVmObjects {
-		edges = append(edges, team.EdgeToVmObjects)
+	edges := make([]string, 0, 2)
+	if m.cleared_TeamToCompetition {
+		edges = append(edges, team.EdgeTeamToCompetition)
+	}
+	if m.cleared_TeamToVmObjects {
+		edges = append(edges, team.EdgeTeamToVmObjects)
 	}
 	return edges
 }
@@ -526,8 +989,10 @@ func (m *TeamMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *TeamMutation) EdgeCleared(name string) bool {
 	switch name {
-	case team.EdgeToVmObjects:
-		return m.cleared_ToVmObjects
+	case team.EdgeTeamToCompetition:
+		return m.cleared_TeamToCompetition
+	case team.EdgeTeamToVmObjects:
+		return m.cleared_TeamToVmObjects
 	}
 	return false
 }
@@ -536,6 +1001,9 @@ func (m *TeamMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *TeamMutation) ClearEdge(name string) error {
 	switch name {
+	case team.EdgeTeamToCompetition:
+		m.ClearTeamToCompetition()
+		return nil
 	}
 	return fmt.Errorf("unknown Team unique edge %s", name)
 }
@@ -544,8 +1012,11 @@ func (m *TeamMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TeamMutation) ResetEdge(name string) error {
 	switch name {
-	case team.EdgeToVmObjects:
-		m.ResetToVmObjects()
+	case team.EdgeTeamToCompetition:
+		m.ResetTeamToCompetition()
+		return nil
+	case team.EdgeTeamToVmObjects:
+		m.ResetTeamToVmObjects()
 		return nil
 	}
 	return fmt.Errorf("unknown Team edge %s", name)
@@ -554,19 +1025,18 @@ func (m *TeamMutation) ResetEdge(name string) error {
 // VmObjectMutation represents an operation that mutates the VmObject nodes in the graph.
 type VmObjectMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *uuid.UUID
-	name           *string
-	identifier     *string
-	ip_addresses   *[]string
-	clearedFields  map[string]struct{}
-	_ToTeam        map[uuid.UUID]struct{}
-	removed_ToTeam map[uuid.UUID]struct{}
-	cleared_ToTeam bool
-	done           bool
-	oldValue       func(context.Context) (*VmObject, error)
-	predicates     []predicate.VmObject
+	op                     Op
+	typ                    string
+	id                     *uuid.UUID
+	name                   *string
+	identifier             *string
+	ip_addresses           *[]string
+	clearedFields          map[string]struct{}
+	_VmObjectToTeam        *uuid.UUID
+	cleared_VmObjectToTeam bool
+	done                   bool
+	oldValue               func(context.Context) (*VmObject, error)
+	predicates             []predicate.VmObject
 }
 
 var _ ent.Mutation = (*VmObjectMutation)(nil)
@@ -794,58 +1264,43 @@ func (m *VmObjectMutation) ResetIPAddresses() {
 	delete(m.clearedFields, vmobject.FieldIPAddresses)
 }
 
-// AddToTeamIDs adds the "ToTeam" edge to the Team entity by ids.
-func (m *VmObjectMutation) AddToTeamIDs(ids ...uuid.UUID) {
-	if m._ToTeam == nil {
-		m._ToTeam = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m._ToTeam[ids[i]] = struct{}{}
-	}
+// SetVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by id.
+func (m *VmObjectMutation) SetVmObjectToTeamID(id uuid.UUID) {
+	m._VmObjectToTeam = &id
 }
 
-// ClearToTeam clears the "ToTeam" edge to the Team entity.
-func (m *VmObjectMutation) ClearToTeam() {
-	m.cleared_ToTeam = true
+// ClearVmObjectToTeam clears the "VmObjectToTeam" edge to the Team entity.
+func (m *VmObjectMutation) ClearVmObjectToTeam() {
+	m.cleared_VmObjectToTeam = true
 }
 
-// ToTeamCleared reports if the "ToTeam" edge to the Team entity was cleared.
-func (m *VmObjectMutation) ToTeamCleared() bool {
-	return m.cleared_ToTeam
+// VmObjectToTeamCleared reports if the "VmObjectToTeam" edge to the Team entity was cleared.
+func (m *VmObjectMutation) VmObjectToTeamCleared() bool {
+	return m.cleared_VmObjectToTeam
 }
 
-// RemoveToTeamIDs removes the "ToTeam" edge to the Team entity by IDs.
-func (m *VmObjectMutation) RemoveToTeamIDs(ids ...uuid.UUID) {
-	if m.removed_ToTeam == nil {
-		m.removed_ToTeam = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m._ToTeam, ids[i])
-		m.removed_ToTeam[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedToTeam returns the removed IDs of the "ToTeam" edge to the Team entity.
-func (m *VmObjectMutation) RemovedToTeamIDs() (ids []uuid.UUID) {
-	for id := range m.removed_ToTeam {
-		ids = append(ids, id)
+// VmObjectToTeamID returns the "VmObjectToTeam" edge ID in the mutation.
+func (m *VmObjectMutation) VmObjectToTeamID() (id uuid.UUID, exists bool) {
+	if m._VmObjectToTeam != nil {
+		return *m._VmObjectToTeam, true
 	}
 	return
 }
 
-// ToTeamIDs returns the "ToTeam" edge IDs in the mutation.
-func (m *VmObjectMutation) ToTeamIDs() (ids []uuid.UUID) {
-	for id := range m._ToTeam {
-		ids = append(ids, id)
+// VmObjectToTeamIDs returns the "VmObjectToTeam" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// VmObjectToTeamID instead. It exists only for internal usage by the builders.
+func (m *VmObjectMutation) VmObjectToTeamIDs() (ids []uuid.UUID) {
+	if id := m._VmObjectToTeam; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetToTeam resets all changes to the "ToTeam" edge.
-func (m *VmObjectMutation) ResetToTeam() {
-	m._ToTeam = nil
-	m.cleared_ToTeam = false
-	m.removed_ToTeam = nil
+// ResetVmObjectToTeam resets all changes to the "VmObjectToTeam" edge.
+func (m *VmObjectMutation) ResetVmObjectToTeam() {
+	m._VmObjectToTeam = nil
+	m.cleared_VmObjectToTeam = false
 }
 
 // Where appends a list predicates to the VmObjectMutation builder.
@@ -1010,8 +1465,8 @@ func (m *VmObjectMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *VmObjectMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m._ToTeam != nil {
-		edges = append(edges, vmobject.EdgeToTeam)
+	if m._VmObjectToTeam != nil {
+		edges = append(edges, vmobject.EdgeVmObjectToTeam)
 	}
 	return edges
 }
@@ -1020,12 +1475,10 @@ func (m *VmObjectMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *VmObjectMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case vmobject.EdgeToTeam:
-		ids := make([]ent.Value, 0, len(m._ToTeam))
-		for id := range m._ToTeam {
-			ids = append(ids, id)
+	case vmobject.EdgeVmObjectToTeam:
+		if id := m._VmObjectToTeam; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -1033,9 +1486,6 @@ func (m *VmObjectMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *VmObjectMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removed_ToTeam != nil {
-		edges = append(edges, vmobject.EdgeToTeam)
-	}
 	return edges
 }
 
@@ -1043,12 +1493,6 @@ func (m *VmObjectMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *VmObjectMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case vmobject.EdgeToTeam:
-		ids := make([]ent.Value, 0, len(m.removed_ToTeam))
-		for id := range m.removed_ToTeam {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
@@ -1056,8 +1500,8 @@ func (m *VmObjectMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *VmObjectMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.cleared_ToTeam {
-		edges = append(edges, vmobject.EdgeToTeam)
+	if m.cleared_VmObjectToTeam {
+		edges = append(edges, vmobject.EdgeVmObjectToTeam)
 	}
 	return edges
 }
@@ -1066,8 +1510,8 @@ func (m *VmObjectMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *VmObjectMutation) EdgeCleared(name string) bool {
 	switch name {
-	case vmobject.EdgeToTeam:
-		return m.cleared_ToTeam
+	case vmobject.EdgeVmObjectToTeam:
+		return m.cleared_VmObjectToTeam
 	}
 	return false
 }
@@ -1076,6 +1520,9 @@ func (m *VmObjectMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *VmObjectMutation) ClearEdge(name string) error {
 	switch name {
+	case vmobject.EdgeVmObjectToTeam:
+		m.ClearVmObjectToTeam()
+		return nil
 	}
 	return fmt.Errorf("unknown VmObject unique edge %s", name)
 }
@@ -1084,8 +1531,8 @@ func (m *VmObjectMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *VmObjectMutation) ResetEdge(name string) error {
 	switch name {
-	case vmobject.EdgeToTeam:
-		m.ResetToTeam()
+	case vmobject.EdgeVmObjectToTeam:
+		m.ResetVmObjectToTeam()
 		return nil
 	}
 	return fmt.Errorf("unknown VmObject edge %s", name)
