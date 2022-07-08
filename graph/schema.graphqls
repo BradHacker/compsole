@@ -1,0 +1,50 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type VmObject {
+  ID: ID!
+  Name: String!
+  Identifier: String!
+  IPAddresses: [String]
+  VmObjectToTeam: Team
+}
+
+type Team {
+  ID: ID!
+  TeamNumber: Int!
+  Name: String
+  TeamToCompetition: Competition!
+  TeamToVmObjects: [VmObject]!
+}
+
+type Competition {
+  ID: ID!
+  Name: String
+  CompetitionToTeams: [Team]!
+}
+
+enum Role {
+  USER
+  ADMIN
+  UNDEFINED
+}
+
+enum Provider {
+  LOCAL
+  GITLAB
+  UNDEFINED
+}
+
+type User {
+  ID: ID!
+  Username: String!
+  FirstName: String!
+  LastName: String!
+  Role: Role!
+  Provider: Provider!
+}
+
+type Query {
+  vmObjects: [VmObject!]!
+}

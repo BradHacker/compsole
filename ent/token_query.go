@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -12,110 +11,62 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
-	"github.com/BradHacker/compsole/ent/team"
+	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
-	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/google/uuid"
 )
 
-// TeamQuery is the builder for querying Team entities.
-type TeamQuery struct {
+// TokenQuery is the builder for querying Token entities.
+type TokenQuery struct {
 	config
 	limit      *int
 	offset     *int
 	unique     *bool
 	order      []OrderFunc
 	fields     []string
-	predicates []predicate.Team
+	predicates []predicate.Token
 	// eager-loading edges.
-	withTeamToCompetition *CompetitionQuery
-	withTeamToVmObjects   *VmObjectQuery
-	withTeamToUsers       *UserQuery
-	withFKs               bool
+	withTokenToUser *UserQuery
+	withFKs         bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the TeamQuery builder.
-func (tq *TeamQuery) Where(ps ...predicate.Team) *TeamQuery {
+// Where adds a new predicate for the TokenQuery builder.
+func (tq *TokenQuery) Where(ps ...predicate.Token) *TokenQuery {
 	tq.predicates = append(tq.predicates, ps...)
 	return tq
 }
 
 // Limit adds a limit step to the query.
-func (tq *TeamQuery) Limit(limit int) *TeamQuery {
+func (tq *TokenQuery) Limit(limit int) *TokenQuery {
 	tq.limit = &limit
 	return tq
 }
 
 // Offset adds an offset step to the query.
-func (tq *TeamQuery) Offset(offset int) *TeamQuery {
+func (tq *TokenQuery) Offset(offset int) *TokenQuery {
 	tq.offset = &offset
 	return tq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (tq *TeamQuery) Unique(unique bool) *TeamQuery {
+func (tq *TokenQuery) Unique(unique bool) *TokenQuery {
 	tq.unique = &unique
 	return tq
 }
 
 // Order adds an order step to the query.
-func (tq *TeamQuery) Order(o ...OrderFunc) *TeamQuery {
+func (tq *TokenQuery) Order(o ...OrderFunc) *TokenQuery {
 	tq.order = append(tq.order, o...)
 	return tq
 }
 
-// QueryTeamToCompetition chains the current query on the "TeamToCompetition" edge.
-func (tq *TeamQuery) QueryTeamToCompetition() *CompetitionQuery {
-	query := &CompetitionQuery{config: tq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(team.Table, team.FieldID, selector),
-			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryTeamToVmObjects chains the current query on the "TeamToVmObjects" edge.
-func (tq *TeamQuery) QueryTeamToVmObjects() *VmObjectQuery {
-	query := &VmObjectQuery{config: tq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := tq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(team.Table, team.FieldID, selector),
-			sqlgraph.To(vmobject.Table, vmobject.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryTeamToUsers chains the current query on the "TeamToUsers" edge.
-func (tq *TeamQuery) QueryTeamToUsers() *UserQuery {
+// QueryTokenToUser chains the current query on the "TokenToUser" edge.
+func (tq *TokenQuery) QueryTokenToUser() *UserQuery {
 	query := &UserQuery{config: tq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -126,9 +77,9 @@ func (tq *TeamQuery) QueryTeamToUsers() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.From(token.Table, token.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToUsersTable, team.TeamToUsersColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, token.TokenToUserTable, token.TokenToUserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -136,21 +87,21 @@ func (tq *TeamQuery) QueryTeamToUsers() *UserQuery {
 	return query
 }
 
-// First returns the first Team entity from the query.
-// Returns a *NotFoundError when no Team was found.
-func (tq *TeamQuery) First(ctx context.Context) (*Team, error) {
+// First returns the first Token entity from the query.
+// Returns a *NotFoundError when no Token was found.
+func (tq *TokenQuery) First(ctx context.Context) (*Token, error) {
 	nodes, err := tq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{team.Label}
+		return nil, &NotFoundError{token.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (tq *TeamQuery) FirstX(ctx context.Context) *Team {
+func (tq *TokenQuery) FirstX(ctx context.Context) *Token {
 	node, err := tq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -158,22 +109,22 @@ func (tq *TeamQuery) FirstX(ctx context.Context) *Team {
 	return node
 }
 
-// FirstID returns the first Team ID from the query.
-// Returns a *NotFoundError when no Team ID was found.
-func (tq *TeamQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Token ID from the query.
+// Returns a *NotFoundError when no Token ID was found.
+func (tq *TokenQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = tq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (tq *TeamQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (tq *TokenQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := tq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,10 +132,10 @@ func (tq *TeamQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Team entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Team entity is found.
-// Returns a *NotFoundError when no Team entities are found.
-func (tq *TeamQuery) Only(ctx context.Context) (*Team, error) {
+// Only returns a single Token entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Token entity is found.
+// Returns a *NotFoundError when no Token entities are found.
+func (tq *TokenQuery) Only(ctx context.Context) (*Token, error) {
 	nodes, err := tq.Limit(2).All(ctx)
 	if err != nil {
 		return nil, err
@@ -193,14 +144,14 @@ func (tq *TeamQuery) Only(ctx context.Context) (*Team, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{team.Label}
+		return nil, &NotFoundError{token.Label}
 	default:
-		return nil, &NotSingularError{team.Label}
+		return nil, &NotSingularError{token.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (tq *TeamQuery) OnlyX(ctx context.Context) *Team {
+func (tq *TokenQuery) OnlyX(ctx context.Context) *Token {
 	node, err := tq.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -208,10 +159,10 @@ func (tq *TeamQuery) OnlyX(ctx context.Context) *Team {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Team ID in the query.
-// Returns a *NotSingularError when more than one Team ID is found.
+// OnlyID is like Only, but returns the only Token ID in the query.
+// Returns a *NotSingularError when more than one Token ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (tq *TeamQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (tq *TokenQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = tq.Limit(2).IDs(ctx); err != nil {
 		return
@@ -220,15 +171,15 @@ func (tq *TeamQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = &NotSingularError{team.Label}
+		err = &NotSingularError{token.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (tq *TeamQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (tq *TokenQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := tq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -236,8 +187,8 @@ func (tq *TeamQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of Teams.
-func (tq *TeamQuery) All(ctx context.Context) ([]*Team, error) {
+// All executes the query and returns a list of Tokens.
+func (tq *TokenQuery) All(ctx context.Context) ([]*Token, error) {
 	if err := tq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -245,7 +196,7 @@ func (tq *TeamQuery) All(ctx context.Context) ([]*Team, error) {
 }
 
 // AllX is like All, but panics if an error occurs.
-func (tq *TeamQuery) AllX(ctx context.Context) []*Team {
+func (tq *TokenQuery) AllX(ctx context.Context) []*Token {
 	nodes, err := tq.All(ctx)
 	if err != nil {
 		panic(err)
@@ -253,17 +204,17 @@ func (tq *TeamQuery) AllX(ctx context.Context) []*Team {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Team IDs.
-func (tq *TeamQuery) IDs(ctx context.Context) ([]uuid.UUID, error) {
+// IDs executes the query and returns a list of Token IDs.
+func (tq *TokenQuery) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	var ids []uuid.UUID
-	if err := tq.Select(team.FieldID).Scan(ctx, &ids); err != nil {
+	if err := tq.Select(token.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (tq *TeamQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (tq *TokenQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := tq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -272,7 +223,7 @@ func (tq *TeamQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (tq *TeamQuery) Count(ctx context.Context) (int, error) {
+func (tq *TokenQuery) Count(ctx context.Context) (int, error) {
 	if err := tq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -280,7 +231,7 @@ func (tq *TeamQuery) Count(ctx context.Context) (int, error) {
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (tq *TeamQuery) CountX(ctx context.Context) int {
+func (tq *TokenQuery) CountX(ctx context.Context) int {
 	count, err := tq.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -289,7 +240,7 @@ func (tq *TeamQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (tq *TeamQuery) Exist(ctx context.Context) (bool, error) {
+func (tq *TokenQuery) Exist(ctx context.Context) (bool, error) {
 	if err := tq.prepareQuery(ctx); err != nil {
 		return false, err
 	}
@@ -297,7 +248,7 @@ func (tq *TeamQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (tq *TeamQuery) ExistX(ctx context.Context) bool {
+func (tq *TokenQuery) ExistX(ctx context.Context) bool {
 	exist, err := tq.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -305,21 +256,19 @@ func (tq *TeamQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the TeamQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the TokenQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (tq *TeamQuery) Clone() *TeamQuery {
+func (tq *TokenQuery) Clone() *TokenQuery {
 	if tq == nil {
 		return nil
 	}
-	return &TeamQuery{
-		config:                tq.config,
-		limit:                 tq.limit,
-		offset:                tq.offset,
-		order:                 append([]OrderFunc{}, tq.order...),
-		predicates:            append([]predicate.Team{}, tq.predicates...),
-		withTeamToCompetition: tq.withTeamToCompetition.Clone(),
-		withTeamToVmObjects:   tq.withTeamToVmObjects.Clone(),
-		withTeamToUsers:       tq.withTeamToUsers.Clone(),
+	return &TokenQuery{
+		config:          tq.config,
+		limit:           tq.limit,
+		offset:          tq.offset,
+		order:           append([]OrderFunc{}, tq.order...),
+		predicates:      append([]predicate.Token{}, tq.predicates...),
+		withTokenToUser: tq.withTokenToUser.Clone(),
 		// clone intermediate query.
 		sql:    tq.sql.Clone(),
 		path:   tq.path,
@@ -327,36 +276,14 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 	}
 }
 
-// WithTeamToCompetition tells the query-builder to eager-load the nodes that are connected to
-// the "TeamToCompetition" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithTeamToCompetition(opts ...func(*CompetitionQuery)) *TeamQuery {
-	query := &CompetitionQuery{config: tq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withTeamToCompetition = query
-	return tq
-}
-
-// WithTeamToVmObjects tells the query-builder to eager-load the nodes that are connected to
-// the "TeamToVmObjects" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithTeamToVmObjects(opts ...func(*VmObjectQuery)) *TeamQuery {
-	query := &VmObjectQuery{config: tq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	tq.withTeamToVmObjects = query
-	return tq
-}
-
-// WithTeamToUsers tells the query-builder to eager-load the nodes that are connected to
-// the "TeamToUsers" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithTeamToUsers(opts ...func(*UserQuery)) *TeamQuery {
+// WithTokenToUser tells the query-builder to eager-load the nodes that are connected to
+// the "TokenToUser" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TokenQuery) WithTokenToUser(opts ...func(*UserQuery)) *TokenQuery {
 	query := &UserQuery{config: tq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withTeamToUsers = query
+	tq.withTokenToUser = query
 	return tq
 }
 
@@ -366,17 +293,17 @@ func (tq *TeamQuery) WithTeamToUsers(opts ...func(*UserQuery)) *TeamQuery {
 // Example:
 //
 //	var v []struct {
-//		TeamNumber int `json:"team_number,omitempty"`
+//		Token string `json:"token,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Team.Query().
-//		GroupBy(team.FieldTeamNumber).
+//	client.Token.Query().
+//		GroupBy(token.FieldToken).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
-func (tq *TeamQuery) GroupBy(field string, fields ...string) *TeamGroupBy {
-	group := &TeamGroupBy{config: tq.config}
+func (tq *TokenQuery) GroupBy(field string, fields ...string) *TokenGroupBy {
+	group := &TokenGroupBy{config: tq.config}
 	group.fields = append([]string{field}, fields...)
 	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -393,21 +320,21 @@ func (tq *TeamQuery) GroupBy(field string, fields ...string) *TeamGroupBy {
 // Example:
 //
 //	var v []struct {
-//		TeamNumber int `json:"team_number,omitempty"`
+//		Token string `json:"token,omitempty"`
 //	}
 //
-//	client.Team.Query().
-//		Select(team.FieldTeamNumber).
+//	client.Token.Query().
+//		Select(token.FieldToken).
 //		Scan(ctx, &v)
 //
-func (tq *TeamQuery) Select(fields ...string) *TeamSelect {
+func (tq *TokenQuery) Select(fields ...string) *TokenSelect {
 	tq.fields = append(tq.fields, fields...)
-	return &TeamSelect{TeamQuery: tq}
+	return &TokenSelect{TokenQuery: tq}
 }
 
-func (tq *TeamQuery) prepareQuery(ctx context.Context) error {
+func (tq *TokenQuery) prepareQuery(ctx context.Context) error {
 	for _, f := range tq.fields {
-		if !team.ValidColumn(f) {
+		if !token.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -421,25 +348,23 @@ func (tq *TeamQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
+func (tq *TokenQuery) sqlAll(ctx context.Context) ([]*Token, error) {
 	var (
-		nodes       = []*Team{}
+		nodes       = []*Token{}
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
-			tq.withTeamToCompetition != nil,
-			tq.withTeamToVmObjects != nil,
-			tq.withTeamToUsers != nil,
+		loadedTypes = [1]bool{
+			tq.withTokenToUser != nil,
 		}
 	)
-	if tq.withTeamToCompetition != nil {
+	if tq.withTokenToUser != nil {
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, team.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, token.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
-		node := &Team{config: tq.config}
+		node := &Token{config: tq.config}
 		nodes = append(nodes, node)
 		return node.scanValues(columns)
 	}
@@ -458,20 +383,20 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		return nodes, nil
 	}
 
-	if query := tq.withTeamToCompetition; query != nil {
+	if query := tq.withTokenToUser; query != nil {
 		ids := make([]uuid.UUID, 0, len(nodes))
-		nodeids := make(map[uuid.UUID][]*Team)
+		nodeids := make(map[uuid.UUID][]*Token)
 		for i := range nodes {
-			if nodes[i].team_team_to_competition == nil {
+			if nodes[i].user_user_to_token == nil {
 				continue
 			}
-			fk := *nodes[i].team_team_to_competition
+			fk := *nodes[i].user_user_to_token
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
 			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
-		query.Where(competition.IDIn(ids...))
+		query.Where(user.IDIn(ids...))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
@@ -479,76 +404,18 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_competition" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_token" returned %v`, n.ID)
 			}
 			for i := range nodes {
-				nodes[i].Edges.TeamToCompetition = n
+				nodes[i].Edges.TokenToUser = n
 			}
-		}
-	}
-
-	if query := tq.withTeamToVmObjects; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[uuid.UUID]*Team)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.TeamToVmObjects = []*VmObject{}
-		}
-		query.withFKs = true
-		query.Where(predicate.VmObject(func(s *sql.Selector) {
-			s.Where(sql.InValues(team.TeamToVmObjectsColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range neighbors {
-			fk := n.vm_object_vm_object_to_team
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "vm_object_vm_object_to_team" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "vm_object_vm_object_to_team" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.TeamToVmObjects = append(node.Edges.TeamToVmObjects, n)
-		}
-	}
-
-	if query := tq.withTeamToUsers; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[uuid.UUID]*Team)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.TeamToUsers = []*User{}
-		}
-		query.withFKs = true
-		query.Where(predicate.User(func(s *sql.Selector) {
-			s.Where(sql.InValues(team.TeamToUsersColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range neighbors {
-			fk := n.user_user_to_team
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "user_user_to_team" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_team" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.TeamToUsers = append(node.Edges.TeamToUsers, n)
 		}
 	}
 
 	return nodes, nil
 }
 
-func (tq *TeamQuery) sqlCount(ctx context.Context) (int, error) {
+func (tq *TokenQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
 	_spec.Node.Columns = tq.fields
 	if len(tq.fields) > 0 {
@@ -557,7 +424,7 @@ func (tq *TeamQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, tq.driver, _spec)
 }
 
-func (tq *TeamQuery) sqlExist(ctx context.Context) (bool, error) {
+func (tq *TokenQuery) sqlExist(ctx context.Context) (bool, error) {
 	n, err := tq.sqlCount(ctx)
 	if err != nil {
 		return false, fmt.Errorf("ent: check existence: %w", err)
@@ -565,14 +432,14 @@ func (tq *TeamQuery) sqlExist(ctx context.Context) (bool, error) {
 	return n > 0, nil
 }
 
-func (tq *TeamQuery) querySpec() *sqlgraph.QuerySpec {
+func (tq *TokenQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
-			Table:   team.Table,
-			Columns: team.Columns,
+			Table:   token.Table,
+			Columns: token.Columns,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeUUID,
-				Column: team.FieldID,
+				Column: token.FieldID,
 			},
 		},
 		From:   tq.sql,
@@ -583,9 +450,9 @@ func (tq *TeamQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := tq.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, team.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, token.FieldID)
 		for i := range fields {
-			if fields[i] != team.FieldID {
+			if fields[i] != token.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -613,12 +480,12 @@ func (tq *TeamQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (tq *TeamQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (tq *TokenQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(tq.driver.Dialect())
-	t1 := builder.Table(team.Table)
+	t1 := builder.Table(token.Table)
 	columns := tq.fields
 	if len(columns) == 0 {
-		columns = team.Columns
+		columns = token.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if tq.sql != nil {
@@ -645,8 +512,8 @@ func (tq *TeamQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// TeamGroupBy is the group-by builder for Team entities.
-type TeamGroupBy struct {
+// TokenGroupBy is the group-by builder for Token entities.
+type TokenGroupBy struct {
 	config
 	fields []string
 	fns    []AggregateFunc
@@ -656,13 +523,13 @@ type TeamGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (tgb *TeamGroupBy) Aggregate(fns ...AggregateFunc) *TeamGroupBy {
+func (tgb *TokenGroupBy) Aggregate(fns ...AggregateFunc) *TokenGroupBy {
 	tgb.fns = append(tgb.fns, fns...)
 	return tgb
 }
 
 // Scan applies the group-by query and scans the result into the given value.
-func (tgb *TeamGroupBy) Scan(ctx context.Context, v interface{}) error {
+func (tgb *TokenGroupBy) Scan(ctx context.Context, v interface{}) error {
 	query, err := tgb.path(ctx)
 	if err != nil {
 		return err
@@ -672,7 +539,7 @@ func (tgb *TeamGroupBy) Scan(ctx context.Context, v interface{}) error {
 }
 
 // ScanX is like Scan, but panics if an error occurs.
-func (tgb *TeamGroupBy) ScanX(ctx context.Context, v interface{}) {
+func (tgb *TokenGroupBy) ScanX(ctx context.Context, v interface{}) {
 	if err := tgb.Scan(ctx, v); err != nil {
 		panic(err)
 	}
@@ -680,9 +547,9 @@ func (tgb *TeamGroupBy) ScanX(ctx context.Context, v interface{}) {
 
 // Strings returns list of strings from group-by.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Strings(ctx context.Context) ([]string, error) {
+func (tgb *TokenGroupBy) Strings(ctx context.Context) ([]string, error) {
 	if len(tgb.fields) > 1 {
-		return nil, errors.New("ent: TeamGroupBy.Strings is not achievable when grouping more than 1 field")
+		return nil, errors.New("ent: TokenGroupBy.Strings is not achievable when grouping more than 1 field")
 	}
 	var v []string
 	if err := tgb.Scan(ctx, &v); err != nil {
@@ -692,7 +559,7 @@ func (tgb *TeamGroupBy) Strings(ctx context.Context) ([]string, error) {
 }
 
 // StringsX is like Strings, but panics if an error occurs.
-func (tgb *TeamGroupBy) StringsX(ctx context.Context) []string {
+func (tgb *TokenGroupBy) StringsX(ctx context.Context) []string {
 	v, err := tgb.Strings(ctx)
 	if err != nil {
 		panic(err)
@@ -702,7 +569,7 @@ func (tgb *TeamGroupBy) StringsX(ctx context.Context) []string {
 
 // String returns a single string from a group-by query.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) String(ctx context.Context) (_ string, err error) {
+func (tgb *TokenGroupBy) String(ctx context.Context) (_ string, err error) {
 	var v []string
 	if v, err = tgb.Strings(ctx); err != nil {
 		return
@@ -711,15 +578,15 @@ func (tgb *TeamGroupBy) String(ctx context.Context) (_ string, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamGroupBy.Strings returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenGroupBy.Strings returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // StringX is like String, but panics if an error occurs.
-func (tgb *TeamGroupBy) StringX(ctx context.Context) string {
+func (tgb *TokenGroupBy) StringX(ctx context.Context) string {
 	v, err := tgb.String(ctx)
 	if err != nil {
 		panic(err)
@@ -729,9 +596,9 @@ func (tgb *TeamGroupBy) StringX(ctx context.Context) string {
 
 // Ints returns list of ints from group-by.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Ints(ctx context.Context) ([]int, error) {
+func (tgb *TokenGroupBy) Ints(ctx context.Context) ([]int, error) {
 	if len(tgb.fields) > 1 {
-		return nil, errors.New("ent: TeamGroupBy.Ints is not achievable when grouping more than 1 field")
+		return nil, errors.New("ent: TokenGroupBy.Ints is not achievable when grouping more than 1 field")
 	}
 	var v []int
 	if err := tgb.Scan(ctx, &v); err != nil {
@@ -741,7 +608,7 @@ func (tgb *TeamGroupBy) Ints(ctx context.Context) ([]int, error) {
 }
 
 // IntsX is like Ints, but panics if an error occurs.
-func (tgb *TeamGroupBy) IntsX(ctx context.Context) []int {
+func (tgb *TokenGroupBy) IntsX(ctx context.Context) []int {
 	v, err := tgb.Ints(ctx)
 	if err != nil {
 		panic(err)
@@ -751,7 +618,7 @@ func (tgb *TeamGroupBy) IntsX(ctx context.Context) []int {
 
 // Int returns a single int from a group-by query.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Int(ctx context.Context) (_ int, err error) {
+func (tgb *TokenGroupBy) Int(ctx context.Context) (_ int, err error) {
 	var v []int
 	if v, err = tgb.Ints(ctx); err != nil {
 		return
@@ -760,15 +627,15 @@ func (tgb *TeamGroupBy) Int(ctx context.Context) (_ int, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamGroupBy.Ints returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenGroupBy.Ints returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // IntX is like Int, but panics if an error occurs.
-func (tgb *TeamGroupBy) IntX(ctx context.Context) int {
+func (tgb *TokenGroupBy) IntX(ctx context.Context) int {
 	v, err := tgb.Int(ctx)
 	if err != nil {
 		panic(err)
@@ -778,9 +645,9 @@ func (tgb *TeamGroupBy) IntX(ctx context.Context) int {
 
 // Float64s returns list of float64s from group-by.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Float64s(ctx context.Context) ([]float64, error) {
+func (tgb *TokenGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 	if len(tgb.fields) > 1 {
-		return nil, errors.New("ent: TeamGroupBy.Float64s is not achievable when grouping more than 1 field")
+		return nil, errors.New("ent: TokenGroupBy.Float64s is not achievable when grouping more than 1 field")
 	}
 	var v []float64
 	if err := tgb.Scan(ctx, &v); err != nil {
@@ -790,7 +657,7 @@ func (tgb *TeamGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 }
 
 // Float64sX is like Float64s, but panics if an error occurs.
-func (tgb *TeamGroupBy) Float64sX(ctx context.Context) []float64 {
+func (tgb *TokenGroupBy) Float64sX(ctx context.Context) []float64 {
 	v, err := tgb.Float64s(ctx)
 	if err != nil {
 		panic(err)
@@ -800,7 +667,7 @@ func (tgb *TeamGroupBy) Float64sX(ctx context.Context) []float64 {
 
 // Float64 returns a single float64 from a group-by query.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Float64(ctx context.Context) (_ float64, err error) {
+func (tgb *TokenGroupBy) Float64(ctx context.Context) (_ float64, err error) {
 	var v []float64
 	if v, err = tgb.Float64s(ctx); err != nil {
 		return
@@ -809,15 +676,15 @@ func (tgb *TeamGroupBy) Float64(ctx context.Context) (_ float64, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamGroupBy.Float64s returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenGroupBy.Float64s returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // Float64X is like Float64, but panics if an error occurs.
-func (tgb *TeamGroupBy) Float64X(ctx context.Context) float64 {
+func (tgb *TokenGroupBy) Float64X(ctx context.Context) float64 {
 	v, err := tgb.Float64(ctx)
 	if err != nil {
 		panic(err)
@@ -827,9 +694,9 @@ func (tgb *TeamGroupBy) Float64X(ctx context.Context) float64 {
 
 // Bools returns list of bools from group-by.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Bools(ctx context.Context) ([]bool, error) {
+func (tgb *TokenGroupBy) Bools(ctx context.Context) ([]bool, error) {
 	if len(tgb.fields) > 1 {
-		return nil, errors.New("ent: TeamGroupBy.Bools is not achievable when grouping more than 1 field")
+		return nil, errors.New("ent: TokenGroupBy.Bools is not achievable when grouping more than 1 field")
 	}
 	var v []bool
 	if err := tgb.Scan(ctx, &v); err != nil {
@@ -839,7 +706,7 @@ func (tgb *TeamGroupBy) Bools(ctx context.Context) ([]bool, error) {
 }
 
 // BoolsX is like Bools, but panics if an error occurs.
-func (tgb *TeamGroupBy) BoolsX(ctx context.Context) []bool {
+func (tgb *TokenGroupBy) BoolsX(ctx context.Context) []bool {
 	v, err := tgb.Bools(ctx)
 	if err != nil {
 		panic(err)
@@ -849,7 +716,7 @@ func (tgb *TeamGroupBy) BoolsX(ctx context.Context) []bool {
 
 // Bool returns a single bool from a group-by query.
 // It is only allowed when executing a group-by query with one field.
-func (tgb *TeamGroupBy) Bool(ctx context.Context) (_ bool, err error) {
+func (tgb *TokenGroupBy) Bool(ctx context.Context) (_ bool, err error) {
 	var v []bool
 	if v, err = tgb.Bools(ctx); err != nil {
 		return
@@ -858,15 +725,15 @@ func (tgb *TeamGroupBy) Bool(ctx context.Context) (_ bool, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamGroupBy.Bools returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenGroupBy.Bools returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // BoolX is like Bool, but panics if an error occurs.
-func (tgb *TeamGroupBy) BoolX(ctx context.Context) bool {
+func (tgb *TokenGroupBy) BoolX(ctx context.Context) bool {
 	v, err := tgb.Bool(ctx)
 	if err != nil {
 		panic(err)
@@ -874,9 +741,9 @@ func (tgb *TeamGroupBy) BoolX(ctx context.Context) bool {
 	return v
 }
 
-func (tgb *TeamGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+func (tgb *TokenGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 	for _, f := range tgb.fields {
-		if !team.ValidColumn(f) {
+		if !token.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
 		}
 	}
@@ -893,7 +760,7 @@ func (tgb *TeamGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 	return sql.ScanSlice(rows, v)
 }
 
-func (tgb *TeamGroupBy) sqlQuery() *sql.Selector {
+func (tgb *TokenGroupBy) sqlQuery() *sql.Selector {
 	selector := tgb.sql.Select()
 	aggregation := make([]string, 0, len(tgb.fns))
 	for _, fn := range tgb.fns {
@@ -912,33 +779,33 @@ func (tgb *TeamGroupBy) sqlQuery() *sql.Selector {
 	return selector.GroupBy(selector.Columns(tgb.fields...)...)
 }
 
-// TeamSelect is the builder for selecting fields of Team entities.
-type TeamSelect struct {
-	*TeamQuery
+// TokenSelect is the builder for selecting fields of Token entities.
+type TokenSelect struct {
+	*TokenQuery
 	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ts *TeamSelect) Scan(ctx context.Context, v interface{}) error {
+func (ts *TokenSelect) Scan(ctx context.Context, v interface{}) error {
 	if err := ts.prepareQuery(ctx); err != nil {
 		return err
 	}
-	ts.sql = ts.TeamQuery.sqlQuery(ctx)
+	ts.sql = ts.TokenQuery.sqlQuery(ctx)
 	return ts.sqlScan(ctx, v)
 }
 
 // ScanX is like Scan, but panics if an error occurs.
-func (ts *TeamSelect) ScanX(ctx context.Context, v interface{}) {
+func (ts *TokenSelect) ScanX(ctx context.Context, v interface{}) {
 	if err := ts.Scan(ctx, v); err != nil {
 		panic(err)
 	}
 }
 
 // Strings returns list of strings from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Strings(ctx context.Context) ([]string, error) {
+func (ts *TokenSelect) Strings(ctx context.Context) ([]string, error) {
 	if len(ts.fields) > 1 {
-		return nil, errors.New("ent: TeamSelect.Strings is not achievable when selecting more than 1 field")
+		return nil, errors.New("ent: TokenSelect.Strings is not achievable when selecting more than 1 field")
 	}
 	var v []string
 	if err := ts.Scan(ctx, &v); err != nil {
@@ -948,7 +815,7 @@ func (ts *TeamSelect) Strings(ctx context.Context) ([]string, error) {
 }
 
 // StringsX is like Strings, but panics if an error occurs.
-func (ts *TeamSelect) StringsX(ctx context.Context) []string {
+func (ts *TokenSelect) StringsX(ctx context.Context) []string {
 	v, err := ts.Strings(ctx)
 	if err != nil {
 		panic(err)
@@ -957,7 +824,7 @@ func (ts *TeamSelect) StringsX(ctx context.Context) []string {
 }
 
 // String returns a single string from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) String(ctx context.Context) (_ string, err error) {
+func (ts *TokenSelect) String(ctx context.Context) (_ string, err error) {
 	var v []string
 	if v, err = ts.Strings(ctx); err != nil {
 		return
@@ -966,15 +833,15 @@ func (ts *TeamSelect) String(ctx context.Context) (_ string, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamSelect.Strings returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenSelect.Strings returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // StringX is like String, but panics if an error occurs.
-func (ts *TeamSelect) StringX(ctx context.Context) string {
+func (ts *TokenSelect) StringX(ctx context.Context) string {
 	v, err := ts.String(ctx)
 	if err != nil {
 		panic(err)
@@ -983,9 +850,9 @@ func (ts *TeamSelect) StringX(ctx context.Context) string {
 }
 
 // Ints returns list of ints from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Ints(ctx context.Context) ([]int, error) {
+func (ts *TokenSelect) Ints(ctx context.Context) ([]int, error) {
 	if len(ts.fields) > 1 {
-		return nil, errors.New("ent: TeamSelect.Ints is not achievable when selecting more than 1 field")
+		return nil, errors.New("ent: TokenSelect.Ints is not achievable when selecting more than 1 field")
 	}
 	var v []int
 	if err := ts.Scan(ctx, &v); err != nil {
@@ -995,7 +862,7 @@ func (ts *TeamSelect) Ints(ctx context.Context) ([]int, error) {
 }
 
 // IntsX is like Ints, but panics if an error occurs.
-func (ts *TeamSelect) IntsX(ctx context.Context) []int {
+func (ts *TokenSelect) IntsX(ctx context.Context) []int {
 	v, err := ts.Ints(ctx)
 	if err != nil {
 		panic(err)
@@ -1004,7 +871,7 @@ func (ts *TeamSelect) IntsX(ctx context.Context) []int {
 }
 
 // Int returns a single int from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Int(ctx context.Context) (_ int, err error) {
+func (ts *TokenSelect) Int(ctx context.Context) (_ int, err error) {
 	var v []int
 	if v, err = ts.Ints(ctx); err != nil {
 		return
@@ -1013,15 +880,15 @@ func (ts *TeamSelect) Int(ctx context.Context) (_ int, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamSelect.Ints returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenSelect.Ints returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // IntX is like Int, but panics if an error occurs.
-func (ts *TeamSelect) IntX(ctx context.Context) int {
+func (ts *TokenSelect) IntX(ctx context.Context) int {
 	v, err := ts.Int(ctx)
 	if err != nil {
 		panic(err)
@@ -1030,9 +897,9 @@ func (ts *TeamSelect) IntX(ctx context.Context) int {
 }
 
 // Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Float64s(ctx context.Context) ([]float64, error) {
+func (ts *TokenSelect) Float64s(ctx context.Context) ([]float64, error) {
 	if len(ts.fields) > 1 {
-		return nil, errors.New("ent: TeamSelect.Float64s is not achievable when selecting more than 1 field")
+		return nil, errors.New("ent: TokenSelect.Float64s is not achievable when selecting more than 1 field")
 	}
 	var v []float64
 	if err := ts.Scan(ctx, &v); err != nil {
@@ -1042,7 +909,7 @@ func (ts *TeamSelect) Float64s(ctx context.Context) ([]float64, error) {
 }
 
 // Float64sX is like Float64s, but panics if an error occurs.
-func (ts *TeamSelect) Float64sX(ctx context.Context) []float64 {
+func (ts *TokenSelect) Float64sX(ctx context.Context) []float64 {
 	v, err := ts.Float64s(ctx)
 	if err != nil {
 		panic(err)
@@ -1051,7 +918,7 @@ func (ts *TeamSelect) Float64sX(ctx context.Context) []float64 {
 }
 
 // Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Float64(ctx context.Context) (_ float64, err error) {
+func (ts *TokenSelect) Float64(ctx context.Context) (_ float64, err error) {
 	var v []float64
 	if v, err = ts.Float64s(ctx); err != nil {
 		return
@@ -1060,15 +927,15 @@ func (ts *TeamSelect) Float64(ctx context.Context) (_ float64, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamSelect.Float64s returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenSelect.Float64s returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // Float64X is like Float64, but panics if an error occurs.
-func (ts *TeamSelect) Float64X(ctx context.Context) float64 {
+func (ts *TokenSelect) Float64X(ctx context.Context) float64 {
 	v, err := ts.Float64(ctx)
 	if err != nil {
 		panic(err)
@@ -1077,9 +944,9 @@ func (ts *TeamSelect) Float64X(ctx context.Context) float64 {
 }
 
 // Bools returns list of bools from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Bools(ctx context.Context) ([]bool, error) {
+func (ts *TokenSelect) Bools(ctx context.Context) ([]bool, error) {
 	if len(ts.fields) > 1 {
-		return nil, errors.New("ent: TeamSelect.Bools is not achievable when selecting more than 1 field")
+		return nil, errors.New("ent: TokenSelect.Bools is not achievable when selecting more than 1 field")
 	}
 	var v []bool
 	if err := ts.Scan(ctx, &v); err != nil {
@@ -1089,7 +956,7 @@ func (ts *TeamSelect) Bools(ctx context.Context) ([]bool, error) {
 }
 
 // BoolsX is like Bools, but panics if an error occurs.
-func (ts *TeamSelect) BoolsX(ctx context.Context) []bool {
+func (ts *TokenSelect) BoolsX(ctx context.Context) []bool {
 	v, err := ts.Bools(ctx)
 	if err != nil {
 		panic(err)
@@ -1098,7 +965,7 @@ func (ts *TeamSelect) BoolsX(ctx context.Context) []bool {
 }
 
 // Bool returns a single bool from a selector. It is only allowed when selecting one field.
-func (ts *TeamSelect) Bool(ctx context.Context) (_ bool, err error) {
+func (ts *TokenSelect) Bool(ctx context.Context) (_ bool, err error) {
 	var v []bool
 	if v, err = ts.Bools(ctx); err != nil {
 		return
@@ -1107,15 +974,15 @@ func (ts *TeamSelect) Bool(ctx context.Context) (_ bool, err error) {
 	case 1:
 		return v[0], nil
 	case 0:
-		err = &NotFoundError{team.Label}
+		err = &NotFoundError{token.Label}
 	default:
-		err = fmt.Errorf("ent: TeamSelect.Bools returned %d results when one was expected", len(v))
+		err = fmt.Errorf("ent: TokenSelect.Bools returned %d results when one was expected", len(v))
 	}
 	return
 }
 
 // BoolX is like Bool, but panics if an error occurs.
-func (ts *TeamSelect) BoolX(ctx context.Context) bool {
+func (ts *TokenSelect) BoolX(ctx context.Context) bool {
 	v, err := ts.Bool(ctx)
 	if err != nil {
 		panic(err)
@@ -1123,7 +990,7 @@ func (ts *TeamSelect) BoolX(ctx context.Context) bool {
 	return v
 }
 
-func (ts *TeamSelect) sqlScan(ctx context.Context, v interface{}) error {
+func (ts *TokenSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
 	query, args := ts.sql.Query()
 	if err := ts.driver.Query(ctx, query, args, rows); err != nil {

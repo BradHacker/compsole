@@ -19,6 +19,8 @@ const (
 	EdgeTeamToCompetition = "TeamToCompetition"
 	// EdgeTeamToVmObjects holds the string denoting the teamtovmobjects edge name in mutations.
 	EdgeTeamToVmObjects = "TeamToVmObjects"
+	// EdgeTeamToUsers holds the string denoting the teamtousers edge name in mutations.
+	EdgeTeamToUsers = "TeamToUsers"
 	// Table holds the table name of the team in the database.
 	Table = "teams"
 	// TeamToCompetitionTable is the table that holds the TeamToCompetition relation/edge.
@@ -35,6 +37,13 @@ const (
 	TeamToVmObjectsInverseTable = "vm_objects"
 	// TeamToVmObjectsColumn is the table column denoting the TeamToVmObjects relation/edge.
 	TeamToVmObjectsColumn = "vm_object_vm_object_to_team"
+	// TeamToUsersTable is the table that holds the TeamToUsers relation/edge.
+	TeamToUsersTable = "users"
+	// TeamToUsersInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	TeamToUsersInverseTable = "users"
+	// TeamToUsersColumn is the table column denoting the TeamToUsers relation/edge.
+	TeamToUsersColumn = "user_user_to_team"
 )
 
 // Columns holds all SQL columns for team fields.

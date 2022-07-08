@@ -10,6 +10,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/team"
+	"github.com/BradHacker/compsole/ent/token"
+	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/ent/vmobject"
 )
 
@@ -33,6 +35,8 @@ func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
 		competition.Table: competition.ValidColumn,
 		team.Table:        team.ValidColumn,
+		token.Table:       token.ValidColumn,
+		user.Table:        user.ValidColumn,
 		vmobject.Table:    vmobject.ValidColumn,
 	}
 	check, ok := checks[table]

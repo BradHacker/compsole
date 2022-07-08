@@ -1,0 +1,18 @@
+version: "3.4"
+
+services:
+  db:
+    image: library/postgres:14.4-alpine
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    volumes:
+      - compsole-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=compsole
+      - POSTGRES_PASSWORD=compsole
+      - POSTGRES_DB=compsole
+
+volumes:
+  compsole-db:
+    driver: local

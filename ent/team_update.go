@@ -13,6 +13,7 @@ import (
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/team"
+	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/google/uuid"
 )
@@ -89,6 +90,21 @@ func (tu *TeamUpdate) AddTeamToVmObjects(v ...*VmObject) *TeamUpdate {
 	return tu.AddTeamToVmObjectIDs(ids...)
 }
 
+// AddTeamToUserIDs adds the "TeamToUsers" edge to the User entity by IDs.
+func (tu *TeamUpdate) AddTeamToUserIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.AddTeamToUserIDs(ids...)
+	return tu
+}
+
+// AddTeamToUsers adds the "TeamToUsers" edges to the User entity.
+func (tu *TeamUpdate) AddTeamToUsers(u ...*User) *TeamUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return tu.AddTeamToUserIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
@@ -119,6 +135,27 @@ func (tu *TeamUpdate) RemoveTeamToVmObjects(v ...*VmObject) *TeamUpdate {
 		ids[i] = v[i].ID
 	}
 	return tu.RemoveTeamToVmObjectIDs(ids...)
+}
+
+// ClearTeamToUsers clears all "TeamToUsers" edges to the User entity.
+func (tu *TeamUpdate) ClearTeamToUsers() *TeamUpdate {
+	tu.mutation.ClearTeamToUsers()
+	return tu
+}
+
+// RemoveTeamToUserIDs removes the "TeamToUsers" edge to User entities by IDs.
+func (tu *TeamUpdate) RemoveTeamToUserIDs(ids ...uuid.UUID) *TeamUpdate {
+	tu.mutation.RemoveTeamToUserIDs(ids...)
+	return tu
+}
+
+// RemoveTeamToUsers removes "TeamToUsers" edges to User entities.
+func (tu *TeamUpdate) RemoveTeamToUsers(u ...*User) *TeamUpdate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return tu.RemoveTeamToUserIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -323,6 +360,60 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if tu.mutation.TeamToUsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedTeamToUsersIDs(); len(nodes) > 0 && !tu.mutation.TeamToUsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.TeamToUsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{team.Label}
@@ -401,6 +492,21 @@ func (tuo *TeamUpdateOne) AddTeamToVmObjects(v ...*VmObject) *TeamUpdateOne {
 	return tuo.AddTeamToVmObjectIDs(ids...)
 }
 
+// AddTeamToUserIDs adds the "TeamToUsers" edge to the User entity by IDs.
+func (tuo *TeamUpdateOne) AddTeamToUserIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.AddTeamToUserIDs(ids...)
+	return tuo
+}
+
+// AddTeamToUsers adds the "TeamToUsers" edges to the User entity.
+func (tuo *TeamUpdateOne) AddTeamToUsers(u ...*User) *TeamUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return tuo.AddTeamToUserIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
@@ -431,6 +537,27 @@ func (tuo *TeamUpdateOne) RemoveTeamToVmObjects(v ...*VmObject) *TeamUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return tuo.RemoveTeamToVmObjectIDs(ids...)
+}
+
+// ClearTeamToUsers clears all "TeamToUsers" edges to the User entity.
+func (tuo *TeamUpdateOne) ClearTeamToUsers() *TeamUpdateOne {
+	tuo.mutation.ClearTeamToUsers()
+	return tuo
+}
+
+// RemoveTeamToUserIDs removes the "TeamToUsers" edge to User entities by IDs.
+func (tuo *TeamUpdateOne) RemoveTeamToUserIDs(ids ...uuid.UUID) *TeamUpdateOne {
+	tuo.mutation.RemoveTeamToUserIDs(ids...)
+	return tuo
+}
+
+// RemoveTeamToUsers removes "TeamToUsers" edges to User entities.
+func (tuo *TeamUpdateOne) RemoveTeamToUsers(u ...*User) *TeamUpdateOne {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return tuo.RemoveTeamToUserIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -651,6 +778,60 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: vmobject.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.TeamToUsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedTeamToUsersIDs(); len(nodes) > 0 && !tuo.mutation.TeamToUsersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.TeamToUsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
 				},
 			},
 		}

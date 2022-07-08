@@ -26,6 +26,8 @@ type config struct {
 type hooks struct {
 	Competition []ent.Hook
 	Team        []ent.Hook
+	Token       []ent.Hook
+	User        []ent.Hook
 	VmObject    []ent.Hook
 }
 

@@ -16,6 +16,10 @@ type Tx struct {
 	Competition *CompetitionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
+	// Token is the client for interacting with the Token builders.
+	Token *TokenClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 	// VmObject is the client for interacting with the VmObject builders.
 	VmObject *VmObjectClient
 
@@ -155,6 +159,8 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Competition = NewCompetitionClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
+	tx.Token = NewTokenClient(tx.config)
+	tx.User = NewUserClient(tx.config)
 	tx.VmObject = NewVmObjectClient(tx.config)
 }
 

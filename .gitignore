@@ -14,4 +14,11 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# env files
+.env
+.env.dev
+.env.prod
+
+# Development
 dev/
+.vagrant

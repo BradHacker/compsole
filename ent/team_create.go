@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/team"
+	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/google/uuid"
 )
@@ -80,6 +81,21 @@ func (tc *TeamCreate) AddTeamToVmObjects(v ...*VmObject) *TeamCreate {
 		ids[i] = v[i].ID
 	}
 	return tc.AddTeamToVmObjectIDs(ids...)
+}
+
+// AddTeamToUserIDs adds the "TeamToUsers" edge to the User entity by IDs.
+func (tc *TeamCreate) AddTeamToUserIDs(ids ...uuid.UUID) *TeamCreate {
+	tc.mutation.AddTeamToUserIDs(ids...)
+	return tc
+}
+
+// AddTeamToUsers adds the "TeamToUsers" edges to the User entity.
+func (tc *TeamCreate) AddTeamToUsers(u ...*User) *TeamCreate {
+	ids := make([]uuid.UUID, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return tc.AddTeamToUserIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -250,6 +266,25 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: vmobject.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.TeamToUsersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   team.TeamToUsersTable,
+			Columns: []string{team.TeamToUsersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: user.FieldID,
 				},
 			},
 		}

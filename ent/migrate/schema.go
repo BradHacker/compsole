@@ -40,6 +40,52 @@ var (
 			},
 		},
 	}
+	// TokensColumns holds the columns for the "tokens" table.
+	TokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "token", Type: field.TypeString},
+		{Name: "expire_at", Type: field.TypeInt64},
+		{Name: "user_user_to_token", Type: field.TypeUUID},
+	}
+	// TokensTable holds the schema information for the "tokens" table.
+	TokensTable = &schema.Table{
+		Name:       "tokens",
+		Columns:    TokensColumns,
+		PrimaryKey: []*schema.Column{TokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tokens_users_UserToToken",
+				Columns:    []*schema.Column{TokensColumns[3]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "oid", Type: field.TypeUUID},
+		{Name: "username", Type: field.TypeString},
+		{Name: "password", Type: field.TypeString},
+		{Name: "first_name", Type: field.TypeString, Default: ""},
+		{Name: "last_name", Type: field.TypeString, Default: ""},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"USER", "ADMIN"}},
+		{Name: "provider", Type: field.TypeEnum, Enums: []string{"LOCAL", "GITLAB"}},
+		{Name: "user_user_to_team", Type: field.TypeUUID, Nullable: true},
+	}
+	// UsersTable holds the schema information for the "users" table.
+	UsersTable = &schema.Table{
+		Name:       "users",
+		Columns:    UsersColumns,
+		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "users_teams_UserToTeam",
+				Columns:    []*schema.Column{UsersColumns[7]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// VMObjectsColumns holds the columns for the "vm_objects" table.
 	VMObjectsColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
@@ -66,11 +112,15 @@ var (
 	Tables = []*schema.Table{
 		CompetitionsTable,
 		TeamsTable,
+		TokensTable,
+		UsersTable,
 		VMObjectsTable,
 	}
 )
 
 func init() {
 	TeamsTable.ForeignKeys[0].RefTable = CompetitionsTable
+	TokensTable.ForeignKeys[0].RefTable = UsersTable
+	UsersTable.ForeignKeys[0].RefTable = TeamsTable
 	VMObjectsTable.ForeignKeys[0].RefTable = TeamsTable
 }

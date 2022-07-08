@@ -363,6 +363,34 @@ func HasTeamToVmObjectsWith(preds ...predicate.VmObject) predicate.Team {
 	})
 }
 
+// HasTeamToUsers applies the HasEdge predicate on the "TeamToUsers" edge.
+func HasTeamToUsers() predicate.Team {
+	return predicate.Team(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TeamToUsersTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TeamToUsersTable, TeamToUsersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTeamToUsersWith applies the HasEdge predicate on the "TeamToUsers" edge with a given conditions (other predicates).
+func HasTeamToUsersWith(preds ...predicate.User) predicate.Team {
+	return predicate.Team(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TeamToUsersInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TeamToUsersTable, TeamToUsersColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Team) predicate.Team {
 	return predicate.Team(func(s *sql.Selector) {

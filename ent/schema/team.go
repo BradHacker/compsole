@@ -28,5 +28,6 @@ func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("TeamToCompetition", Competition.Type).Unique().Required(),
 		edge.From("TeamToVmObjects", VmObject.Type).Ref("VmObjectToTeam"),
+		edge.From("TeamToUsers", User.Type).Ref("UserToTeam"),
 	}
 }

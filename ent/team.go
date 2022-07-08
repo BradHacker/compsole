@@ -33,9 +33,11 @@ type TeamEdges struct {
 	TeamToCompetition *Competition `json:"TeamToCompetition,omitempty"`
 	// TeamToVmObjects holds the value of the TeamToVmObjects edge.
 	TeamToVmObjects []*VmObject `json:"TeamToVmObjects,omitempty"`
+	// TeamToUsers holds the value of the TeamToUsers edge.
+	TeamToUsers []*User `json:"TeamToUsers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // TeamToCompetitionOrErr returns the TeamToCompetition value or an error if the edge
@@ -59,6 +61,15 @@ func (e TeamEdges) TeamToVmObjectsOrErr() ([]*VmObject, error) {
 		return e.TeamToVmObjects, nil
 	}
 	return nil, &NotLoadedError{edge: "TeamToVmObjects"}
+}
+
+// TeamToUsersOrErr returns the TeamToUsers value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) TeamToUsersOrErr() ([]*User, error) {
+	if e.loadedTypes[2] {
+		return e.TeamToUsers, nil
+	}
+	return nil, &NotLoadedError{edge: "TeamToUsers"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -127,6 +138,11 @@ func (t *Team) QueryTeamToCompetition() *CompetitionQuery {
 // QueryTeamToVmObjects queries the "TeamToVmObjects" edge of the Team entity.
 func (t *Team) QueryTeamToVmObjects() *VmObjectQuery {
 	return (&TeamClient{config: t.config}).QueryTeamToVmObjects(t)
+}
+
+// QueryTeamToUsers queries the "TeamToUsers" edge of the Team entity.
+func (t *Team) QueryTeamToUsers() *UserQuery {
+	return (&TeamClient{config: t.config}).QueryTeamToUsers(t)
 }
 
 // Update returns a builder for updating this Team.
