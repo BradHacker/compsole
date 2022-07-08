@@ -18,6 +18,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const defaultPort = "8080"
@@ -62,8 +63,7 @@ func main() {
 	client := &ent.Client{}
 
 	if !ok {
-		logrus.Errorf("no value set for PG_URI env variable. please set the postgres connection uri")
-		os.Exit(1)
+		logrus.Fatalf("no value set for PG_URI env variable. please set the postgres connection uri")
 	} else {
 		client = ent.PGOpen(pgHost)
 	}
@@ -84,10 +84,16 @@ func main() {
 		logrus.Warn("No admin account found, creating default admin...")
 		defaultUsername := os.Getenv("DEFAULT_ADMIN_USERNAME")
 		defaultPassword := os.Getenv("DEFAULT_ADMIN_PASSWORD")
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), 8)
+		if err != nil {
+			logrus.Errorf("failed to hash default admin password")
+			return
+		}
+		password := string(hashedPassword[:])
 
-		err := client.User.Create().
+		err = client.User.Create().
 			SetUsername(defaultUsername).
-			SetPassword(defaultPassword).
+			SetPassword(password).
 			SetRole(user.RoleADMIN).
 			SetProvider(user.ProviderLOCAL).
 			Exec(ctx)

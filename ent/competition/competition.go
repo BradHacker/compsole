@@ -13,6 +13,10 @@ const (
 	FieldID = "oid"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldProviderType holds the string denoting the provider_type field in the database.
+	FieldProviderType = "provider_type"
+	// FieldProviderConfigFile holds the string denoting the provider_config_file field in the database.
+	FieldProviderConfigFile = "provider_config_file"
 	// EdgeCompetitionToTeams holds the string denoting the competitiontoteams edge name in mutations.
 	EdgeCompetitionToTeams = "CompetitionToTeams"
 	// Table holds the table name of the competition in the database.
@@ -30,6 +34,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldProviderType,
+	FieldProviderConfigFile,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

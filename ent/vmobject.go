@@ -19,13 +19,13 @@ type VmObject struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
-	// [Required] A user-friendly name for the VM. This will be provider-specific.
+	// [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
 	Name string `json:"name,omitempty"`
 	// Identifier holds the value of the "identifier" field.
-	// [Required] The identifier of the VM. This will be provider-specific.
+	// [REQUIRED] The identifier of the VM. This will be provider-specific.
 	Identifier string `json:"identifier,omitempty"`
 	// IPAddresses holds the value of the "ip_addresses" field.
-	// [Optional] IP addresses of the VM. This will be displayed to the user.
+	// [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
 	IPAddresses []string `json:"ip_addresses,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VmObjectQuery when eager-loading is set.

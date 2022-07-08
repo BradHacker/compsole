@@ -8,6 +8,53 @@ import (
 	"strconv"
 )
 
+type ConsoleType string
+
+const (
+	ConsoleTypeNovnc  ConsoleType = "NOVNC"
+	ConsoleTypeSpice  ConsoleType = "SPICE"
+	ConsoleTypeRdp    ConsoleType = "RDP"
+	ConsoleTypeSerial ConsoleType = "SERIAL"
+	ConsoleTypeMks    ConsoleType = "MKS"
+)
+
+var AllConsoleType = []ConsoleType{
+	ConsoleTypeNovnc,
+	ConsoleTypeSpice,
+	ConsoleTypeRdp,
+	ConsoleTypeSerial,
+	ConsoleTypeMks,
+}
+
+func (e ConsoleType) IsValid() bool {
+	switch e {
+	case ConsoleTypeNovnc, ConsoleTypeSpice, ConsoleTypeRdp, ConsoleTypeSerial, ConsoleTypeMks:
+		return true
+	}
+	return false
+}
+
+func (e ConsoleType) String() string {
+	return string(e)
+}
+
+func (e *ConsoleType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ConsoleType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ConsoleType", str)
+	}
+	return nil
+}
+
+func (e ConsoleType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type Provider string
 
 const (

@@ -8,9 +8,14 @@ import (
 	"fmt"
 
 	"github.com/BradHacker/compsole/auth"
+	"github.com/BradHacker/compsole/compsole/providers"
+	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
+	"github.com/BradHacker/compsole/ent/user"
+	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
+	"github.com/google/uuid"
 )
 
 // ID is the resolver for the ID field.
@@ -18,18 +23,109 @@ func (r *competitionResolver) ID(ctx context.Context, obj *ent.Competition) (str
 	return obj.ID.String(), nil
 }
 
-// VMObjects is the resolver for the vmObjects field.
-func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) {
+// Console is the resolver for the console field.
+func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error) {
+	entUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get user from context: %v", err)
+	}
+
+	vmObjectUuid, err := uuid.Parse(vmObjectID)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse valid uuid from input vmObjectId: %v", err)
+	}
+
+	if entUser.Role != user.RoleADMIN {
+		canAccessVm, err := entUser.QueryUserToTeam().QueryTeamToVmObjects().Where(vmobject.IDEQ(vmObjectUuid)).Exist(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to query vm object from user")
+		}
+		if !canAccessVm {
+			return "", fmt.Errorf("user does not have permission to access this vm")
+		}
+	}
+	entVmObject, err := r.client.VmObject.Get(ctx, vmObjectUuid)
+	if err != nil {
+		return "", fmt.Errorf("failed to query vm object: %v", err)
+	}
+	entCompetition, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().Only(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to query competition from vm object: %v", err)
+	}
+	provider, err := providers.NewProvider(entCompetition.ProviderType, entCompetition.ProviderConfigFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to create provider from config: %v", err)
+	}
+	return provider.GetConsoleUrl(entVmObject.Identifier, utils.ConsoleType(consoleType))
+}
+
+// MyVMObjects is the resolver for the myVmObjects field.
+func (r *queryResolver) MyVMObjects(ctx context.Context) ([]*ent.VmObject, error) {
 	entUser, err := auth.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
 
-	vmObjects, err := entUser.QueryUserToTeam().QueryTeamToVmObjects().All(ctx)
+	entVmObjects, err := entUser.QueryUserToTeam().QueryTeamToVmObjects().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query vm objects from user: %v", err)
+	}
+	return entVmObjects, nil
+}
+
+// MyTeam is the resolver for the myTeam field.
+func (r *queryResolver) MyTeam(ctx context.Context) (*ent.Team, error) {
+	entUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+
+	entTeam, err := entUser.QueryUserToTeam().Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query team from user: %v", err)
+	}
+	return entTeam, nil
+}
+
+// MyCompetition is the resolver for the myCompetition field.
+func (r *queryResolver) MyCompetition(ctx context.Context) (*ent.Competition, error) {
+	entUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+
+	entCompetition, err := entUser.QueryUserToTeam().QueryTeamToCompetition().Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competition from user: %v", err)
+	}
+	return entCompetition, nil
+}
+
+// VMObjects is the resolver for the vmObjects field.
+func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) {
+	vmObjects, err := r.client.VmObject.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects from user: %v", err)
 	}
 	return vmObjects, nil
+}
+
+// Teams is the resolver for the teams field.
+func (r *queryResolver) Teams(ctx context.Context) ([]*ent.Team, error) {
+	entTeams, err := r.client.Team.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query teams: %v", err)
+	}
+	return entTeams, nil
+}
+
+// Competitions is the resolver for the competitions field.
+func (r *queryResolver) Competitions(ctx context.Context) ([]*ent.Competition, error) {
+	competitions, err := r.client.Competition.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competitions: %v", err)
+	}
+	return competitions, nil
 }
 
 // ID is the resolver for the ID field.

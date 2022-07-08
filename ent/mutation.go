@@ -42,6 +42,8 @@ type CompetitionMutation struct {
 	typ                        string
 	id                         *uuid.UUID
 	name                       *string
+	provider_type              *string
+	provider_config_file       *string
 	clearedFields              map[string]struct{}
 	_CompetitionToTeams        map[uuid.UUID]struct{}
 	removed_CompetitionToTeams map[uuid.UUID]struct{}
@@ -191,6 +193,78 @@ func (m *CompetitionMutation) ResetName() {
 	m.name = nil
 }
 
+// SetProviderType sets the "provider_type" field.
+func (m *CompetitionMutation) SetProviderType(s string) {
+	m.provider_type = &s
+}
+
+// ProviderType returns the value of the "provider_type" field in the mutation.
+func (m *CompetitionMutation) ProviderType() (r string, exists bool) {
+	v := m.provider_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderType returns the old "provider_type" field's value of the Competition entity.
+// If the Competition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitionMutation) OldProviderType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderType: %w", err)
+	}
+	return oldValue.ProviderType, nil
+}
+
+// ResetProviderType resets all changes to the "provider_type" field.
+func (m *CompetitionMutation) ResetProviderType() {
+	m.provider_type = nil
+}
+
+// SetProviderConfigFile sets the "provider_config_file" field.
+func (m *CompetitionMutation) SetProviderConfigFile(s string) {
+	m.provider_config_file = &s
+}
+
+// ProviderConfigFile returns the value of the "provider_config_file" field in the mutation.
+func (m *CompetitionMutation) ProviderConfigFile() (r string, exists bool) {
+	v := m.provider_config_file
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderConfigFile returns the old "provider_config_file" field's value of the Competition entity.
+// If the Competition object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitionMutation) OldProviderConfigFile(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderConfigFile is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderConfigFile requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderConfigFile: %w", err)
+	}
+	return oldValue.ProviderConfigFile, nil
+}
+
+// ResetProviderConfigFile resets all changes to the "provider_config_file" field.
+func (m *CompetitionMutation) ResetProviderConfigFile() {
+	m.provider_config_file = nil
+}
+
 // AddCompetitionToTeamIDs adds the "CompetitionToTeams" edge to the Team entity by ids.
 func (m *CompetitionMutation) AddCompetitionToTeamIDs(ids ...uuid.UUID) {
 	if m._CompetitionToTeams == nil {
@@ -264,9 +338,15 @@ func (m *CompetitionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CompetitionMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 3)
 	if m.name != nil {
 		fields = append(fields, competition.FieldName)
+	}
+	if m.provider_type != nil {
+		fields = append(fields, competition.FieldProviderType)
+	}
+	if m.provider_config_file != nil {
+		fields = append(fields, competition.FieldProviderConfigFile)
 	}
 	return fields
 }
@@ -278,6 +358,10 @@ func (m *CompetitionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case competition.FieldName:
 		return m.Name()
+	case competition.FieldProviderType:
+		return m.ProviderType()
+	case competition.FieldProviderConfigFile:
+		return m.ProviderConfigFile()
 	}
 	return nil, false
 }
@@ -289,6 +373,10 @@ func (m *CompetitionMutation) OldField(ctx context.Context, name string) (ent.Va
 	switch name {
 	case competition.FieldName:
 		return m.OldName(ctx)
+	case competition.FieldProviderType:
+		return m.OldProviderType(ctx)
+	case competition.FieldProviderConfigFile:
+		return m.OldProviderConfigFile(ctx)
 	}
 	return nil, fmt.Errorf("unknown Competition field %s", name)
 }
@@ -304,6 +392,20 @@ func (m *CompetitionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case competition.FieldProviderType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderType(v)
+		return nil
+	case competition.FieldProviderConfigFile:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderConfigFile(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Competition field %s", name)
@@ -356,6 +458,12 @@ func (m *CompetitionMutation) ResetField(name string) error {
 	switch name {
 	case competition.FieldName:
 		m.ResetName()
+		return nil
+	case competition.FieldProviderType:
+		m.ResetProviderType()
+		return nil
+	case competition.FieldProviderConfigFile:
+		m.ResetProviderConfigFile()
 		return nil
 	}
 	return fmt.Errorf("unknown Competition field %s", name)

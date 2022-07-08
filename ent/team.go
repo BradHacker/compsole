@@ -18,8 +18,10 @@ type Team struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// TeamNumber holds the value of the "team_number" field.
+	// [REQUIRED] The team number.
 	TeamNumber int `json:"team_number,omitempty"`
 	// Name holds the value of the "name" field.
+	// [OPTIONAL] The display name for the team.
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.

@@ -18,8 +18,8 @@ func (Team) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			StorageKey("oid"),
-		field.Int("team_number"),
-		field.String("name").Optional(),
+		field.Int("team_number").Comment("[REQUIRED] The team number."),
+		field.String("name").Optional().Comment("[OPTIONAL] The display name for the team."),
 	}
 }
 

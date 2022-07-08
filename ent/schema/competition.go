@@ -19,7 +19,9 @@ func (Competition) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			StorageKey("oid"),
-		field.String("name").Unique(),
+		field.String("name").Unique().Comment("[REQUIRED] The unique name (aka. slug) for the competition."),
+		field.String("provider_type").Comment("[REQUIRED] This is the ID of the competition provider."),
+		field.String("provider_config_file").Comment("[REQUIRED] This is the absolute path to the config file used to connect to the competition provider."),
 	}
 }
 

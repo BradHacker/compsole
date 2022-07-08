@@ -17,7 +17,14 @@ type Competition struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
+	// [REQUIRED] The unique name (aka. slug) for the competition.
 	Name string `json:"name,omitempty"`
+	// ProviderType holds the value of the "provider_type" field.
+	// [REQUIRED] This is the ID of the competition provider.
+	ProviderType string `json:"provider_type,omitempty"`
+	// ProviderConfigFile holds the value of the "provider_config_file" field.
+	// [REQUIRED] This is the absolute path to the config file used to connect to the competition provider.
+	ProviderConfigFile string `json:"provider_config_file,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CompetitionQuery when eager-loading is set.
 	Edges CompetitionEdges `json:"edges"`
@@ -46,7 +53,7 @@ func (*Competition) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case competition.FieldName:
+		case competition.FieldName, competition.FieldProviderType, competition.FieldProviderConfigFile:
 			values[i] = new(sql.NullString)
 		case competition.FieldID:
 			values[i] = new(uuid.UUID)
@@ -76,6 +83,18 @@ func (c *Competition) assignValues(columns []string, values []interface{}) error
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				c.Name = value.String
+			}
+		case competition.FieldProviderType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_type", values[i])
+			} else if value.Valid {
+				c.ProviderType = value.String
+			}
+		case competition.FieldProviderConfigFile:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_config_file", values[i])
+			} else if value.Valid {
+				c.ProviderConfigFile = value.String
 			}
 		}
 	}
@@ -112,6 +131,10 @@ func (c *Competition) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", c.ID))
 	builder.WriteString(", name=")
 	builder.WriteString(c.Name)
+	builder.WriteString(", provider_type=")
+	builder.WriteString(c.ProviderType)
+	builder.WriteString(", provider_config_file=")
+	builder.WriteString(c.ProviderConfigFile)
 	builder.WriteByte(')')
 	return builder.String()
 }

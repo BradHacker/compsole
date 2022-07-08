@@ -18,8 +18,10 @@ type Token struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// Token holds the value of the "token" field.
+	// [REQUIRED] The auth-token cookie value for the user session.
 	Token string `json:"token,omitempty"`
 	// ExpireAt holds the value of the "expire_at" field.
+	// [REQUIRED] The time the token should expire.
 	ExpireAt int64 `json:"expire_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TokenQuery when eager-loading is set.

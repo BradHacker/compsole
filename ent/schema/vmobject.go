@@ -18,9 +18,9 @@ func (VmObject) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			StorageKey("oid"),
-		field.String("name").Comment("[Required] A user-friendly name for the VM. This will be provider-specific."),
-		field.String("identifier").Comment("[Required] The identifier of the VM. This will be provider-specific."),
-		field.Strings("ip_addresses").Optional().Comment("[Optional] IP addresses of the VM. This will be displayed to the user."),
+		field.String("name").Comment("[REQUIRED] A user-friendly name for the VM. This will be provider-specific."),
+		field.String("identifier").Comment("[REQUIRED] The identifier of the VM. This will be provider-specific."),
+		field.Strings("ip_addresses").Optional().Comment("[OPTIONAL] IP addresses of the VM. This will be displayed to the user."),
 	}
 }
 

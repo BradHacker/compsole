@@ -45,6 +45,26 @@ type User {
   Provider: Provider!
 }
 
+enum ConsoleType {
+  # Openstack
+  NOVNC
+  SPICE
+  RDP
+  SERIAL
+  MKS
+}
+
+directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
+
 type Query {
-  vmObjects: [VmObject!]!
+  # Shared actions
+  console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
+  # User actions
+  myVmObjects: [VmObject!]! @hasRole(roles: [USER])
+  myTeam: Team! @hasRole(roles: [USER])
+  myCompetition: Competition! @hasRole(roles: [USER])
+  # Admin actions
+  vmObjects: [VmObject!]! @hasRole(roles: [ADMIN])
+  teams: [Team!]! @hasRole(roles: [ADMIN])
+  competitions: [Competition!]! @hasRole(roles: [ADMIN])
 }

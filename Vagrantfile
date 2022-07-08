@@ -86,7 +86,7 @@ Vagrant.configure("2") do |config|
       docker-compose-plugin
     usermod -a -G docker vagrant
     cd /vagrant
-    docker compose pull
+    docker compose -f docker-compose.dev.yml pull
 
     # Download and install golang
     cd /tmp

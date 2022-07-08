@@ -12,6 +12,8 @@ var (
 	CompetitionsColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "provider_type", Type: field.TypeString},
+		{Name: "provider_config_file", Type: field.TypeString},
 	}
 	// CompetitionsTable holds the schema information for the "competitions" table.
 	CompetitionsTable = &schema.Table{

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,21 +17,27 @@ import (
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/sirupsen/logrus"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	if err != nil {
-		log.Fatalf("failed opening connection to sqlite: %v", err)
+	// Create the ent client
+	pgHost, ok := os.LookupEnv("PG_URI")
+	client := &ent.Client{}
+
+	if !ok {
+		logrus.Fatalf("no value set for PG_URI env variable. please set the postgres connection uri")
+	} else {
+		client = ent.PGOpen(pgHost)
 	}
-	defer client.Close()
-	// Run the auto migration tool.
-	if err := client.Schema.Create(context.Background()); err != nil {
-		log.Fatalf("failed creating schema resources: %v", err)
-	}
+
 	ctx := context.Background()
+	defer ctx.Done()
+	defer client.Close()
+
+	// Run the auto migration tool.
+	if err := client.Schema.Create(ctx); err != nil {
+		logrus.Fatalf("failed creating schema resources: %v", err)
+	}
 
 	for {
 		// Print banner and menu
@@ -186,24 +191,33 @@ compsole:~$ `)
 		if err != nil {
 			fmt.Printf("\033[1;31mError: failed to create ent transaction client: %v\nPress [ENTER] to continue...\033[0m\n", err)
 			fmt.Scanln()
+			tx.Rollback()
 			continue
 		}
 		// Find or create the competition
 		entCompetition, err := tx.Competition.Query().Where(competition.NameEQ(competitionName)).Only(ctx)
 		if err != nil && ent.IsNotFound(err) {
 			logrus.Infof("Creating competition \"%s\"", competitionName)
-			entCompetition, err = tx.Competition.Create().SetName(competitionName).Save(ctx)
+			entCompetition, err = tx.Competition.Create().SetName(competitionName).SetProviderType(providerId).SetProviderConfigFile(configPath).Save(ctx)
 			if err != nil {
 				fmt.Printf("\033[1;31mError: failed to create competition \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", competitionName, err)
 				fmt.Scanln()
+				tx.Rollback()
 				continue
 			}
 		} else if err != nil {
 			fmt.Printf("\033[1;31mError: failed to query competition: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", err)
 			fmt.Scanln()
+			tx.Rollback()
 			continue
 		} else {
-
+			err = tx.Competition.Update().SetProviderType(providerId).SetProviderConfigFile(configPath).Exec(ctx)
+			if err != nil {
+				fmt.Printf("\033[1;31mError: failed to update competition \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", competitionName, err)
+				fmt.Scanln()
+				tx.Rollback()
+				continue
+			}
 			logrus.Infof("Found competition \"%s\"", competitionName)
 		}
 		for i := 0; i <= teamCount; i++ {
@@ -215,11 +229,13 @@ compsole:~$ `)
 				if err != nil {
 					fmt.Printf("\033[1;31mError: failed to create team %d: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", i, err)
 					fmt.Scanln()
+					tx.Rollback()
 					continue
 				}
 			} else if err != nil {
 				fmt.Printf("\033[1;31mError: failed to query team: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", err)
 				fmt.Scanln()
+				tx.Rollback()
 				continue
 			} else {
 				logrus.Infof("Found team \"%s\"", competitionName)
@@ -246,11 +262,13 @@ compsole:~$ `)
 					if err != nil {
 						fmt.Printf("\033[1;31mError: failed to create vm \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", vm.Name, err)
 						fmt.Scanln()
+						tx.Rollback()
 						continue
 					}
 				} else if err != nil {
 					fmt.Printf("\033[1;31mError: failed to query team: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", err)
 					fmt.Scanln()
+					tx.Rollback()
 					continue
 				} else {
 					logrus.Infof("found vm %d", i)
@@ -258,6 +276,7 @@ compsole:~$ `)
 					if err != nil {
 						fmt.Printf("\033[1;31mError: failed to update vm \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", vm.Name, err)
 						fmt.Scanln()
+						tx.Rollback()
 						continue
 					}
 				}
@@ -268,6 +287,7 @@ compsole:~$ `)
 		if err != nil {
 			fmt.Printf("\033[1;31mError: failed to delete dump file: %v\nPress [ENTER] to continue...\033[0m\n", err)
 			fmt.Scanln()
+			tx.Rollback()
 			continue
 		}
 		logrus.Info("Committing changes to database")
@@ -276,6 +296,7 @@ compsole:~$ `)
 		if err != nil {
 			fmt.Printf("\033[1;31mError: failed to commit db changes: %v\nPress [ENTER] to continue...\033[0m\n", err)
 			fmt.Scanln()
+			tx.Rollback()
 			continue
 		}
 		fmt.Printf("\033[1;32mSuccess: ingested all vms from dump\nPress [ENTER] to continue...\033[0m\n")

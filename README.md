@@ -28,5 +28,6 @@ $ vagrant ssh
 # Inside the VM
 $ cd /vagrant
 $ docker compose -f docker-compose.dev.yml up -d
+$ export $(grep -v '^#' .env | xargs)
 $ go run server.go
 ```

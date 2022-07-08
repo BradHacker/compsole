@@ -35,6 +35,18 @@ func (cu *CompetitionUpdate) SetName(s string) *CompetitionUpdate {
 	return cu
 }
 
+// SetProviderType sets the "provider_type" field.
+func (cu *CompetitionUpdate) SetProviderType(s string) *CompetitionUpdate {
+	cu.mutation.SetProviderType(s)
+	return cu
+}
+
+// SetProviderConfigFile sets the "provider_config_file" field.
+func (cu *CompetitionUpdate) SetProviderConfigFile(s string) *CompetitionUpdate {
+	cu.mutation.SetProviderConfigFile(s)
+	return cu
+}
+
 // AddCompetitionToTeamIDs adds the "CompetitionToTeams" edge to the Team entity by IDs.
 func (cu *CompetitionUpdate) AddCompetitionToTeamIDs(ids ...uuid.UUID) *CompetitionUpdate {
 	cu.mutation.AddCompetitionToTeamIDs(ids...)
@@ -155,6 +167,20 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: competition.FieldName,
 		})
 	}
+	if value, ok := cu.mutation.ProviderType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: competition.FieldProviderType,
+		})
+	}
+	if value, ok := cu.mutation.ProviderConfigFile(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: competition.FieldProviderConfigFile,
+		})
+	}
 	if cu.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -231,6 +257,18 @@ type CompetitionUpdateOne struct {
 // SetName sets the "name" field.
 func (cuo *CompetitionUpdateOne) SetName(s string) *CompetitionUpdateOne {
 	cuo.mutation.SetName(s)
+	return cuo
+}
+
+// SetProviderType sets the "provider_type" field.
+func (cuo *CompetitionUpdateOne) SetProviderType(s string) *CompetitionUpdateOne {
+	cuo.mutation.SetProviderType(s)
+	return cuo
+}
+
+// SetProviderConfigFile sets the "provider_config_file" field.
+func (cuo *CompetitionUpdateOne) SetProviderConfigFile(s string) *CompetitionUpdateOne {
+	cuo.mutation.SetProviderConfigFile(s)
 	return cuo
 }
 
@@ -376,6 +414,20 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Type:   field.TypeString,
 			Value:  value,
 			Column: competition.FieldName,
+		})
+	}
+	if value, ok := cuo.mutation.ProviderType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: competition.FieldProviderType,
+		})
+	}
+	if value, ok := cuo.mutation.ProviderConfigFile(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: competition.FieldProviderConfigFile,
 		})
 	}
 	if cuo.mutation.CompetitionToTeamsCleared() {

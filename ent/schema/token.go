@@ -17,8 +17,8 @@ func (Token) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
-		field.String("token"),
-		field.Int64("expire_at"),
+		field.String("token").Comment("[REQUIRED] The auth-token cookie value for the user session."),
+		field.Int64("expire_at").Comment("[REQUIRED] The time the token should expire."),
 	}
 }
 

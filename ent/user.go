@@ -18,16 +18,22 @@ type User struct {
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
 	// Username holds the value of the "username" field.
+	// [REQUIRED] The username for the user.
 	Username string `json:"username,omitempty"`
 	// Password holds the value of the "password" field.
+	// [REQUIRED] The hashed password for the user.
 	Password string `json:"-"`
 	// FirstName holds the value of the "first_name" field.
+	// [OPTIONAL] The display first name for the user.
 	FirstName string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
+	// [OPTIONAL] The display last name for the user
 	LastName string `json:"last_name,omitempty"`
 	// Role holds the value of the "role" field.
+	// [REQUIRED] The role of the user. Admins have full access.
 	Role user.Role `json:"role,omitempty"`
 	// Provider holds the value of the "provider" field.
+	// [REQUIRED] The type of login the user will be using.
 	Provider user.Provider `json:"provider,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.

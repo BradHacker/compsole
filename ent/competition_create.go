@@ -27,6 +27,18 @@ func (cc *CompetitionCreate) SetName(s string) *CompetitionCreate {
 	return cc
 }
 
+// SetProviderType sets the "provider_type" field.
+func (cc *CompetitionCreate) SetProviderType(s string) *CompetitionCreate {
+	cc.mutation.SetProviderType(s)
+	return cc
+}
+
+// SetProviderConfigFile sets the "provider_config_file" field.
+func (cc *CompetitionCreate) SetProviderConfigFile(s string) *CompetitionCreate {
+	cc.mutation.SetProviderConfigFile(s)
+	return cc
+}
+
 // SetID sets the "id" field.
 func (cc *CompetitionCreate) SetID(u uuid.UUID) *CompetitionCreate {
 	cc.mutation.SetID(u)
@@ -138,6 +150,12 @@ func (cc *CompetitionCreate) check() error {
 	if _, ok := cc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Competition.name"`)}
 	}
+	if _, ok := cc.mutation.ProviderType(); !ok {
+		return &ValidationError{Name: "provider_type", err: errors.New(`ent: missing required field "Competition.provider_type"`)}
+	}
+	if _, ok := cc.mutation.ProviderConfigFile(); !ok {
+		return &ValidationError{Name: "provider_config_file", err: errors.New(`ent: missing required field "Competition.provider_config_file"`)}
+	}
 	return nil
 }
 
@@ -181,6 +199,22 @@ func (cc *CompetitionCreate) createSpec() (*Competition, *sqlgraph.CreateSpec) {
 			Column: competition.FieldName,
 		})
 		_node.Name = value
+	}
+	if value, ok := cc.mutation.ProviderType(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: competition.FieldProviderType,
+		})
+		_node.ProviderType = value
+	}
+	if value, ok := cc.mutation.ProviderConfigFile(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: competition.FieldProviderConfigFile,
+		})
+		_node.ProviderConfigFile = value
 	}
 	if nodes := cc.mutation.CompetitionToTeamsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
