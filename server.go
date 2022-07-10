@@ -92,6 +92,8 @@ func main() {
 		password := string(hashedPassword[:])
 
 		err = client.User.Create().
+			SetFirstName("Default").
+			SetLastName("Admin").
 			SetUsername(defaultUsername).
 			SetPassword(password).
 			SetRole(user.RoleADMIN).

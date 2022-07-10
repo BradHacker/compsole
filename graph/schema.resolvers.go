@@ -59,6 +59,15 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 	return provider.GetConsoleUrl(entVmObject.Identifier, utils.ConsoleType(consoleType))
 }
 
+// Me is the resolver for the me field.
+func (r *queryResolver) Me(ctx context.Context) (*ent.User, error) {
+	entUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	return entUser, nil
+}
+
 // MyVMObjects is the resolver for the myVmObjects field.
 func (r *queryResolver) MyVMObjects(ctx context.Context) ([]*ent.VmObject, error) {
 	entUser, err := auth.ForContext(ctx)

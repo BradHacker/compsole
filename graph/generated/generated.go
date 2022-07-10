@@ -58,6 +58,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Competitions  func(childComplexity int) int
 		Console       func(childComplexity int, vmObjectID string, consoleType model.ConsoleType) int
+		Me            func(childComplexity int) int
 		MyCompetition func(childComplexity int) int
 		MyTeam        func(childComplexity int) int
 		MyVMObjects   func(childComplexity int) int
@@ -96,6 +97,7 @@ type CompetitionResolver interface {
 }
 type QueryResolver interface {
 	Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error)
+	Me(ctx context.Context) (*ent.User, error)
 	MyVMObjects(ctx context.Context) ([]*ent.VmObject, error)
 	MyTeam(ctx context.Context) (*ent.Team, error)
 	MyCompetition(ctx context.Context) (*ent.Competition, error)
@@ -170,6 +172,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Console(childComplexity, args["vmObjectId"].(string), args["consoleType"].(model.ConsoleType)), true
+
+	case "Query.me":
+		if e.complexity.Query.Me == nil {
+			break
+		}
+
+		return e.complexity.Query.Me(childComplexity), true
 
 	case "Query.myCompetition":
 		if e.complexity.Query.MyCompetition == nil {
@@ -431,6 +440,7 @@ directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 type Query {
   # Shared actions
   console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
+  me: User
   # User actions
   myVmObjects: [VmObject!]! @hasRole(roles: [USER])
   myTeam: Team! @hasRole(roles: [USER])
@@ -756,6 +766,61 @@ func (ec *executionContext) fieldContext_Query_console(ctx context.Context, fiel
 	if fc.Args, err = ec.field_Query_console_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_me(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Me(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_User_ID(ctx, field)
+			case "Username":
+				return ec.fieldContext_User_Username(ctx, field)
+			case "FirstName":
+				return ec.fieldContext_User_FirstName(ctx, field)
+			case "LastName":
+				return ec.fieldContext_User_LastName(ctx, field)
+			case "Role":
+				return ec.fieldContext_User_Role(ctx, field)
+			case "Provider":
+				return ec.fieldContext_User_Provider(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -3976,6 +4041,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "me":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_me(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "myVmObjects":
 			field := field
 
@@ -5464,6 +5549,13 @@ func (ec *executionContext) marshalOTeam2ᚖgithubᚗcomᚋBradHackerᚋcompsole
 		return graphql.Null
 	}
 	return ec._Team(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v *ent.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v *ent.VmObject) graphql.Marshaler {

@@ -59,6 +59,7 @@ directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 type Query {
   # Shared actions
   console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
+  me: User
   # User actions
   myVmObjects: [VmObject!]! @hasRole(roles: [USER])
   myTeam: Team! @hasRole(roles: [USER])

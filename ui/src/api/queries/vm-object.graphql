@@ -1,0 +1,12 @@
+fragment VmObjectFragment on VmObject {
+  ID
+  Identifier
+  Name
+  IPAddresses
+}
+
+query MyVmObjects {
+  myVmObjects {
+    ...VmObjectFragment
+  }
+}
