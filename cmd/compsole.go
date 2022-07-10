@@ -222,10 +222,18 @@ compsole:~$ `)
 		}
 		for i := 0; i <= teamCount; i++ {
 			// Find or create the teams
+			key := "team" + strconv.Itoa(i)
+			name := "Team " + strconv.Itoa(i)
+			if i == 0 {
+				// Place unsorted vms under team 0
+				key = "unsorted"
+				name = "unsorted"
+				logrus.Info("Team is being labelled as \"unsorted\"")
+			}
 			entTeam, err := tx.Team.Query().Where(team.TeamNumberEQ(i)).Only(ctx)
 			if err != nil && ent.IsNotFound(err) {
 				logrus.Infof("Creating team %d", i)
-				entTeam, err = tx.Team.Create().SetTeamNumber(i).SetTeamToCompetition(entCompetition).Save(ctx)
+				entTeam, err = tx.Team.Create().SetTeamNumber(i).SetTeamToCompetition(entCompetition).SetName(name).Save(ctx)
 				if err != nil {
 					fmt.Printf("\033[1;31mError: failed to create team %d: %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", i, err)
 					fmt.Scanln()
@@ -240,14 +248,6 @@ compsole:~$ `)
 			} else {
 				logrus.Infof("Found team \"%s\"", competitionName)
 			}
-			key := "team" + strconv.Itoa(i)
-			name := ""
-			if i == 0 {
-				// Place unsorted vms under team 0
-				key = "unsorted"
-				name = "unsorted"
-				logrus.Info("Team is being labelled as \"unsorted\"")
-			}
 			for _, vm := range vmIngest[key] { // Find or create the teams
 				entVmObject, err := tx.VmObject.Query().Where(vmobject.IdentifierEQ(vm.Identifier)).Only(ctx)
 				if err != nil && ent.IsNotFound(err) {
@@ -257,7 +257,6 @@ compsole:~$ `)
 						SetIdentifier(vm.Identifier).
 						SetIPAddresses(vm.IPAddresses).
 						SetVmObjectToTeam(entTeam).
-						SetName(name).
 						Exec(ctx)
 					if err != nil {
 						fmt.Printf("\033[1;31mError: failed to create vm \"%s\": %v\nRolling back db changes...\nPress [ENTER] to continue...\033[0m\n", vm.Name, err)

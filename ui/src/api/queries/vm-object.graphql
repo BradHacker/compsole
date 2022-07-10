@@ -10,3 +10,18 @@ query MyVmObjects {
     ...VmObjectFragment
   }
 }
+
+query AllVmObjects {
+  vmObjects {
+    ...VmObjectFragment
+    VmObjectToTeam {
+      ID
+      TeamNumber
+      Name
+      TeamToCompetition {
+        ID
+        Name
+      }
+    }
+  }
+}

@@ -100,6 +100,11 @@ export type MyVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MyVmObjectsQuery = { __typename?: 'Query', myVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null }> };
 
+export type AllVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AllVmObjectsQuery = { __typename?: 'Query', vmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name?: string | null } } | null }> };
+
 export const VmObjectFragmentFragmentDoc = gql`
     fragment VmObjectFragment on VmObject {
   ID
@@ -181,3 +186,46 @@ export function useMyVmObjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type MyVmObjectsQueryHookResult = ReturnType<typeof useMyVmObjectsQuery>;
 export type MyVmObjectsLazyQueryHookResult = ReturnType<typeof useMyVmObjectsLazyQuery>;
 export type MyVmObjectsQueryResult = Apollo.QueryResult<MyVmObjectsQuery, MyVmObjectsQueryVariables>;
+export const AllVmObjectsDocument = gql`
+    query AllVmObjects {
+  vmObjects {
+    ...VmObjectFragment
+    VmObjectToTeam {
+      ID
+      TeamNumber
+      Name
+      TeamToCompetition {
+        ID
+        Name
+      }
+    }
+  }
+}
+    ${VmObjectFragmentFragmentDoc}`;
+
+/**
+ * __useAllVmObjectsQuery__
+ *
+ * To run a query within a React component, call `useAllVmObjectsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useAllVmObjectsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useAllVmObjectsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useAllVmObjectsQuery(baseOptions?: Apollo.QueryHookOptions<AllVmObjectsQuery, AllVmObjectsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<AllVmObjectsQuery, AllVmObjectsQueryVariables>(AllVmObjectsDocument, options);
+      }
+export function useAllVmObjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllVmObjectsQuery, AllVmObjectsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<AllVmObjectsQuery, AllVmObjectsQueryVariables>(AllVmObjectsDocument, options);
+        }
+export type AllVmObjectsQueryHookResult = ReturnType<typeof useAllVmObjectsQuery>;
+export type AllVmObjectsLazyQueryHookResult = ReturnType<typeof useAllVmObjectsLazyQuery>;
+export type AllVmObjectsQueryResult = Apollo.QueryResult<AllVmObjectsQuery, AllVmObjectsQueryVariables>;

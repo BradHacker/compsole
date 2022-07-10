@@ -17,6 +17,7 @@ import {
 import { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import { Auth, Signin, Signup } from "./pages/auth";
 import { Dashboard } from "./pages/dashboard";
+import { SnackbarProvider } from "notistack";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -42,6 +43,12 @@ const darkTheme = createTheme({
   },
   palette: {
     mode: "dark",
+    primary: {
+      main: "#8375BC",
+    },
+    secondary: {
+      main: "#F7B374",
+    },
   },
 });
 
@@ -54,18 +61,20 @@ root.render(
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <BrowserRouter>
-          <Routes>
-            {/* Protected App Routes (Auth Required) */}
-            <Route path="/" element={<App />}>
-              <Route index element={<Dashboard />} />
-            </Route>
-            {/* Unprotected App Routes (No Auth Required) */}
-            <Route path="/auth" element={<Auth />}>
-              <Route index element={<Signin />} />
-              <Route path="signin" element={<Signin />} />
-              <Route path="signup" element={<Signup />} />
-            </Route>
-          </Routes>
+          <SnackbarProvider maxSnack={3}>
+            <Routes>
+              {/* Protected App Routes (Auth Required) */}
+              <Route path="/" element={<App />}>
+                <Route index element={<Dashboard />} />
+              </Route>
+              {/* Unprotected App Routes (No Auth Required) */}
+              <Route path="/auth" element={<Auth />}>
+                <Route index element={<Signin />} />
+                <Route path="signin" element={<Signin />} />
+                <Route path="signup" element={<Signup />} />
+              </Route>
+            </Routes>
+          </SnackbarProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ApolloProvider>
