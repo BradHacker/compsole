@@ -122,6 +122,11 @@ export type VmObject = {
   VmObjectToTeam?: Maybe<Team>;
 };
 
+export type GetCompTeamSearchValuesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCompTeamSearchValuesQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name?: string | null, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null } | null> }> };
+
 export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -154,6 +159,28 @@ export type GetVmConsoleQueryVariables = Exact<{
 
 export type GetVmConsoleQuery = { __typename?: 'Query', console: string };
 
+export type RebootVmMutationVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+  rebootType: RebootType;
+}>;
+
+
+export type RebootVmMutation = { __typename?: 'Mutation', reboot: boolean };
+
+export type PowerOnVmMutationVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type PowerOnVmMutation = { __typename?: 'Mutation', powerOn: boolean };
+
+export type PowerOffVmMutationVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type PowerOffVmMutation = { __typename?: 'Mutation', powerOff: boolean };
+
 export const VmObjectFragmentFragmentDoc = gql`
     fragment VmObjectFragment on VmObject {
   ID
@@ -171,6 +198,46 @@ export const VmObjectFragmentFragmentDoc = gql`
   }
 }
     `;
+export const GetCompTeamSearchValuesDocument = gql`
+    query GetCompTeamSearchValues {
+  competitions {
+    ID
+    Name
+    CompetitionToTeams {
+      ID
+      TeamNumber
+      Name
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetCompTeamSearchValuesQuery__
+ *
+ * To run a query within a React component, call `useGetCompTeamSearchValuesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCompTeamSearchValuesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCompTeamSearchValuesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCompTeamSearchValuesQuery(baseOptions?: Apollo.QueryHookOptions<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>(GetCompTeamSearchValuesDocument, options);
+      }
+export function useGetCompTeamSearchValuesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>(GetCompTeamSearchValuesDocument, options);
+        }
+export type GetCompTeamSearchValuesQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesQuery>;
+export type GetCompTeamSearchValuesLazyQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesLazyQuery>;
+export type GetCompTeamSearchValuesQueryResult = Apollo.QueryResult<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>;
 export const GetCurrentUserDocument = gql`
     query GetCurrentUser {
   me {
@@ -347,3 +414,97 @@ export function useGetVmConsoleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type GetVmConsoleQueryHookResult = ReturnType<typeof useGetVmConsoleQuery>;
 export type GetVmConsoleLazyQueryHookResult = ReturnType<typeof useGetVmConsoleLazyQuery>;
 export type GetVmConsoleQueryResult = Apollo.QueryResult<GetVmConsoleQuery, GetVmConsoleQueryVariables>;
+export const RebootVmDocument = gql`
+    mutation RebootVm($vmObjectId: ID!, $rebootType: RebootType!) {
+  reboot(vmObjectId: $vmObjectId, rebootType: $rebootType)
+}
+    `;
+export type RebootVmMutationFn = Apollo.MutationFunction<RebootVmMutation, RebootVmMutationVariables>;
+
+/**
+ * __useRebootVmMutation__
+ *
+ * To run a mutation, you first call `useRebootVmMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRebootVmMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [rebootVmMutation, { data, loading, error }] = useRebootVmMutation({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *      rebootType: // value for 'rebootType'
+ *   },
+ * });
+ */
+export function useRebootVmMutation(baseOptions?: Apollo.MutationHookOptions<RebootVmMutation, RebootVmMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RebootVmMutation, RebootVmMutationVariables>(RebootVmDocument, options);
+      }
+export type RebootVmMutationHookResult = ReturnType<typeof useRebootVmMutation>;
+export type RebootVmMutationResult = Apollo.MutationResult<RebootVmMutation>;
+export type RebootVmMutationOptions = Apollo.BaseMutationOptions<RebootVmMutation, RebootVmMutationVariables>;
+export const PowerOnVmDocument = gql`
+    mutation PowerOnVm($vmObjectId: ID!) {
+  powerOn(vmObjectId: $vmObjectId)
+}
+    `;
+export type PowerOnVmMutationFn = Apollo.MutationFunction<PowerOnVmMutation, PowerOnVmMutationVariables>;
+
+/**
+ * __usePowerOnVmMutation__
+ *
+ * To run a mutation, you first call `usePowerOnVmMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePowerOnVmMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [powerOnVmMutation, { data, loading, error }] = usePowerOnVmMutation({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function usePowerOnVmMutation(baseOptions?: Apollo.MutationHookOptions<PowerOnVmMutation, PowerOnVmMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PowerOnVmMutation, PowerOnVmMutationVariables>(PowerOnVmDocument, options);
+      }
+export type PowerOnVmMutationHookResult = ReturnType<typeof usePowerOnVmMutation>;
+export type PowerOnVmMutationResult = Apollo.MutationResult<PowerOnVmMutation>;
+export type PowerOnVmMutationOptions = Apollo.BaseMutationOptions<PowerOnVmMutation, PowerOnVmMutationVariables>;
+export const PowerOffVmDocument = gql`
+    mutation PowerOffVm($vmObjectId: ID!) {
+  powerOff(vmObjectId: $vmObjectId)
+}
+    `;
+export type PowerOffVmMutationFn = Apollo.MutationFunction<PowerOffVmMutation, PowerOffVmMutationVariables>;
+
+/**
+ * __usePowerOffVmMutation__
+ *
+ * To run a mutation, you first call `usePowerOffVmMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePowerOffVmMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [powerOffVmMutation, { data, loading, error }] = usePowerOffVmMutation({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function usePowerOffVmMutation(baseOptions?: Apollo.MutationHookOptions<PowerOffVmMutation, PowerOffVmMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PowerOffVmMutation, PowerOffVmMutationVariables>(PowerOffVmDocument, options);
+      }
+export type PowerOffVmMutationHookResult = ReturnType<typeof usePowerOffVmMutation>;
+export type PowerOffVmMutationResult = Apollo.MutationResult<PowerOffVmMutation>;
+export type PowerOffVmMutationOptions = Apollo.BaseMutationOptions<PowerOffVmMutation, PowerOffVmMutationVariables>;

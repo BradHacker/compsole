@@ -35,3 +35,15 @@ query GetVmObject($vmObjectId: ID!) {
 query GetVmConsole($vmObjectId: ID!, $consoleType: ConsoleType!) {
   console(vmObjectId: $vmObjectId, consoleType: $consoleType)
 }
+
+mutation RebootVm($vmObjectId: ID!, $rebootType: RebootType!) {
+  reboot(vmObjectId: $vmObjectId, rebootType: $rebootType)
+}
+
+mutation PowerOnVm($vmObjectId: ID!) {
+  powerOn(vmObjectId: $vmObjectId)
+}
+
+mutation PowerOffVm($vmObjectId: ID!) {
+  powerOff(vmObjectId: $vmObjectId)
+}

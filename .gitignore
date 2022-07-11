@@ -22,3 +22,6 @@
 # Development
 dev/
 .vagrant
+
+# macOS files
+.DS_Store

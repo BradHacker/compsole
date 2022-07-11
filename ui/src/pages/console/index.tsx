@@ -1,4 +1,6 @@
 import {
+  ArrowDropDown,
+  Autorenew,
   PowerInput,
   PowerOff,
   PowerSettingsNew,
@@ -8,18 +10,29 @@ import {
 import {
   Button,
   ButtonGroup,
+  ClickAwayListener,
   Container,
   Grid,
+  Grow,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
   Skeleton,
   Typography,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   ConsoleType,
+  RebootType,
   useGetVmConsoleLazyQuery,
   useGetVmObjectLazyQuery,
+  usePowerOffVmMutation,
+  usePowerOnVmMutation,
+  useRebootVmMutation,
 } from "../../api/generated/graphql";
 
 export const Console: React.FC = (): React.ReactElement => {
@@ -38,6 +51,7 @@ export const Console: React.FC = (): React.ReactElement => {
       data: getVmConsoleData,
       loading: getVmConsoleLoading,
       error: getVmConsoleError,
+      refetch: getVmConsoleRefetch,
     },
   ] = useGetVmConsoleLazyQuery();
   const { enqueueSnackbar } = useSnackbar();
@@ -45,6 +59,94 @@ export const Console: React.FC = (): React.ReactElement => {
     ConsoleType.Novnc
   );
   const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false);
+  const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = React.useState(false);
+  const rebootTypeMenuAnchorRef = React.useRef<HTMLButtonElement>(null);
+  const options = [
+    {
+      title: "Hard Reboot",
+      value: RebootType.Hard,
+    },
+    {
+      title: "Soft Reboot",
+      value: RebootType.Soft,
+    },
+  ];
+  const [selectedRebootType, setSelectedRebootType] = React.useState(1);
+  const [
+    rebootVm,
+    { data: rebootVmData, loading: rebootVmLoading, error: rebootVmError },
+  ] = useRebootVmMutation();
+  const [
+    powerOn,
+    { data: powerOnVmData, loading: powerOnVmLoading, error: powerOnVmError },
+  ] = usePowerOnVmMutation();
+  const [
+    powerOff,
+    {
+      data: powerOffVmData,
+      loading: powerOffVmLoading,
+      error: powerOffVmError,
+    },
+  ] = usePowerOffVmMutation();
+
+  const handleRefreshConsoleClick = () => {
+    if (id)
+      getVmConsoleRefetch({
+        vmObjectId: id,
+        consoleType,
+      });
+  };
+
+  const handleRebootClick = () => {
+    if (id)
+      rebootVm({
+        variables: {
+          vmObjectId: id,
+          rebootType: options[selectedRebootType].value,
+        },
+      });
+  };
+
+  const handlePowerOnClick = () => {
+    if (id)
+      powerOn({
+        variables: {
+          vmObjectId: id,
+        },
+      });
+  };
+
+  const handlePowerOffClick = () => {
+    if (id)
+      powerOff({
+        variables: {
+          vmObjectId: id,
+        },
+      });
+  };
+
+  const handleRebootTypeClick = (
+    event: React.MouseEvent<HTMLLIElement, MouseEvent>,
+    index: number
+  ) => {
+    setSelectedRebootType(index);
+    setRebootTypeMenuOpen(false);
+  };
+
+  const handleToggleRebootTypeMenu = () => {
+    setRebootTypeMenuOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleRebootTypeMenuClose = (event: Event) => {
+    if (
+      rebootTypeMenuAnchorRef.current &&
+      rebootTypeMenuAnchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setRebootTypeMenuOpen(false);
+  };
 
   useEffect(() => {
     if (id) {
@@ -75,7 +177,25 @@ export const Console: React.FC = (): React.ReactElement => {
       enqueueSnackbar(getVmConsoleError.message, {
         variant: "error",
       });
-  }, [getVmObjectError, getVmConsoleError]);
+    if (rebootVmError)
+      enqueueSnackbar(rebootVmError.message, {
+        variant: "error",
+      });
+    if (powerOnVmError)
+      enqueueSnackbar(powerOnVmError.message, {
+        variant: "error",
+      });
+    if (powerOffVmError)
+      enqueueSnackbar(powerOffVmError.message, {
+        variant: "error",
+      });
+  }, [
+    getVmObjectError,
+    getVmConsoleError,
+    rebootVmError,
+    powerOnVmError,
+    powerOffVmError,
+  ]);
 
   return (
     <Container
@@ -91,8 +211,8 @@ export const Console: React.FC = (): React.ReactElement => {
           mb: 1,
         }}
       >
-        <Grid item xs={8}>
-          <Typography variant="h4">
+        <Grid item xs={4}>
+          <Typography variant="h5">
             {getVmObjectLoading || !getVmObjectData ? (
               <Skeleton />
             ) : (
@@ -110,7 +230,7 @@ export const Console: React.FC = (): React.ReactElement => {
         </Grid>
         <Grid
           item
-          xs={4}
+          xs={8}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -125,20 +245,106 @@ export const Console: React.FC = (): React.ReactElement => {
             >
               Fullscreen
             </Button> */}
-            <Button color="error" size="small" startIcon={<PowerOff />}>
+            <LoadingButton
+              color="primary"
+              size="small"
+              variant="contained"
+              startIcon={<Autorenew />}
+              loading={
+                getVmConsoleLoading ||
+                rebootVmLoading ||
+                powerOnVmLoading ||
+                powerOffVmLoading
+              }
+              loadingPosition="start"
+              onClick={handleRefreshConsoleClick}
+            >
+              Refresh Console
+            </LoadingButton>
+            <LoadingButton
+              color="error"
+              size="small"
+              variant="contained"
+              startIcon={<PowerOff />}
+              loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
+              loadingPosition="start"
+              onClick={handlePowerOffClick}
+            >
               Shutdown
-            </Button>
-            <Button
+            </LoadingButton>
+            <LoadingButton
               color="success"
               size="small"
+              variant="contained"
               startIcon={<PowerSettingsNew />}
+              loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
+              loadingPosition="start"
+              onClick={handlePowerOnClick}
             >
               Power On
-            </Button>
-            <Button color="warning" size="small" startIcon={<RestartAlt />}>
-              Reboot
+            </LoadingButton>
+            <LoadingButton
+              color="warning"
+              size="small"
+              variant="contained"
+              startIcon={<RestartAlt />}
+              loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
+              loadingPosition="start"
+              onClick={handleRebootClick}
+              ref={rebootTypeMenuAnchorRef}
+            >
+              {options[selectedRebootType].title}
+            </LoadingButton>
+            <Button
+              color="warning"
+              size="small"
+              aria-controls={
+                rebootTypeMenuOpen ? "split-button-menu" : undefined
+              }
+              aria-expanded={rebootTypeMenuOpen ? "true" : undefined}
+              aria-label="select merge strategy"
+              aria-haspopup="menu"
+              onClick={handleToggleRebootTypeMenu}
+            >
+              <ArrowDropDown />
             </Button>
           </ButtonGroup>
+          <Popper
+            open={rebootTypeMenuOpen}
+            anchorEl={rebootTypeMenuAnchorRef.current}
+            role={undefined}
+            transition
+            disablePortal
+          >
+            {({ TransitionProps, placement }) => (
+              <Grow
+                {...TransitionProps}
+                style={{
+                  transformOrigin:
+                    placement === "bottom" ? "center top" : "center bottom",
+                }}
+              >
+                <Paper>
+                  <ClickAwayListener onClickAway={handleRebootTypeMenuClose}>
+                    <MenuList id="split-button-menu" autoFocusItem>
+                      {options.map((option, index) => (
+                        <MenuItem
+                          key={option.value}
+                          disabled={index === 2}
+                          selected={index === selectedRebootType}
+                          onClick={(event) =>
+                            handleRebootTypeClick(event, index)
+                          }
+                        >
+                          {option.title}
+                        </MenuItem>
+                      ))}
+                    </MenuList>
+                  </ClickAwayListener>
+                </Paper>
+              </Grow>
+            )}
+          </Popper>
         </Grid>
       </Grid>
       {getVmConsoleLoading || !getVmConsoleData ? (

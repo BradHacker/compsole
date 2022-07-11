@@ -1,0 +1,11 @@
+query GetCompTeamSearchValues {
+  competitions {
+    ID
+    Name
+    CompetitionToTeams {
+      ID
+      TeamNumber
+      Name
+    }
+  }
+}
