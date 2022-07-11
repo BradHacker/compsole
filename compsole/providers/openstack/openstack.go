@@ -10,6 +10,7 @@ import (
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 	"github.com/gophercloud/gophercloud/pagination"
 )
@@ -109,7 +110,7 @@ func (provider CompsoleProviderOpenstack) newComputeClient() (*gophercloud.Servi
 		Region: provider.Config.RegionName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make Openstack compute client: %v", err)
 	}
 	if provider.Config.NovaMicroversion != "" {
 		computeClient.Microversion = provider.Config.NovaMicroversion
@@ -119,7 +120,7 @@ func (provider CompsoleProviderOpenstack) newComputeClient() (*gophercloud.Servi
 	return computeClient, nil
 }
 
-func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, consoleType utils.ConsoleType) (string, error) {
+func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error) {
 	// Create Openstack compute client
 	computeClient, err := provider.newComputeClient()
 	if err != nil {
@@ -151,7 +152,7 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(serverId string, console
 	}
 
 	// Create the remote console and return the URL
-	remoteConsole, err := remoteconsoles.Create(computeClient, serverId, remoteconsoles.CreateOpts{
+	remoteConsole, err := remoteconsoles.Create(computeClient, vmObject.Identifier, remoteconsoles.CreateOpts{
 		Protocol: remoteConsoleProtocol,
 		Type:     remoteConsoleType,
 	}).Extract()
@@ -211,4 +212,79 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 		return nil, fmt.Errorf("failed to iterate over servers: %v", err)
 	}
 	return serverList, nil
+}
+
+func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebootType utils.RebootType) error {
+	// Generate authenticated compute client for Openstack
+	gopherProvider, err := provider.newAuthProvider()
+	if err != nil {
+		return fmt.Errorf("failed to authenticate with Openstack: %v", err)
+	}
+	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
+		Region: provider.Config.RegionName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to make Openstack compute client: %v", err)
+	}
+	// Determine which type of reboot to requests
+	var rebootMethod servers.RebootMethod
+	switch rebootType {
+	case utils.SoftReboot:
+		rebootMethod = servers.SoftReboot
+		break
+	case utils.HardReboot:
+		rebootMethod = servers.HardReboot
+		break
+	default:
+		rebootMethod = servers.SoftReboot
+	}
+	// Reboot the server
+	err = servers.Reboot(computeClient, vmObject.Identifier, servers.RebootOpts{
+		Type: rebootMethod,
+	}).ExtractErr()
+	if err != nil {
+		return fmt.Errorf("failed to reboot server: %v", err)
+	}
+	return nil
+}
+
+func (provider CompsoleProviderOpenstack) PowerOnVM(vmObject *ent.VmObject) error {
+	// Generate authenticated compute client for Openstack
+	gopherProvider, err := provider.newAuthProvider()
+	if err != nil {
+		return fmt.Errorf("failed to authenticate with Openstack: %v", err)
+	}
+	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
+		Region: provider.Config.RegionName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to make Openstack compute client: %v", err)
+	}
+	// Start the vm
+	err = startstop.Start(computeClient, vmObject.Identifier).ExtractErr()
+	if err != nil {
+		return fmt.Errorf("failed to start server: %v", err)
+	}
+	return nil
+}
+
+func (provider CompsoleProviderOpenstack) PowerOffVM(vmObject *ent.VmObject) error {
+
+	// Generate authenticated compute client for Openstack
+	gopherProvider, err := provider.newAuthProvider()
+	if err != nil {
+		return fmt.Errorf("failed to authenticate with Openstack: %v", err)
+	}
+	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
+		Region: provider.Config.RegionName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to make Openstack compute client: %v", err)
+	}
+	// Stop the vm
+	err = startstop.Stop(computeClient, vmObject.Identifier).ExtractErr()
+	if err != nil {
+		return fmt.Errorf("failed to stop server: %v", err)
+	}
+	return nil
 }

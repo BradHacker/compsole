@@ -38,6 +38,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Competition() CompetitionResolver
+	Mutation() MutationResolver
 	Query() QueryResolver
 	Team() TeamResolver
 	User() UserResolver
@@ -55,6 +56,12 @@ type ComplexityRoot struct {
 		Name               func(childComplexity int) int
 	}
 
+	Mutation struct {
+		PowerOff func(childComplexity int, vmObjectID string) int
+		PowerOn  func(childComplexity int, vmObjectID string) int
+		Reboot   func(childComplexity int, vmObjectID string, rebootType model.RebootType) int
+	}
+
 	Query struct {
 		Competitions  func(childComplexity int) int
 		Console       func(childComplexity int, vmObjectID string, consoleType model.ConsoleType) int
@@ -63,6 +70,7 @@ type ComplexityRoot struct {
 		MyTeam        func(childComplexity int) int
 		MyVMObjects   func(childComplexity int) int
 		Teams         func(childComplexity int) int
+		VMObject      func(childComplexity int, vmObjectID string) int
 		VMObjects     func(childComplexity int) int
 	}
 
@@ -95,9 +103,15 @@ type ComplexityRoot struct {
 type CompetitionResolver interface {
 	ID(ctx context.Context, obj *ent.Competition) (string, error)
 }
+type MutationResolver interface {
+	Reboot(ctx context.Context, vmObjectID string, rebootType model.RebootType) (bool, error)
+	PowerOn(ctx context.Context, vmObjectID string) (bool, error)
+	PowerOff(ctx context.Context, vmObjectID string) (bool, error)
+}
 type QueryResolver interface {
 	Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error)
 	Me(ctx context.Context) (*ent.User, error)
+	VMObject(ctx context.Context, vmObjectID string) (*ent.VmObject, error)
 	MyVMObjects(ctx context.Context) ([]*ent.VmObject, error)
 	MyTeam(ctx context.Context) (*ent.Team, error)
 	MyCompetition(ctx context.Context) (*ent.Competition, error)
@@ -154,6 +168,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Competition.Name(childComplexity), true
 
+	case "Mutation.powerOff":
+		if e.complexity.Mutation.PowerOff == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_powerOff_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PowerOff(childComplexity, args["vmObjectId"].(string)), true
+
+	case "Mutation.powerOn":
+		if e.complexity.Mutation.PowerOn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_powerOn_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.PowerOn(childComplexity, args["vmObjectId"].(string)), true
+
+	case "Mutation.reboot":
+		if e.complexity.Mutation.Reboot == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_reboot_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Reboot(childComplexity, args["vmObjectId"].(string), args["rebootType"].(model.RebootType)), true
+
 	case "Query.competitions":
 		if e.complexity.Query.Competitions == nil {
 			break
@@ -207,6 +257,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Teams(childComplexity), true
+
+	case "Query.vmObject":
+		if e.complexity.Query.VMObject == nil {
+			break
+		}
+
+		args, err := ec.field_Query_vmObject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.VMObject(childComplexity, args["vmObjectId"].(string)), true
 
 	case "Query.vmObjects":
 		if e.complexity.Query.VMObjects == nil {
@@ -353,6 +415,21 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
+			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -440,7 +517,8 @@ directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 type Query {
   # Shared actions
   console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
-  me: User
+  me: User! @hasRole(roles: [ADMIN, USER])
+  vmObject(vmObjectId: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
   # User actions
   myVmObjects: [VmObject!]! @hasRole(roles: [USER])
   myTeam: Team! @hasRole(roles: [USER])
@@ -449,6 +527,18 @@ type Query {
   vmObjects: [VmObject!]! @hasRole(roles: [ADMIN])
   teams: [Team!]! @hasRole(roles: [ADMIN])
   competitions: [Competition!]! @hasRole(roles: [ADMIN])
+}
+
+enum RebootType {
+  SOFT
+  HARD
+}
+
+type Mutation {
+  # Shared actions
+  reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
+  powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
+  powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
 }
 `, BuiltIn: false},
 }
@@ -470,6 +560,60 @@ func (ec *executionContext) dir_hasRole_args(ctx context.Context, rawArgs map[st
 		}
 	}
 	args["roles"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_powerOff_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["vmObjectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vmObjectId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vmObjectId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_powerOn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["vmObjectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vmObjectId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vmObjectId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_reboot_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["vmObjectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vmObjectId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vmObjectId"] = arg0
+	var arg1 model.RebootType
+	if tmp, ok := rawArgs["rebootType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rebootType"))
+		arg1, err = ec.unmarshalNRebootType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRebootType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["rebootType"] = arg1
 	return args, nil
 }
 
@@ -509,6 +653,21 @@ func (ec *executionContext) field_Query_console_args(ctx context.Context, rawArg
 		}
 	}
 	args["consoleType"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_vmObject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["vmObjectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vmObjectId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vmObjectId"] = arg0
 	return args, nil
 }
 
@@ -691,6 +850,243 @@ func (ec *executionContext) fieldContext_Competition_CompetitionToTeams(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_reboot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_reboot(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().Reboot(rctx, fc.Args["vmObjectId"].(string), fc.Args["rebootType"].(model.RebootType))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_reboot(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_reboot_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_powerOn(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_powerOn(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().PowerOn(rctx, fc.Args["vmObjectId"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_powerOn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_powerOn_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_powerOff(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_powerOff(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().PowerOff(rctx, fc.Args["vmObjectId"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_powerOff(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_powerOff_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_console(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_console(ctx, field)
 	if err != nil {
@@ -783,19 +1179,46 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Me(rctx)
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Me(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*ent.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/ent.User`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*ent.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -821,6 +1244,97 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_vmObject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_vmObject(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().VMObject(rctx, fc.Args["vmObjectId"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*ent.VmObject); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/ent.VmObject`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.VmObject)
+	fc.Result = res
+	return ec.marshalNVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_vmObject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_VmObject_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_VmObject_Name(ctx, field)
+			case "Identifier":
+				return ec.fieldContext_VmObject_Identifier(ctx, field)
+			case "IPAddresses":
+				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "VmObjectToTeam":
+				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VmObject", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_vmObject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -3999,6 +4513,63 @@ func (ec *executionContext) _Competition(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
+			Object: field.Name,
+			Field:  field,
+		})
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "reboot":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_reboot(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "powerOn":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_powerOn(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "powerOff":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_powerOff(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -4051,6 +4622,32 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_me(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "vmObject":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_vmObject(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -4933,6 +5530,16 @@ func (ec *executionContext) marshalNProvider2githubᚗcomᚋBradHackerᚋcompsol
 	return v
 }
 
+func (ec *executionContext) unmarshalNRebootType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRebootType(ctx context.Context, v interface{}) (model.RebootType, error) {
+	var res model.RebootType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRebootType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRebootType(ctx context.Context, sel ast.SelectionSet, v model.RebootType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNRole2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRole(ctx context.Context, v interface{}) (model.Role, error) {
 	var res model.Role
 	err := res.UnmarshalGQL(v)
@@ -5113,6 +5720,24 @@ func (ec *executionContext) marshalNTeam2ᚖgithubᚗcomᚋBradHackerᚋcompsole
 		return graphql.Null
 	}
 	return ec._Team(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUser2githubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v ent.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v *ent.User) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNVmObject2githubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v ent.VmObject) graphql.Marshaler {
+	return ec._VmObject(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v []*ent.VmObject) graphql.Marshaler {
@@ -5549,13 +6174,6 @@ func (ec *executionContext) marshalOTeam2ᚖgithubᚗcomᚋBradHackerᚋcompsole
 		return graphql.Null
 	}
 	return ec._Team(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v *ent.User) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v *ent.VmObject) graphql.Marshaler {

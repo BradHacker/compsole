@@ -8,11 +8,12 @@ import (
 
 type ConsoleType string
 
-type VmObject struct {
-	ID          string
-	Name        string
-	IpAddresses []string
-}
+type RebootType string
+
+const (
+	SoftReboot RebootType = "SOFT"
+	HardReboot RebootType = "HARD"
+)
 
 // LoadProviderConfig is a helper function which loads the config file into a provider
 func LoadProviderConfig(configFilePath string, config interface{}) error {

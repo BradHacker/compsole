@@ -30,6 +30,29 @@ export enum ConsoleType {
   Spice = 'SPICE'
 }
 
+export type Mutation = {
+  __typename?: 'Mutation';
+  powerOff: Scalars['Boolean'];
+  powerOn: Scalars['Boolean'];
+  reboot: Scalars['Boolean'];
+};
+
+
+export type MutationPowerOffArgs = {
+  vmObjectId: Scalars['ID'];
+};
+
+
+export type MutationPowerOnArgs = {
+  vmObjectId: Scalars['ID'];
+};
+
+
+export type MutationRebootArgs = {
+  rebootType: RebootType;
+  vmObjectId: Scalars['ID'];
+};
+
 export enum Provider {
   Gitlab = 'GITLAB',
   Local = 'LOCAL',
@@ -40,11 +63,12 @@ export type Query = {
   __typename?: 'Query';
   competitions: Array<Competition>;
   console: Scalars['String'];
-  me?: Maybe<User>;
+  me: User;
   myCompetition: Competition;
   myTeam: Team;
   myVmObjects: Array<VmObject>;
   teams: Array<Team>;
+  vmObject: VmObject;
   vmObjects: Array<VmObject>;
 };
 
@@ -53,6 +77,16 @@ export type QueryConsoleArgs = {
   consoleType: ConsoleType;
   vmObjectId: Scalars['ID'];
 };
+
+
+export type QueryVmObjectArgs = {
+  vmObjectId: Scalars['ID'];
+};
+
+export enum RebootType {
+  Hard = 'HARD',
+  Soft = 'SOFT'
+}
 
 export enum Role {
   Admin = 'ADMIN',
@@ -91,19 +125,34 @@ export type VmObject = {
 export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCurrentUserQuery = { __typename?: 'Query', me?: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role } | null };
+export type GetCurrentUserQuery = { __typename?: 'Query', me: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role } };
 
-export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null };
+export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name?: string | null } } | null };
 
 export type MyVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyVmObjectsQuery = { __typename?: 'Query', myVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null }> };
+export type MyVmObjectsQuery = { __typename?: 'Query', myVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name?: string | null } } | null }> };
 
 export type AllVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AllVmObjectsQuery = { __typename?: 'Query', vmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name?: string | null } } | null }> };
+
+export type GetVmObjectQueryVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type GetVmObjectQuery = { __typename?: 'Query', vmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses?: Array<string | null> | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name?: string | null } } | null } };
+
+export type GetVmConsoleQueryVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+  consoleType: ConsoleType;
+}>;
+
+
+export type GetVmConsoleQuery = { __typename?: 'Query', console: string };
 
 export const VmObjectFragmentFragmentDoc = gql`
     fragment VmObjectFragment on VmObject {
@@ -111,6 +160,15 @@ export const VmObjectFragmentFragmentDoc = gql`
   Identifier
   Name
   IPAddresses
+  VmObjectToTeam {
+    ID
+    TeamNumber
+    Name
+    TeamToCompetition {
+      ID
+      Name
+    }
+  }
 }
     `;
 export const GetCurrentUserDocument = gql`
@@ -190,15 +248,6 @@ export const AllVmObjectsDocument = gql`
     query AllVmObjects {
   vmObjects {
     ...VmObjectFragment
-    VmObjectToTeam {
-      ID
-      TeamNumber
-      Name
-      TeamToCompetition {
-        ID
-        Name
-      }
-    }
   }
 }
     ${VmObjectFragmentFragmentDoc}`;
@@ -229,3 +278,72 @@ export function useAllVmObjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type AllVmObjectsQueryHookResult = ReturnType<typeof useAllVmObjectsQuery>;
 export type AllVmObjectsLazyQueryHookResult = ReturnType<typeof useAllVmObjectsLazyQuery>;
 export type AllVmObjectsQueryResult = Apollo.QueryResult<AllVmObjectsQuery, AllVmObjectsQueryVariables>;
+export const GetVmObjectDocument = gql`
+    query GetVmObject($vmObjectId: ID!) {
+  vmObject(vmObjectId: $vmObjectId) {
+    ...VmObjectFragment
+  }
+}
+    ${VmObjectFragmentFragmentDoc}`;
+
+/**
+ * __useGetVmObjectQuery__
+ *
+ * To run a query within a React component, call `useGetVmObjectQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetVmObjectQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetVmObjectQuery({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function useGetVmObjectQuery(baseOptions: Apollo.QueryHookOptions<GetVmObjectQuery, GetVmObjectQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetVmObjectQuery, GetVmObjectQueryVariables>(GetVmObjectDocument, options);
+      }
+export function useGetVmObjectLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetVmObjectQuery, GetVmObjectQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetVmObjectQuery, GetVmObjectQueryVariables>(GetVmObjectDocument, options);
+        }
+export type GetVmObjectQueryHookResult = ReturnType<typeof useGetVmObjectQuery>;
+export type GetVmObjectLazyQueryHookResult = ReturnType<typeof useGetVmObjectLazyQuery>;
+export type GetVmObjectQueryResult = Apollo.QueryResult<GetVmObjectQuery, GetVmObjectQueryVariables>;
+export const GetVmConsoleDocument = gql`
+    query GetVmConsole($vmObjectId: ID!, $consoleType: ConsoleType!) {
+  console(vmObjectId: $vmObjectId, consoleType: $consoleType)
+}
+    `;
+
+/**
+ * __useGetVmConsoleQuery__
+ *
+ * To run a query within a React component, call `useGetVmConsoleQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetVmConsoleQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetVmConsoleQuery({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *      consoleType: // value for 'consoleType'
+ *   },
+ * });
+ */
+export function useGetVmConsoleQuery(baseOptions: Apollo.QueryHookOptions<GetVmConsoleQuery, GetVmConsoleQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetVmConsoleQuery, GetVmConsoleQueryVariables>(GetVmConsoleDocument, options);
+      }
+export function useGetVmConsoleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetVmConsoleQuery, GetVmConsoleQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetVmConsoleQuery, GetVmConsoleQueryVariables>(GetVmConsoleDocument, options);
+        }
+export type GetVmConsoleQueryHookResult = ReturnType<typeof useGetVmConsoleQuery>;
+export type GetVmConsoleLazyQueryHookResult = ReturnType<typeof useGetVmConsoleLazyQuery>;
+export type GetVmConsoleQueryResult = Apollo.QueryResult<GetVmConsoleQuery, GetVmConsoleQueryVariables>;

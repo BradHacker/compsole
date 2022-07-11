@@ -98,6 +98,47 @@ func (e Provider) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type RebootType string
+
+const (
+	RebootTypeSoft RebootType = "SOFT"
+	RebootTypeHard RebootType = "HARD"
+)
+
+var AllRebootType = []RebootType{
+	RebootTypeSoft,
+	RebootTypeHard,
+}
+
+func (e RebootType) IsValid() bool {
+	switch e {
+	case RebootTypeSoft, RebootTypeHard:
+		return true
+	}
+	return false
+}
+
+func (e RebootType) String() string {
+	return string(e)
+}
+
+func (e *RebootType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RebootType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RebootType", str)
+	}
+	return nil
+}
+
+func (e RebootType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type Role string
 
 const (

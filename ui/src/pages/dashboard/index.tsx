@@ -1,3 +1,4 @@
+import { Terminal } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -8,9 +9,11 @@ import {
   Container,
   Divider,
   Grid,
+  IconButton,
   Skeleton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -74,7 +77,14 @@ const VmCard: React.FC<{
         </Typography>
       </CardContent>
       <CardActions>
-        <Button size="small">Learn More</Button>
+        <Tooltip title="Console">
+          <IconButton
+            aria-label="Console"
+            href={`/console/${vmObject?.ID ?? "undefined"}`}
+          >
+            <Terminal />
+          </IconButton>
+        </Tooltip>
       </CardActions>
     </Card>
   );

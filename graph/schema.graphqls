@@ -59,7 +59,8 @@ directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 type Query {
   # Shared actions
   console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
-  me: User
+  me: User! @hasRole(roles: [ADMIN, USER])
+  vmObject(vmObjectId: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
   # User actions
   myVmObjects: [VmObject!]! @hasRole(roles: [USER])
   myTeam: Team! @hasRole(roles: [USER])
@@ -68,4 +69,16 @@ type Query {
   vmObjects: [VmObject!]! @hasRole(roles: [ADMIN])
   teams: [Team!]! @hasRole(roles: [ADMIN])
   competitions: [Competition!]! @hasRole(roles: [ADMIN])
+}
+
+enum RebootType {
+  SOFT
+  HARD
+}
+
+type Mutation {
+  # Shared actions
+  reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
+  powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
+  powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
 }

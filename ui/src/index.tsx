@@ -18,6 +18,7 @@ import { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import { Auth, Signin, Signup } from "./pages/auth";
 import { Dashboard } from "./pages/dashboard";
 import { SnackbarProvider } from "notistack";
+import { Console } from "./pages/console";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -66,6 +67,7 @@ root.render(
               {/* Protected App Routes (Auth Required) */}
               <Route path="/" element={<App />}>
                 <Route index element={<Dashboard />} />
+                <Route path="console/:id" element={<Console />} />
               </Route>
               {/* Unprotected App Routes (No Auth Required) */}
               <Route path="/auth" element={<Auth />}>

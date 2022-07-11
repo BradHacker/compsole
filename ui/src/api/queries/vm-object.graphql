@@ -3,6 +3,15 @@ fragment VmObjectFragment on VmObject {
   Identifier
   Name
   IPAddresses
+  VmObjectToTeam {
+    ID
+    TeamNumber
+    Name
+    TeamToCompetition {
+      ID
+      Name
+    }
+  }
 }
 
 query MyVmObjects {
@@ -14,14 +23,15 @@ query MyVmObjects {
 query AllVmObjects {
   vmObjects {
     ...VmObjectFragment
-    VmObjectToTeam {
-      ID
-      TeamNumber
-      Name
-      TeamToCompetition {
-        ID
-        Name
-      }
-    }
   }
+}
+
+query GetVmObject($vmObjectId: ID!) {
+  vmObject(vmObjectId: $vmObjectId) {
+    ...VmObjectFragment
+  }
+}
+
+query GetVmConsole($vmObjectId: ID!, $consoleType: ConsoleType!) {
+  console(vmObjectId: $vmObjectId, consoleType: $consoleType)
 }
