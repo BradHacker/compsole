@@ -125,7 +125,7 @@ export type VmObject = {
 export type GetCompTeamSearchValuesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCompTeamSearchValuesQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name?: string | null, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null } | null> }> };
+export type GetCompTeamSearchValuesQuery = { __typename?: 'Query', teams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name?: string | null } }> };
 
 export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -200,12 +200,12 @@ export const VmObjectFragmentFragmentDoc = gql`
     `;
 export const GetCompTeamSearchValuesDocument = gql`
     query GetCompTeamSearchValues {
-  competitions {
+  teams {
     ID
+    TeamNumber
     Name
-    CompetitionToTeams {
+    TeamToCompetition {
       ID
-      TeamNumber
       Name
     }
   }

@@ -45,10 +45,29 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#8375BC",
+      main: "#c4a7e7",
     },
     secondary: {
-      main: "#F7B374",
+      main: "#f6c177",
+    },
+    error: {
+      main: "#eb6f92",
+    },
+    warning: {
+      main: "#ea9a97",
+    },
+    info: {
+      main: "#3e8fb0",
+    },
+    success: {
+      main: "#9ccfd8",
+    },
+    background: {
+      default: "#232136",
+      paper: "#2a273f",
+    },
+    text: {
+      primary: "#e0def4",
     },
   },
 });

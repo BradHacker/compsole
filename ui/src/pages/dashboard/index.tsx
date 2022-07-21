@@ -1,5 +1,6 @@
 import { Terminal } from "@mui/icons-material";
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -23,7 +24,9 @@ import {
   MyVmObjectsQuery,
   MyVmObjectsQueryResult,
   Role,
+  Team,
   useAllVmObjectsLazyQuery,
+  useGetCompTeamSearchValuesLazyQuery,
   useMyVmObjectsLazyQuery,
   useMyVmObjectsQuery,
   VmObject,
@@ -92,6 +95,7 @@ const VmCard: React.FC<{
 
 export const Dashboard: React.FC = (): React.ReactElement => {
   let user = useContext(UserContext);
+  const { enqueueSnackbar } = useSnackbar();
   let [
     getMyVmObjects,
     {
@@ -108,11 +112,25 @@ export const Dashboard: React.FC = (): React.ReactElement => {
       error: allVmObjectsError,
     },
   ] = useAllVmObjectsLazyQuery();
-  const { enqueueSnackbar } = useSnackbar();
+  let [
+    getSearchValues,
+    {
+      data: getSearchValuesData,
+      loading: getSearchValuesLoading,
+      error: getSearchValuesError,
+    },
+  ] = useGetCompTeamSearchValuesLazyQuery();
+  const [teamFilter, setTeamFilter] = React.useState<Team | null>(null);
+  const [filteredVmObjects, setFilteredVmObjects] = React.useState<
+    MyVmObjectsQuery["myVmObjects"] | AllVmObjectsQuery["vmObjects"]
+  >([]);
 
   useEffect(() => {
     if (user.Role == Role.User) getMyVmObjects();
-    else if (user.Role == Role.Admin) getAllVmObjects();
+    else if (user.Role == Role.Admin) {
+      getAllVmObjects();
+      getSearchValues();
+    }
   }, [user]);
 
   useEffect(() => {
@@ -126,6 +144,26 @@ export const Dashboard: React.FC = (): React.ReactElement => {
       );
   }, [myVmObjectsError, allVmObjectsError]);
 
+  useEffect(() => {
+    if (myVmObjectsData?.myVmObjects || allVmObjectsData?.vmObjects) {
+      if (teamFilter) {
+        setFilteredVmObjects([
+          ...(
+            myVmObjectsData?.myVmObjects ||
+            allVmObjectsData?.vmObjects ||
+            []
+          ).filter((vm) => (vm.VmObjectToTeam?.ID ?? "") === teamFilter.ID),
+        ]);
+      } else {
+        setFilteredVmObjects([
+          ...(myVmObjectsData?.myVmObjects ||
+            allVmObjectsData?.vmObjects ||
+            []),
+        ]);
+      }
+    }
+  }, [teamFilter, myVmObjectsData, allVmObjectsData]);
+
   return (
     <Container
       component="main"
@@ -134,7 +172,23 @@ export const Dashboard: React.FC = (): React.ReactElement => {
       }}
     >
       <Stack spacing={2}>
-        <TextField id="outlined-basic" label="Outlined" variant="outlined" />
+        {user && user.Role === Role.Admin && (
+          <Autocomplete
+            options={getSearchValuesData?.teams ?? []}
+            groupBy={(t) => t.TeamToCompetition?.Name ?? "N/A"}
+            getOptionLabel={(t) =>
+              `${t.TeamToCompetition.Name} - ${
+                t.Name || `Team ${t.TeamNumber}`
+              }`
+            }
+            renderInput={(params) => (
+              <TextField {...params} label="With categories" />
+            )}
+            onChange={(event, value) => {
+              setTeamFilter(value as Team);
+            }}
+          />
+        )}
         {myVmObjectsLoading ||
         allVmObjectsLoading ||
         myVmObjectsError ||
@@ -146,11 +200,7 @@ export const Dashboard: React.FC = (): React.ReactElement => {
           </Grid>
         ) : (
           <Grid container spacing={2}>
-            {(
-              myVmObjectsData?.myVmObjects ||
-              allVmObjectsData?.vmObjects ||
-              []
-            ).map((vmObject) => (
+            {filteredVmObjects.map((vmObject) => (
               <Grid item key={vmObject.ID} xs={4}>
                 <VmCard
                   vmObject={vmObject}
