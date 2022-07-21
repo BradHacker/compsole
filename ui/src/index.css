@@ -3,3 +3,24 @@ body,
 #root {
   min-height: 100vh;
 }
+
+.SnackbarItem-variantDefault {
+  background-color: #c4a7e7 !important;
+  color: #000 !important;
+}
+.SnackbarItem-variantError {
+  background-color: #eb6f92 !important;
+  color: #000 !important;
+}
+.SnackbarItem-variantInfo {
+  background-color: #3e8fb0 !important;
+  color: #000 !important;
+}
+.SnackbarItem-variantSuccess {
+  background-color: #9ccfd8 !important;
+  color: #000 !important;
+}
+.SnackbarItem-variantWarning {
+  background-color: #ea9a97 !important;
+  color: #000 !important;
+}

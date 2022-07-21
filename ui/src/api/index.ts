@@ -39,3 +39,17 @@ export const LocalLogin = (
       })
   );
 };
+
+export const Logout = (): Promise<boolean> => {
+  return new Promise((resolve, reject) =>
+    fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logout`, {
+      method: "GET",
+      credentials: "include",
+    }).then((res) => {
+      if (res.status < 200 || res.status > 299) {
+        return reject(`error: returned status '${res.statusText}'`);
+      }
+      resolve(true);
+    })
+  );
+};

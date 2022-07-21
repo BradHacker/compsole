@@ -94,7 +94,16 @@ export const Console: React.FC = (): React.ReactElement => {
       getVmConsoleRefetch({
         vmObjectId: id,
         consoleType,
-      });
+      }).then(
+        () =>
+          enqueueSnackbar("Refreshed Console", {
+            variant: "success",
+          }),
+        (err) =>
+          enqueueSnackbar(`Failed to Refresh Console: ${err}`, {
+            variant: "error",
+          })
+      );
   };
 
   const handleRebootClick = () => {
@@ -104,7 +113,16 @@ export const Console: React.FC = (): React.ReactElement => {
           vmObjectId: id,
           rebootType: options[selectedRebootType].value,
         },
-      });
+      }).then(
+        () =>
+          enqueueSnackbar("Rebooted VM", {
+            variant: "success",
+          }),
+        (err) =>
+          enqueueSnackbar(`Failed to Reboot VM: ${err}`, {
+            variant: "error",
+          })
+      );
   };
 
   const handlePowerOnClick = () => {
@@ -113,7 +131,16 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      });
+      }).then(
+        () =>
+          enqueueSnackbar("Powered On VM", {
+            variant: "success",
+          }),
+        (err) =>
+          enqueueSnackbar(`Failed to Power On VM: ${err}`, {
+            variant: "error",
+          })
+      );
   };
 
   const handlePowerOffClick = () => {
@@ -122,7 +149,16 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      });
+      }).then(
+        () =>
+          enqueueSnackbar("Powered Off VM", {
+            variant: "success",
+          }),
+        (err) =>
+          enqueueSnackbar(`Failed to Power Off VM: ${err}`, {
+            variant: "error",
+          })
+      );
   };
 
   const handleRebootTypeClick = (

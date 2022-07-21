@@ -13,10 +13,16 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useGetCurrentUserQuery, User } from "./api/generated/graphql";
 import { Loading } from "./pages/loading";
 import { UserContext } from "./user-context";
+import SettingsIcon from "@mui/icons-material/Settings";
+import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
+import { Logout } from "./api";
+
+import Logo from "./res/logo_200.png";
+import { useSnackbar } from "notistack";
 
 function App() {
   const {
@@ -25,6 +31,7 @@ function App() {
     error: currentUserError,
   } = useGetCurrentUserQuery();
   let navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   let [user, setUser] = useState<User | null | undefined>();
   let [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
 
@@ -38,29 +45,45 @@ function App() {
     else if (!currentUserLoading && !currentUserError && currentUser)
       setUser(currentUser.me);
   }, [currentUser, currentUserLoading, currentUserError, navigate]);
+
+  const handleSignOut = () => {
+    Logout().then(
+      () => {
+        enqueueSnackbar("Logged out successfully", {
+          variant: "success",
+        });
+        navigate("/auth/signin");
+      },
+      (err) => {
+        enqueueSnackbar(`Failed to logout: ${err}`, {
+          variant: "error",
+        });
+      }
+    );
+  };
+
   return !currentUserLoading && user ? (
     <UserContext.Provider value={user}>
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              <Box
-                sx={{
-                  color: "#8375BC",
-                }}
-                component="span"
-              >
-                &lt;Comp/&gt;
-              </Box>
-              <Box
-                sx={{
-                  color: "#F7B374",
-                }}
-                component="span"
-              >
-                sole
-              </Box>
-            </Typography>
+            <Link
+              to="/"
+              style={{
+                flexGrow: 1,
+                textDecoration: "none",
+                color: "inherit",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <img
+                src={Logo}
+                alt="Logo"
+                style={{ height: "2.5rem", marginRight: "0.5rem" }}
+              />
+              <Typography variant="h6">Compsole</Typography>
+            </Link>
             <Box
               sx={{
                 display: "flex",
@@ -115,7 +138,12 @@ function App() {
                   onClose={handleCloseUserMenu}
                 >
                   <MenuItem onClick={handleCloseUserMenu}>
-                    <Typography textAlign="center">Account Settings</Typography>
+                    <SettingsIcon sx={{ mr: 1 }} />
+                    <Typography textAlign="left">Account Settings</Typography>
+                  </MenuItem>
+                  <MenuItem onClick={handleSignOut}>
+                    <PowerSettingsNewIcon sx={{ mr: 1 }} />
+                    <Typography textAlign="left">Sign Out</Typography>
                   </MenuItem>
                 </Menu>
               </Box>

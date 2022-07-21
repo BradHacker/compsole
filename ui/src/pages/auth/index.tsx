@@ -14,6 +14,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import * as React from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { LocalLogin } from "../../api";
+import Logo from "../../res/logo512.png";
 
 export const Auth: React.FC = (): React.ReactElement => {
   return (
@@ -24,8 +25,10 @@ export const Auth: React.FC = (): React.ReactElement => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          justifyContent: "space-evenly",
         }}
       >
+        <img src={Logo} alt="Logo" style={{ maxWidth: "80%" }} />
         <Outlet />
       </Box>
     </Container>

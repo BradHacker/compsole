@@ -41,6 +41,7 @@ const darkTheme = createTheme({
         LinkComponent: LinkBehavior,
       },
     },
+    MuiSnackbar: {},
   },
   palette: {
     mode: "dark",
