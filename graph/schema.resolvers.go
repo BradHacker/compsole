@@ -11,9 +11,14 @@ import (
 	"github.com/BradHacker/compsole/compsole/providers"
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
+	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/team"
+	"github.com/BradHacker/compsole/ent/user"
+	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // ID is the resolver for the ID field.
@@ -132,6 +137,268 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 	return true, provider.PowerOffVM(entVmObject)
 }
 
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
+	usernameExists, err := r.client.User.Query().Where(user.UsernameEQ(input.Username)).Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query if username is already in use: %v", err)
+	}
+	if usernameExists {
+		return nil, fmt.Errorf("failed to create user: username already in use")
+	}
+
+	var entTeam *ent.Team = nil
+	if input.UserToTeam != nil {
+		teamUuid, err := uuid.Parse(*input.UserToTeam)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse UserToTeam UUID: %v", err)
+		}
+		entTeam, err = r.client.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query team: %v", err)
+		}
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), 8)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %v", err)
+	}
+	password := string(hashedPassword[:])
+	entUser, err := r.client.User.Create().SetUsername(input.Username).SetPassword(password).SetFirstName(input.FirstName).SetLastName(input.LastName).SetRole(user.Role(input.Role)).SetProvider(user.Provider(input.Provider)).SetUserToTeam(entTeam).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %v", err)
+	}
+	return entUser, nil
+}
+
+// UpdateUser is the resolver for the updateUser field.
+func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query user: ID must not be nil")
+	}
+	userUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse user UUID: %v", err)
+	}
+	entUser, err := r.client.User.Query().Where(user.IDEQ(userUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user: %v", err)
+	}
+	var entTeam *ent.Team = nil
+	if input.UserToTeam != nil {
+		teamUuid, err := uuid.Parse(*input.UserToTeam)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse team UUID: %v", err)
+		}
+		entTeam, err = r.client.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query team: %v", err)
+		}
+	}
+	entUser, err = entUser.Update().
+		SetFirstName(input.FirstName).
+		SetLastName(input.LastName).
+		SetRole(user.Role(input.Role)).
+		SetProvider(user.Provider(input.Provider)).
+		SetUserToTeam(entTeam).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user: %v", err)
+	}
+	return entUser, nil
+}
+
+// DeleteUser is the resolver for the deleteUser field.
+func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, error) {
+	userUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete user: %v", err)
+	}
+	return true, nil
+}
+
+// CreateTeam is the resolver for the createTeam field.
+func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error) {
+	competitionUuid, err := uuid.Parse(input.TeamToCompetition)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
+	}
+	teamExists, err := r.client.Team.Query().Where(team.And(team.TeamNumberEQ(input.TeamNumber), team.HasTeamToCompetitionWith(competition.IDEQ(competitionUuid)))).Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query if team already exists: %v", err)
+	}
+	if teamExists {
+		return nil, fmt.Errorf("failed to create team: team already exists")
+	}
+
+	entCompetition, err := r.client.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competition: %v", err)
+	}
+	entTeam, err := r.client.Team.Create().SetTeamNumber(input.TeamNumber).SetName(*input.Name).SetTeamToCompetition(entCompetition).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %v", err)
+	}
+	return entTeam, nil
+}
+
+// UpdateTeam is the resolver for the updateTeam field.
+func (r *mutationResolver) UpdateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error) {
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query team: ID must not be nil")
+	}
+	teamUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse team UUID: %v", err)
+	}
+	entTeam, err := r.client.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query team: %v", err)
+	}
+	competitionUuid, err := uuid.Parse(input.TeamToCompetition)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
+	}
+	entCompetition, err := r.client.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competition: %v", err)
+	}
+	entTeam, err = entTeam.Update().SetName(*input.Name).SetTeamToCompetition(entCompetition).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update team: %v", err)
+	}
+	return entTeam, nil
+}
+
+// DeleteTeam is the resolver for the deleteTeam field.
+func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, error) {
+	teamUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.Team.Delete().Where(team.IDEQ(teamUuid)).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete team: %v", err)
+	}
+	return true, nil
+}
+
+// CreateCompetition is the resolver for the createCompetition field.
+func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
+	entTeam, err := r.client.Competition.Create().SetName(input.Name).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create competition: %v", err)
+	}
+	return entTeam, nil
+}
+
+// UpdateCompetition is the resolver for the updateCompetition field.
+func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query competition: ID must not be nil")
+	}
+	competitionUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
+	}
+	entCompetition, err := r.client.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competition: %v", err)
+	}
+	entCompetition, err = entCompetition.Update().SetName(input.Name).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update team: %v", err)
+	}
+	return entCompetition, nil
+}
+
+// DeleteCompetition is the resolver for the deleteCompetition field.
+func (r *mutationResolver) DeleteCompetition(ctx context.Context, id string) (bool, error) {
+	competitionUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.Competition.Delete().Where(competition.IDEQ(competitionUuid)).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete competition: %v", err)
+	}
+	return true, nil
+}
+
+// CreateVMObject is the resolver for the createVmObject field.
+func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error) {
+	var entTeam *ent.Team = nil
+	if input.VMObjectToTeam != nil {
+		teamUuid, err := uuid.Parse(*input.VMObjectToTeam)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse team UUID: %v", err)
+		}
+		entTeam, err = r.client.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query team: %v", err)
+		}
+	}
+	entVmObject, err := r.client.VmObject.Create().
+		SetName(input.Name).
+		SetIdentifier(input.Identifier).
+		SetIPAddresses(input.IPAddresses).
+		SetVmObjectToTeam(entTeam).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create vm object: %v", err)
+	}
+	return entVmObject, nil
+}
+
+// UpdateVMObject is the resolver for the updateVmObject field.
+func (r *mutationResolver) UpdateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error) {
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query vm object: ID must not be nil")
+	}
+	vmObjectUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse vm object UUID: %v", err)
+	}
+	entVmObject, err := r.client.VmObject.Query().Where(vmobject.IDEQ(vmObjectUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query vm object: %v", err)
+	}
+	teamUuid, err := uuid.Parse(*input.VMObjectToTeam)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse team UUID: %v", err)
+	}
+	entTeam, err := r.client.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query team: %v", err)
+	}
+	entVmObject, err = entVmObject.Update().
+		SetName(input.Name).
+		SetIdentifier(input.Identifier).
+		SetIPAddresses(input.IPAddresses).
+		SetVmObjectToTeam(entTeam).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update vm object: %v", err)
+	}
+	return entVmObject, nil
+}
+
+// DeleteVMObject is the resolver for the deleteVmObject field.
+func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool, error) {
+	vmObjectUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.VmObject.Delete().Where(vmobject.IDEQ(vmObjectUuid)).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete vm object: %v", err)
+	}
+	return true, nil
+}
+
 // Console is the resolver for the console field.
 func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error) {
 	entUser, err := auth.ForContext(ctx)
@@ -246,13 +513,48 @@ func (r *queryResolver) MyCompetition(ctx context.Context) (*ent.Competition, er
 	return entCompetition, nil
 }
 
+// Users is the resolver for the users field.
+func (r *queryResolver) Users(ctx context.Context) ([]*ent.User, error) {
+	entUsers, err := r.client.User.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %v", err)
+	}
+	return entUsers, nil
+}
+
+// GetUser is the resolver for the getUser field.
+func (r *queryResolver) GetUser(ctx context.Context, id string) (*ent.User, error) {
+	userUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	entUser, err := r.client.User.Query().Where(user.IDEQ(userUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user: %v", err)
+	}
+	return entUser, nil
+}
+
 // VMObjects is the resolver for the vmObjects field.
 func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) {
-	vmObjects, err := r.client.VmObject.Query().All(ctx)
+	entVmObjects, err := r.client.VmObject.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects: %v", err)
 	}
-	return vmObjects, nil
+	return entVmObjects, nil
+}
+
+// GetVMObject is the resolver for the getVmObject field.
+func (r *queryResolver) GetVMObject(ctx context.Context, id string) (*ent.VmObject, error) {
+	vmObjectUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	entVmObject, err := r.client.VmObject.Query().Where(vmobject.IDEQ(vmObjectUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query vm object: %v", err)
+	}
+	return entVmObject, nil
 }
 
 // Teams is the resolver for the teams field.
@@ -264,13 +566,39 @@ func (r *queryResolver) Teams(ctx context.Context) ([]*ent.Team, error) {
 	return entTeams, nil
 }
 
+// GetTeam is the resolver for the getTeam field.
+func (r *queryResolver) GetTeam(ctx context.Context, id string) (*ent.Team, error) {
+	teamUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	entTeam, err := r.client.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query team: %v", err)
+	}
+	return entTeam, nil
+}
+
 // Competitions is the resolver for the competitions field.
 func (r *queryResolver) Competitions(ctx context.Context) ([]*ent.Competition, error) {
-	competitions, err := r.client.Competition.Query().All(ctx)
+	entCompetitions, err := r.client.Competition.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query competitions: %v", err)
 	}
-	return competitions, nil
+	return entCompetitions, nil
+}
+
+// GetCompetition is the resolver for the getCompetition field.
+func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Competition, error) {
+	competitionUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	entCompetition, err := r.client.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competition: %v", err)
+	}
+	return entCompetition, nil
 }
 
 // ID is the resolver for the ID field.

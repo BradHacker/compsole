@@ -8,6 +8,37 @@ import (
 	"strconv"
 )
 
+type CompetitionInput struct {
+	ID   *string `json:"ID"`
+	Name string  `json:"Name"`
+}
+
+type TeamInput struct {
+	ID                *string `json:"ID"`
+	TeamNumber        int     `json:"TeamNumber"`
+	Name              *string `json:"Name"`
+	TeamToCompetition string  `json:"TeamToCompetition"`
+}
+
+type UserInput struct {
+	ID         *string  `json:"ID"`
+	Username   string   `json:"Username"`
+	Password   string   `json:"Password"`
+	FirstName  string   `json:"FirstName"`
+	LastName   string   `json:"LastName"`
+	Role       Role     `json:"Role"`
+	Provider   Provider `json:"Provider"`
+	UserToTeam *string  `json:"UserToTeam"`
+}
+
+type VMObjectInput struct {
+	ID             *string  `json:"ID"`
+	Name           string   `json:"Name"`
+	Identifier     string   `json:"Identifier"`
+	IPAddresses    []string `json:"IPAddresses"`
+	VMObjectToTeam *string  `json:"VmObjectToTeam"`
+}
+
 type ConsoleType string
 
 const (

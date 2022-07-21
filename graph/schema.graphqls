@@ -6,7 +6,7 @@ type VmObject {
   ID: ID!
   Name: String!
   Identifier: String!
-  IPAddresses: [String]
+  IPAddresses: [String!]!
   VmObjectToTeam: Team
 }
 
@@ -20,7 +20,7 @@ type Team {
 
 type Competition {
   ID: ID!
-  Name: String
+  Name: String!
   CompetitionToTeams: [Team]!
 }
 
@@ -66,9 +66,14 @@ type Query {
   myTeam: Team! @hasRole(roles: [USER])
   myCompetition: Competition! @hasRole(roles: [USER])
   # Admin actions
+  users: [User!]! @hasRole(roles: [ADMIN])
+  getUser(id: ID!): User! @hasRole(roles: [ADMIN])
   vmObjects: [VmObject!]! @hasRole(roles: [ADMIN])
+  getVmObject(id: ID!): VmObject! @hasRole(roles: [ADMIN])
   teams: [Team!]! @hasRole(roles: [ADMIN])
+  getTeam(id: ID!): Team! @hasRole(roles: [ADMIN])
   competitions: [Competition!]! @hasRole(roles: [ADMIN])
+  getCompetition(id: ID!): Competition! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
@@ -76,9 +81,53 @@ enum RebootType {
   HARD
 }
 
+input UserInput {
+  ID: ID
+  Username: String!
+  Password: String!
+  FirstName: String!
+  LastName: String!
+  Role: Role!
+  Provider: Provider!
+  UserToTeam: ID
+}
+
+input VmObjectInput {
+  ID: ID
+  Name: String!
+  Identifier: String!
+  IPAddresses: [String!]!
+  VmObjectToTeam: ID
+}
+
+input TeamInput {
+  ID: ID
+  TeamNumber: Int!
+  Name: String
+  TeamToCompetition: ID!
+}
+
+input CompetitionInput {
+  ID: ID
+  Name: String!
+}
+
 type Mutation {
   # Shared actions
   reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
+  # Admin actions
+  createUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
+  updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
+  deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
+  updateTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
+  deleteTeam(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  createCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
+  updateCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
+  deleteCompetition(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  createVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
+  updateVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
+  deleteVmObject(id: ID!): Boolean! @hasRole(roles: [ADMIN])
 }
