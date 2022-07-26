@@ -2,16 +2,12 @@
 
 ## Setup environment
 
-Copy the `.env.example` file to `.env`
+Source the `.envrc` file to generate your `.env` file.
+
+> _Note: this is necessary to run every time the environment is executed to prefill the environment variables_
 
 ```shell
-$ cp .env.example .env
-```
-
-Edit the `.env` file with the appropriate values. Then run this command to export them to your terminal:
-
-```shell
-$ export $(grep -v '^#' .env | xargs)
+$ source .envrc
 ```
 
 ## Development
