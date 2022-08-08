@@ -1,9 +1,9 @@
 # compsole
 
-<img src="https://img.shields.io/github/go-mod/go-version/BradHacker/compsole" alt="Go version">
-<img src="https://goreportcard.com/badge/github.com/BradHacker/compsole" alt="License">
-<img src="https://img.shields.io/github/package-json/dependency-version/BradHacker/compsole/react-scripts?filename=ui%2Fpackage.json" alt="React-scripts version">
-<img src="https://img.shields.io/github/license/BradHacker/compsole" alt="License">
+![Go version](https://img.shields.io/github/go-mod/go-version/BradHacker/compsole)
+![License](https://goreportcard.com/badge/github.com/BradHacker/compsole)
+![React-scripts version](https://img.shields.io/github/package-json/dependency-version/BradHacker/compsole/react-scripts?filename=ui%2Fpackage.json)
+![License](https://img.shields.io/github/license/BradHacker/compsole)
 
 <p align="center">
   <img src="ui/src/res/logo.svg" width="80%" />
