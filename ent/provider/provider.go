@@ -13,6 +13,8 @@ const (
 	FieldID = "oid"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldType holds the string denoting the type field in the database.
+	FieldType = "type"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
 	// EdgeProviderToCompetition holds the string denoting the providertocompetition edge name in mutations.
@@ -30,6 +32,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldType,
 	FieldConfig,
 }
 

@@ -23,6 +23,7 @@ var (
 	ProvidersColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "type", Type: field.TypeString},
 		{Name: "config", Type: field.TypeString},
 	}
 	// ProvidersTable holds the schema information for the "providers" table.

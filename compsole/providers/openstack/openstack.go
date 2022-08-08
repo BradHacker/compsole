@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"path"
@@ -23,7 +24,6 @@ type CompsoleProviderOpenstack struct {
 }
 
 type OpenstackConfig struct {
-	FilePath         string `json:"-"`
 	AuthUrl          string `json:"auth_url"`
 	IdentityVersion  string `json:"identify_version"`
 	NovaMicroversion string `json:"nova_microversion,omitempty"`
@@ -63,18 +63,16 @@ func (provider CompsoleProviderOpenstack) Version() string { return Version }
 // # FUNCTIONS #
 // #############
 // NewOpenstackProvider creates a provider for the Openstack cloud provider
-func NewOpenstackProvider(configFilePath string) (provider CompsoleProviderOpenstack, err error) {
-	provider = CompsoleProviderOpenstack{
-		Config: OpenstackConfig{
-			FilePath: configFilePath,
-		},
-	}
-	err = utils.LoadProviderConfig(configFilePath, &provider.Config)
+func NewOpenstackProvider(config string) (provider CompsoleProviderOpenstack, err error) {
+	var providerConfig OpenstackConfig
+	err = json.Unmarshal([]byte(config), &providerConfig)
 	if err != nil {
-		err = fmt.Errorf("failed to load Openstack provider config: %v", err)
+		err = fmt.Errorf("failed to unmarshal Openstack config: %v", err)
 		return
 	}
-
+	provider = CompsoleProviderOpenstack{
+		Config: providerConfig,
+	}
 	return
 }
 

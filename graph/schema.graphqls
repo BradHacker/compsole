@@ -21,8 +21,14 @@ type Team {
 type Competition {
   ID: ID!
   Name: String!
-  ProviderType: String!
   CompetitionToTeams: [Team]!
+  CompetitionToProvider: Provider!
+}
+
+type Provider {
+  ID: ID!
+  Name: String!
+  Config: String!
 }
 
 enum Role {
@@ -31,7 +37,7 @@ enum Role {
   UNDEFINED
 }
 
-enum Provider {
+enum AuthProvider {
   LOCAL
   GITLAB
   UNDEFINED
@@ -43,7 +49,7 @@ type User {
   FirstName: String!
   LastName: String!
   Role: Role!
-  Provider: Provider!
+  Provider: AuthProvider!
   UserToTeam: Team
 }
 
@@ -68,14 +74,21 @@ type Query {
   myTeam: Team! @hasRole(roles: [USER])
   myCompetition: Competition! @hasRole(roles: [USER])
   # Admin actions
+  #   Users
   users: [User!]! @hasRole(roles: [ADMIN])
   getUser(id: ID!): User! @hasRole(roles: [ADMIN])
+  #   VMObjects
   vmObjects: [VmObject!]! @hasRole(roles: [ADMIN])
   getVmObject(id: ID!): VmObject! @hasRole(roles: [ADMIN])
+  #   Teams
   teams: [Team!]! @hasRole(roles: [ADMIN])
   getTeam(id: ID!): Team! @hasRole(roles: [ADMIN])
+  #   Competitions
   competitions: [Competition!]! @hasRole(roles: [ADMIN])
   getCompetition(id: ID!): Competition! @hasRole(roles: [ADMIN])
+  #   Providers
+  providers: [Provider!]! @hasRole(roles: [ADMIN])
+  getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
@@ -89,7 +102,7 @@ input UserInput {
   FirstName: String!
   LastName: String!
   Role: Role!
-  Provider: Provider!
+  Provider: AuthProvider!
   UserToTeam: ID
 }
 
@@ -111,6 +124,14 @@ input TeamInput {
 input CompetitionInput {
   ID: ID
   Name: String!
+  CompetitionToProvider: ID!
+}
+
+input ProviderInput {
+  ID: ID
+  Name: String!
+  Type: String!
+  Config: String!
 }
 
 type Mutation {
@@ -119,17 +140,25 @@ type Mutation {
   powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   # Admin actions
+  #   Users
   createUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   changePassword(id: ID!, password: String!): Boolean! @hasRole(roles: [ADMIN])
+  #   Teams
   createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   updateTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   deleteTeam(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   Competitions
   createCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
   updateCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
   deleteCompetition(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   VMObjects
   createVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
   updateVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
   deleteVmObject(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   Providers
+  createProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
+  updateProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
+  deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
 }

@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Providers are now own entity and Competitions can share a single provider
+- Spiced up the README
+- Providers now store config in database instead of using filesystem
 
 ### Deprecated
 

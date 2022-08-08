@@ -20,6 +20,7 @@ func (Provider) Fields() []ent.Field {
 			Default(uuid.New).
 			StorageKey("oid"),
 		field.String("name").Unique().Comment("[REQUIRED] The unique name (aka. slug) for the provider."),
+		field.String("type").Comment("[REQUIRED] The unique name (aka. slug) for the provider."),
 		field.String("config").Comment("[REQUIRED] This is the JSON configuration for the provider."),
 	}
 }

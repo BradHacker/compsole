@@ -19,6 +19,9 @@ type Provider struct {
 	// Name holds the value of the "name" field.
 	// [REQUIRED] The unique name (aka. slug) for the provider.
 	Name string `json:"name,omitempty"`
+	// Type holds the value of the "type" field.
+	// [REQUIRED] The unique name (aka. slug) for the provider.
+	Type string `json:"type,omitempty"`
 	// Config holds the value of the "config" field.
 	// [REQUIRED] This is the JSON configuration for the provider.
 	Config string `json:"config,omitempty"`
@@ -50,7 +53,7 @@ func (*Provider) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case provider.FieldName, provider.FieldConfig:
+		case provider.FieldName, provider.FieldType, provider.FieldConfig:
 			values[i] = new(sql.NullString)
 		case provider.FieldID:
 			values[i] = new(uuid.UUID)
@@ -80,6 +83,12 @@ func (pr *Provider) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				pr.Name = value.String
+			}
+		case provider.FieldType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field type", values[i])
+			} else if value.Valid {
+				pr.Type = value.String
 			}
 		case provider.FieldConfig:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -122,6 +131,8 @@ func (pr *Provider) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", pr.ID))
 	builder.WriteString(", name=")
 	builder.WriteString(pr.Name)
+	builder.WriteString(", type=")
+	builder.WriteString(pr.Type)
 	builder.WriteString(", config=")
 	builder.WriteString(pr.Config)
 	builder.WriteByte(')')

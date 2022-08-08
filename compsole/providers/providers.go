@@ -20,10 +20,10 @@ type CompsoleProvider interface {
 	PowerOffVM(vmObject *ent.VmObject) error
 }
 
-func NewProvider(providerType string, configFilePath string) (provider CompsoleProvider, err error) {
+func NewProvider(providerType string, config string) (provider CompsoleProvider, err error) {
 	switch providerType {
 	case openstack.ID:
-		return openstack.NewOpenstackProvider(configFilePath)
+		return openstack.NewOpenstackProvider(config)
 	default:
 		err = fmt.Errorf("invalid provider type")
 		return

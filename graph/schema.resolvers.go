@@ -12,6 +12,7 @@ import (
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -24,6 +25,11 @@ import (
 // ID is the resolver for the ID field.
 func (r *competitionResolver) ID(ctx context.Context, obj *ent.Competition) (string, error) {
 	return obj.ID.String(), nil
+}
+
+// CompetitionToProvider is the resolver for the CompetitionToProvider field.
+func (r *competitionResolver) CompetitionToProvider(ctx context.Context, obj *ent.Competition) (*ent.Provider, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Reboot is the resolver for the reboot field.
@@ -54,8 +60,12 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 	if err != nil {
 		return false, fmt.Errorf("failed to query competition from vm object: %v", err)
 	}
+	entProvider, err := entCompetition.QueryCompetitionToProvider().Only(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to query provider from competition: %v", err)
+	}
 	// Generate the provider
-	provider, err := providers.NewProvider(entCompetition.ProviderType, entCompetition.ProviderConfigFile)
+	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
 	}
@@ -91,8 +101,12 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 	if err != nil {
 		return false, fmt.Errorf("failed to query competition from vm object: %v", err)
 	}
+	entProvider, err := entCompetition.QueryCompetitionToProvider().Only(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to query provider from competition: %v", err)
+	}
 	// Generate the provider
-	provider, err := providers.NewProvider(entCompetition.ProviderType, entCompetition.ProviderConfigFile)
+	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
 	}
@@ -128,8 +142,12 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 	if err != nil {
 		return false, fmt.Errorf("failed to query competition from vm object: %v", err)
 	}
+	entProvider, err := entCompetition.QueryCompetitionToProvider().Only(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to query provider from competition: %v", err)
+	}
 	// Generate the provider
-	provider, err := providers.NewProvider(entCompetition.ProviderType, entCompetition.ProviderConfigFile)
+	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
 	}
@@ -312,11 +330,11 @@ func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, err
 
 // CreateCompetition is the resolver for the createCompetition field.
 func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
-	entTeam, err := r.client.Competition.Create().SetName(input.Name).Save(ctx)
+	entCompetition, err := r.client.Competition.Create().SetName(input.Name).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create competition: %v", err)
 	}
-	return entTeam, nil
+	return entCompetition, nil
 }
 
 // UpdateCompetition is the resolver for the updateCompetition field.
@@ -423,6 +441,57 @@ func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool,
 	return true, nil
 }
 
+// CreateProvider is the resolver for the createProvider field.
+func (r *mutationResolver) CreateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error) {
+	entProvider, err := r.client.Provider.Create().SetName(input.Name).SetType(input.Type).SetConfig(input.Config).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provider: %v", err)
+	}
+	return entProvider, nil
+}
+
+// UpdateProvider is the resolver for the updateProvider field.
+func (r *mutationResolver) UpdateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error) {
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query provider: ID must not be nil")
+	}
+	providerUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse provider UUID: %v", err)
+	}
+	entProvider, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query provider: %v", err)
+	}
+	entProvider, err = entProvider.Update().
+		SetName(input.Name).
+		SetType(input.Type).
+		SetConfig(input.Config).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update provider: %v", err)
+	}
+	return entProvider, nil
+}
+
+// DeleteProvider is the resolver for the deleteProvider field.
+func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool, error) {
+	providerUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.Provider.Delete().Where(provider.IDEQ(providerUuid)).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete provider: %v", err)
+	}
+	return true, nil
+}
+
+// ID is the resolver for the ID field.
+func (r *providerResolver) ID(ctx context.Context, obj *ent.Provider) (string, error) {
+	return obj.ID.String(), nil
+}
+
 // Console is the resolver for the console field.
 func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error) {
 	entUser, err := auth.ForContext(ctx)
@@ -453,7 +522,12 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 	if err != nil {
 		return "", fmt.Errorf("failed to query competition from vm object: %v", err)
 	}
-	provider, err := providers.NewProvider(entCompetition.ProviderType, entCompetition.ProviderConfigFile)
+	entProvider, err := entCompetition.QueryCompetitionToProvider().Only(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to query provider from competition: %v", err)
+	}
+	// Generate the provider
+	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 	if err != nil {
 		return "", fmt.Errorf("failed to create provider from config: %v", err)
 	}
@@ -625,6 +699,16 @@ func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Com
 	return entCompetition, nil
 }
 
+// Providers is the resolver for the providers field.
+func (r *queryResolver) Providers(ctx context.Context) ([]*ent.Provider, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// GetProvider is the resolver for the getProvider field.
+func (r *queryResolver) GetProvider(ctx context.Context, id string) (*ent.Provider, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 // ID is the resolver for the ID field.
 func (r *teamResolver) ID(ctx context.Context, obj *ent.Team) (string, error) {
 	return obj.ID.String(), nil
@@ -641,8 +725,8 @@ func (r *userResolver) Role(ctx context.Context, obj *ent.User) (model.Role, err
 }
 
 // Provider is the resolver for the Provider field.
-func (r *userResolver) Provider(ctx context.Context, obj *ent.User) (model.Provider, error) {
-	return model.Provider(obj.Provider), nil
+func (r *userResolver) Provider(ctx context.Context, obj *ent.User) (model.AuthProvider, error) {
+	return model.AuthProvider(obj.Provider), nil
 }
 
 // ID is the resolver for the ID field.
@@ -655,6 +739,9 @@ func (r *Resolver) Competition() generated.CompetitionResolver { return &competi
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+// Provider returns generated.ProviderResolver implementation.
+func (r *Resolver) Provider() generated.ProviderResolver { return &providerResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
@@ -670,6 +757,7 @@ func (r *Resolver) VmObject() generated.VmObjectResolver { return &vmObjectResol
 
 type competitionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type providerResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

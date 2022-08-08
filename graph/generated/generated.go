@@ -39,6 +39,7 @@ type Config struct {
 type ResolverRoot interface {
 	Competition() CompetitionResolver
 	Mutation() MutationResolver
+	Provider() ProviderResolver
 	Query() QueryResolver
 	Team() TeamResolver
 	User() UserResolver
@@ -51,19 +52,21 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Competition struct {
-		CompetitionToTeams func(childComplexity int) int
-		ID                 func(childComplexity int) int
-		Name               func(childComplexity int) int
-		ProviderType       func(childComplexity int) int
+		CompetitionToProvider func(childComplexity int) int
+		CompetitionToTeams    func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Name                  func(childComplexity int) int
 	}
 
 	Mutation struct {
 		ChangePassword    func(childComplexity int, id string, password string) int
 		CreateCompetition func(childComplexity int, input model.CompetitionInput) int
+		CreateProvider    func(childComplexity int, input model.ProviderInput) int
 		CreateTeam        func(childComplexity int, input model.TeamInput) int
 		CreateUser        func(childComplexity int, input model.UserInput) int
 		CreateVMObject    func(childComplexity int, input model.VMObjectInput) int
 		DeleteCompetition func(childComplexity int, id string) int
+		DeleteProvider    func(childComplexity int, id string) int
 		DeleteTeam        func(childComplexity int, id string) int
 		DeleteUser        func(childComplexity int, id string) int
 		DeleteVMObject    func(childComplexity int, id string) int
@@ -71,15 +74,23 @@ type ComplexityRoot struct {
 		PowerOn           func(childComplexity int, vmObjectID string) int
 		Reboot            func(childComplexity int, vmObjectID string, rebootType model.RebootType) int
 		UpdateCompetition func(childComplexity int, input model.CompetitionInput) int
+		UpdateProvider    func(childComplexity int, input model.ProviderInput) int
 		UpdateTeam        func(childComplexity int, input model.TeamInput) int
 		UpdateUser        func(childComplexity int, input model.UserInput) int
 		UpdateVMObject    func(childComplexity int, input model.VMObjectInput) int
+	}
+
+	Provider struct {
+		Config func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Name   func(childComplexity int) int
 	}
 
 	Query struct {
 		Competitions   func(childComplexity int) int
 		Console        func(childComplexity int, vmObjectID string, consoleType model.ConsoleType) int
 		GetCompetition func(childComplexity int, id string) int
+		GetProvider    func(childComplexity int, id string) int
 		GetTeam        func(childComplexity int, id string) int
 		GetUser        func(childComplexity int, id string) int
 		GetVMObject    func(childComplexity int, id string) int
@@ -87,6 +98,7 @@ type ComplexityRoot struct {
 		MyCompetition  func(childComplexity int) int
 		MyTeam         func(childComplexity int) int
 		MyVMObjects    func(childComplexity int) int
+		Providers      func(childComplexity int) int
 		Teams          func(childComplexity int) int
 		Users          func(childComplexity int) int
 		VMObject       func(childComplexity int, vmObjectID string) int
@@ -122,6 +134,8 @@ type ComplexityRoot struct {
 
 type CompetitionResolver interface {
 	ID(ctx context.Context, obj *ent.Competition) (string, error)
+
+	CompetitionToProvider(ctx context.Context, obj *ent.Competition) (*ent.Provider, error)
 }
 type MutationResolver interface {
 	Reboot(ctx context.Context, vmObjectID string, rebootType model.RebootType) (bool, error)
@@ -140,6 +154,12 @@ type MutationResolver interface {
 	CreateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error)
 	UpdateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error)
 	DeleteVMObject(ctx context.Context, id string) (bool, error)
+	CreateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error)
+	UpdateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error)
+	DeleteProvider(ctx context.Context, id string) (bool, error)
+}
+type ProviderResolver interface {
+	ID(ctx context.Context, obj *ent.Provider) (string, error)
 }
 type QueryResolver interface {
 	Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error)
@@ -156,6 +176,8 @@ type QueryResolver interface {
 	GetTeam(ctx context.Context, id string) (*ent.Team, error)
 	Competitions(ctx context.Context) ([]*ent.Competition, error)
 	GetCompetition(ctx context.Context, id string) (*ent.Competition, error)
+	Providers(ctx context.Context) ([]*ent.Provider, error)
+	GetProvider(ctx context.Context, id string) (*ent.Provider, error)
 }
 type TeamResolver interface {
 	ID(ctx context.Context, obj *ent.Team) (string, error)
@@ -164,7 +186,7 @@ type UserResolver interface {
 	ID(ctx context.Context, obj *ent.User) (string, error)
 
 	Role(ctx context.Context, obj *ent.User) (model.Role, error)
-	Provider(ctx context.Context, obj *ent.User) (model.Provider, error)
+	Provider(ctx context.Context, obj *ent.User) (model.AuthProvider, error)
 }
 type VmObjectResolver interface {
 	ID(ctx context.Context, obj *ent.VmObject) (string, error)
@@ -184,6 +206,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Competition.CompetitionToProvider":
+		if e.complexity.Competition.CompetitionToProvider == nil {
+			break
+		}
+
+		return e.complexity.Competition.CompetitionToProvider(childComplexity), true
 
 	case "Competition.CompetitionToTeams":
 		if e.complexity.Competition.CompetitionToTeams == nil {
@@ -205,13 +234,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Competition.Name(childComplexity), true
-
-	case "Competition.ProviderType":
-		if e.complexity.Competition.ProviderType == nil {
-			break
-		}
-
-		return e.complexity.Competition.ProviderType(childComplexity), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -236,6 +258,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateCompetition(childComplexity, args["input"].(model.CompetitionInput)), true
+
+	case "Mutation.createProvider":
+		if e.complexity.Mutation.CreateProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProvider(childComplexity, args["input"].(model.ProviderInput)), true
 
 	case "Mutation.createTeam":
 		if e.complexity.Mutation.CreateTeam == nil {
@@ -284,6 +318,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteCompetition(childComplexity, args["id"].(string)), true
+
+	case "Mutation.deleteProvider":
+		if e.complexity.Mutation.DeleteProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProvider(childComplexity, args["id"].(string)), true
 
 	case "Mutation.deleteTeam":
 		if e.complexity.Mutation.DeleteTeam == nil {
@@ -369,6 +415,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateCompetition(childComplexity, args["input"].(model.CompetitionInput)), true
 
+	case "Mutation.updateProvider":
+		if e.complexity.Mutation.UpdateProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProvider(childComplexity, args["input"].(model.ProviderInput)), true
+
 	case "Mutation.updateTeam":
 		if e.complexity.Mutation.UpdateTeam == nil {
 			break
@@ -405,6 +463,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateVMObject(childComplexity, args["input"].(model.VMObjectInput)), true
 
+	case "Provider.Config":
+		if e.complexity.Provider.Config == nil {
+			break
+		}
+
+		return e.complexity.Provider.Config(childComplexity), true
+
+	case "Provider.ID":
+		if e.complexity.Provider.ID == nil {
+			break
+		}
+
+		return e.complexity.Provider.ID(childComplexity), true
+
+	case "Provider.Name":
+		if e.complexity.Provider.Name == nil {
+			break
+		}
+
+		return e.complexity.Provider.Name(childComplexity), true
+
 	case "Query.competitions":
 		if e.complexity.Query.Competitions == nil {
 			break
@@ -435,6 +514,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCompetition(childComplexity, args["id"].(string)), true
+
+	case "Query.getProvider":
+		if e.complexity.Query.GetProvider == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getProvider_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetProvider(childComplexity, args["id"].(string)), true
 
 	case "Query.getTeam":
 		if e.complexity.Query.GetTeam == nil {
@@ -499,6 +590,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.MyVMObjects(childComplexity), true
+
+	case "Query.providers":
+		if e.complexity.Query.Providers == nil {
+			break
+		}
+
+		return e.complexity.Query.Providers(childComplexity), true
 
 	case "Query.teams":
 		if e.complexity.Query.Teams == nil {
@@ -661,6 +759,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCompetitionInput,
+		ec.unmarshalInputProviderInput,
 		ec.unmarshalInputTeamInput,
 		ec.unmarshalInputUserInput,
 		ec.unmarshalInputVmObjectInput,
@@ -747,8 +846,14 @@ type Team {
 type Competition {
   ID: ID!
   Name: String!
-  ProviderType: String!
   CompetitionToTeams: [Team]!
+  CompetitionToProvider: Provider!
+}
+
+type Provider {
+  ID: ID!
+  Name: String!
+  Config: String!
 }
 
 enum Role {
@@ -757,7 +862,7 @@ enum Role {
   UNDEFINED
 }
 
-enum Provider {
+enum AuthProvider {
   LOCAL
   GITLAB
   UNDEFINED
@@ -769,7 +874,7 @@ type User {
   FirstName: String!
   LastName: String!
   Role: Role!
-  Provider: Provider!
+  Provider: AuthProvider!
   UserToTeam: Team
 }
 
@@ -794,14 +899,21 @@ type Query {
   myTeam: Team! @hasRole(roles: [USER])
   myCompetition: Competition! @hasRole(roles: [USER])
   # Admin actions
+  #   Users
   users: [User!]! @hasRole(roles: [ADMIN])
   getUser(id: ID!): User! @hasRole(roles: [ADMIN])
+  #   VMObjects
   vmObjects: [VmObject!]! @hasRole(roles: [ADMIN])
   getVmObject(id: ID!): VmObject! @hasRole(roles: [ADMIN])
+  #   Teams
   teams: [Team!]! @hasRole(roles: [ADMIN])
   getTeam(id: ID!): Team! @hasRole(roles: [ADMIN])
+  #   Competitions
   competitions: [Competition!]! @hasRole(roles: [ADMIN])
   getCompetition(id: ID!): Competition! @hasRole(roles: [ADMIN])
+  #   Providers
+  providers: [Provider!]! @hasRole(roles: [ADMIN])
+  getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
@@ -815,7 +927,7 @@ input UserInput {
   FirstName: String!
   LastName: String!
   Role: Role!
-  Provider: Provider!
+  Provider: AuthProvider!
   UserToTeam: ID
 }
 
@@ -837,6 +949,14 @@ input TeamInput {
 input CompetitionInput {
   ID: ID
   Name: String!
+  CompetitionToProvider: ID!
+}
+
+input ProviderInput {
+  ID: ID
+  Name: String!
+  Type: String!
+  Config: String!
 }
 
 type Mutation {
@@ -845,19 +965,27 @@ type Mutation {
   powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   # Admin actions
+  #   Users
   createUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   changePassword(id: ID!, password: String!): Boolean! @hasRole(roles: [ADMIN])
+  #   Teams
   createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   updateTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   deleteTeam(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   Competitions
   createCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
   updateCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
   deleteCompetition(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   VMObjects
   createVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
   updateVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
   deleteVmObject(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   Providers
+  createProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
+  updateProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
+  deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
 }
 `, BuiltIn: false},
 }
@@ -921,6 +1049,21 @@ func (ec *executionContext) field_Mutation_createCompetition_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ProviderInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNProviderInput2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProviderInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -967,6 +1110,21 @@ func (ec *executionContext) field_Mutation_createVmObject_args(ctx context.Conte
 }
 
 func (ec *executionContext) field_Mutation_deleteCompetition_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1095,6 +1253,21 @@ func (ec *executionContext) field_Mutation_updateCompetition_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ProviderInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNProviderInput2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProviderInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1180,6 +1353,21 @@ func (ec *executionContext) field_Query_console_args(ctx context.Context, rawArg
 }
 
 func (ec *executionContext) field_Query_getCompetition_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getProvider_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1380,50 +1568,6 @@ func (ec *executionContext) fieldContext_Competition_Name(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Competition_ProviderType(ctx context.Context, field graphql.CollectedField, obj *ent.Competition) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Competition_ProviderType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProviderType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Competition_ProviderType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Competition",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Competition_CompetitionToTeams(ctx context.Context, field graphql.CollectedField, obj *ent.Competition) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
 	if err != nil {
@@ -1475,6 +1619,58 @@ func (ec *executionContext) fieldContext_Competition_CompetitionToTeams(ctx cont
 				return ec.fieldContext_Team_TeamToVmObjects(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Competition_CompetitionToProvider(ctx context.Context, field graphql.CollectedField, obj *ent.Competition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Competition().CompetitionToProvider(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Provider)
+	fc.Result = res
+	return ec.marshalNProvider2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Competition_CompetitionToProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Competition",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Provider_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_Provider_Name(ctx, field)
+			case "Config":
+				return ec.fieldContext_Provider_Config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
 		},
 	}
 	return fc, nil
@@ -2393,10 +2589,10 @@ func (ec *executionContext) fieldContext_Mutation_createCompetition(ctx context.
 				return ec.fieldContext_Competition_ID(ctx, field)
 			case "Name":
 				return ec.fieldContext_Competition_Name(ctx, field)
-			case "ProviderType":
-				return ec.fieldContext_Competition_ProviderType(ctx, field)
 			case "CompetitionToTeams":
 				return ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
+			case "CompetitionToProvider":
+				return ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Competition", field.Name)
 		},
@@ -2482,10 +2678,10 @@ func (ec *executionContext) fieldContext_Mutation_updateCompetition(ctx context.
 				return ec.fieldContext_Competition_ID(ctx, field)
 			case "Name":
 				return ec.fieldContext_Competition_Name(ctx, field)
-			case "ProviderType":
-				return ec.fieldContext_Competition_ProviderType(ctx, field)
 			case "CompetitionToTeams":
 				return ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
+			case "CompetitionToProvider":
+				return ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Competition", field.Name)
 		},
@@ -2840,6 +3036,391 @@ func (ec *executionContext) fieldContext_Mutation_deleteVmObject(ctx context.Con
 	if fc.Args, err = ec.field_Mutation_deleteVmObject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateProvider(rctx, fc.Args["input"].(model.ProviderInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*ent.Provider); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/ent.Provider`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Provider)
+	fc.Result = res
+	return ec.marshalNProvider2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Provider_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_Provider_Name(ctx, field)
+			case "Config":
+				return ec.fieldContext_Provider_Config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createProvider_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateProvider(rctx, fc.Args["input"].(model.ProviderInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*ent.Provider); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/ent.Provider`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Provider)
+	fc.Result = res
+	return ec.marshalNProvider2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Provider_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_Provider_Name(ctx, field)
+			case "Config":
+				return ec.fieldContext_Provider_Config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProvider_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteProvider(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProvider_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Provider_ID(ctx context.Context, field graphql.CollectedField, obj *ent.Provider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Provider_ID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Provider().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Provider_ID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Provider",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Provider_Name(ctx context.Context, field graphql.CollectedField, obj *ent.Provider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Provider_Name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Provider_Name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Provider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Provider_Config(ctx context.Context, field graphql.CollectedField, obj *ent.Provider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Provider_Config(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Config, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Provider_Config(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Provider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -3325,10 +3906,10 @@ func (ec *executionContext) fieldContext_Query_myCompetition(ctx context.Context
 				return ec.fieldContext_Competition_ID(ctx, field)
 			case "Name":
 				return ec.fieldContext_Competition_Name(ctx, field)
-			case "ProviderType":
-				return ec.fieldContext_Competition_ProviderType(ctx, field)
 			case "CompetitionToTeams":
 				return ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
+			case "CompetitionToProvider":
+				return ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Competition", field.Name)
 		},
@@ -3924,10 +4505,10 @@ func (ec *executionContext) fieldContext_Query_competitions(ctx context.Context,
 				return ec.fieldContext_Competition_ID(ctx, field)
 			case "Name":
 				return ec.fieldContext_Competition_Name(ctx, field)
-			case "ProviderType":
-				return ec.fieldContext_Competition_ProviderType(ctx, field)
 			case "CompetitionToTeams":
 				return ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
+			case "CompetitionToProvider":
+				return ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Competition", field.Name)
 		},
@@ -4002,10 +4583,10 @@ func (ec *executionContext) fieldContext_Query_getCompetition(ctx context.Contex
 				return ec.fieldContext_Competition_ID(ctx, field)
 			case "Name":
 				return ec.fieldContext_Competition_Name(ctx, field)
-			case "ProviderType":
-				return ec.fieldContext_Competition_ProviderType(ctx, field)
 			case "CompetitionToTeams":
 				return ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
+			case "CompetitionToProvider":
+				return ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Competition", field.Name)
 		},
@@ -4018,6 +4599,169 @@ func (ec *executionContext) fieldContext_Query_getCompetition(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getCompetition_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_providers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_providers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Providers(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*ent.Provider); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/BradHacker/compsole/ent.Provider`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.Provider)
+	fc.Result = res
+	return ec.marshalNProvider2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProviderᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_providers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Provider_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_Provider_Name(ctx, field)
+			case "Config":
+				return ec.fieldContext_Provider_Config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getProvider(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetProvider(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*ent.Provider); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/ent.Provider`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Provider)
+	fc.Result = res
+	return ec.marshalNProvider2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Provider_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_Provider_Name(ctx, field)
+			case "Config":
+				return ec.fieldContext_Provider_Config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Provider", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getProvider_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -4325,10 +5069,10 @@ func (ec *executionContext) fieldContext_Team_TeamToCompetition(ctx context.Cont
 				return ec.fieldContext_Competition_ID(ctx, field)
 			case "Name":
 				return ec.fieldContext_Competition_Name(ctx, field)
-			case "ProviderType":
-				return ec.fieldContext_Competition_ProviderType(ctx, field)
 			case "CompetitionToTeams":
 				return ec.fieldContext_Competition_CompetitionToTeams(ctx, field)
+			case "CompetitionToProvider":
+				return ec.fieldContext_Competition_CompetitionToProvider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Competition", field.Name)
 		},
@@ -4638,9 +5382,9 @@ func (ec *executionContext) _User_Provider(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.Provider)
+	res := resTmp.(model.AuthProvider)
 	fc.Result = res
-	return ec.marshalNProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProvider(ctx, field.Selections, res)
+	return ec.marshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_Provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4650,7 +5394,7 @@ func (ec *executionContext) fieldContext_User_Provider(ctx context.Context, fiel
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Provider does not have child fields")
+			return nil, errors.New("field of type AuthProvider does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6718,7 +7462,7 @@ func (ec *executionContext) unmarshalInputCompetitionInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"ID", "Name"}
+	fieldsInOrder := [...]string{"ID", "Name", "CompetitionToProvider"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6738,6 +7482,66 @@ func (ec *executionContext) unmarshalInputCompetitionInput(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
 			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "CompetitionToProvider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("CompetitionToProvider"))
+			it.CompetitionToProvider, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProviderInput(ctx context.Context, obj interface{}) (model.ProviderInput, error) {
+	var it model.ProviderInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ID", "Name", "Type", "Config"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ID"))
+			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Type"))
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Config":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Config"))
+			it.Config, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6857,7 +7661,7 @@ func (ec *executionContext) unmarshalInputUserInput(ctx context.Context, obj int
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Provider"))
-			it.Provider, err = ec.unmarshalNProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProvider(ctx, v)
+			it.Provider, err = ec.unmarshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6980,13 +7784,6 @@ func (ec *executionContext) _Competition(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "ProviderType":
-
-			out.Values[i] = ec._Competition_ProviderType(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "CompetitionToTeams":
 			field := field
 
@@ -6997,6 +7794,26 @@ func (ec *executionContext) _Competition(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._Competition_CompetitionToTeams(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "CompetitionToProvider":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Competition_CompetitionToProvider(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -7180,6 +7997,88 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
+			}
+		case "createProvider":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createProvider(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateProvider":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProvider(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteProvider":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProvider(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var providerImplementors = []string{"Provider"}
+
+func (ec *executionContext) _Provider(ctx context.Context, sel ast.SelectionSet, obj *ent.Provider) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, providerImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Provider")
+		case "ID":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Provider_ID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "Name":
+
+			out.Values[i] = ec._Provider_Name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "Config":
+
+			out.Values[i] = ec._Provider_Config(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -7520,6 +8419,52 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getCompetition(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "providers":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_providers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getProvider":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getProvider(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -8164,6 +9109,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx context.Context, v interface{}) (model.AuthProvider, error) {
+	var res model.AuthProvider
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx context.Context, sel ast.SelectionSet, v model.AuthProvider) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8282,14 +9237,67 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProvider(ctx context.Context, v interface{}) (model.Provider, error) {
-	var res model.Provider
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx context.Context, sel ast.SelectionSet, v ent.Provider) graphql.Marshaler {
+	return ec._Provider(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProvider(ctx context.Context, sel ast.SelectionSet, v model.Provider) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNProvider2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Provider) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProvider2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProvider2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx context.Context, sel ast.SelectionSet, v *ent.Provider) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Provider(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNProviderInput2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐProviderInput(ctx context.Context, v interface{}) (model.ProviderInput, error) {
+	res, err := ec.unmarshalInputProviderInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNRebootType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRebootType(ctx context.Context, v interface{}) (model.RebootType, error) {

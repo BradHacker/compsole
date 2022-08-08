@@ -537,6 +537,7 @@ type ProviderMutation struct {
 	typ                           string
 	id                            *uuid.UUID
 	name                          *string
+	_type                         *string
 	_config                       *string
 	clearedFields                 map[string]struct{}
 	_ProviderToCompetition        map[uuid.UUID]struct{}
@@ -687,6 +688,42 @@ func (m *ProviderMutation) ResetName() {
 	m.name = nil
 }
 
+// SetType sets the "type" field.
+func (m *ProviderMutation) SetType(s string) {
+	m._type = &s
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *ProviderMutation) GetType() (r string, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the Provider entity.
+// If the Provider object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProviderMutation) OldType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *ProviderMutation) ResetType() {
+	m._type = nil
+}
+
 // SetConfig sets the "config" field.
 func (m *ProviderMutation) SetConfig(s string) {
 	m._config = &s
@@ -796,9 +833,12 @@ func (m *ProviderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ProviderMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
 	if m.name != nil {
 		fields = append(fields, provider.FieldName)
+	}
+	if m._type != nil {
+		fields = append(fields, provider.FieldType)
 	}
 	if m._config != nil {
 		fields = append(fields, provider.FieldConfig)
@@ -813,6 +853,8 @@ func (m *ProviderMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case provider.FieldName:
 		return m.Name()
+	case provider.FieldType:
+		return m.GetType()
 	case provider.FieldConfig:
 		return m.Config()
 	}
@@ -826,6 +868,8 @@ func (m *ProviderMutation) OldField(ctx context.Context, name string) (ent.Value
 	switch name {
 	case provider.FieldName:
 		return m.OldName(ctx)
+	case provider.FieldType:
+		return m.OldType(ctx)
 	case provider.FieldConfig:
 		return m.OldConfig(ctx)
 	}
@@ -843,6 +887,13 @@ func (m *ProviderMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case provider.FieldType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
 		return nil
 	case provider.FieldConfig:
 		v, ok := value.(string)
@@ -902,6 +953,9 @@ func (m *ProviderMutation) ResetField(name string) error {
 	switch name {
 	case provider.FieldName:
 		m.ResetName()
+		return nil
+	case provider.FieldType:
+		m.ResetType()
 		return nil
 	case provider.FieldConfig:
 		m.ResetConfig()

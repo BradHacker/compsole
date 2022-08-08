@@ -35,6 +35,12 @@ func (pu *ProviderUpdate) SetName(s string) *ProviderUpdate {
 	return pu
 }
 
+// SetType sets the "type" field.
+func (pu *ProviderUpdate) SetType(s string) *ProviderUpdate {
+	pu.mutation.SetType(s)
+	return pu
+}
+
 // SetConfig sets the "config" field.
 func (pu *ProviderUpdate) SetConfig(s string) *ProviderUpdate {
 	pu.mutation.SetConfig(s)
@@ -161,6 +167,13 @@ func (pu *ProviderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: provider.FieldName,
 		})
 	}
+	if value, ok := pu.mutation.GetType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: provider.FieldType,
+		})
+	}
 	if value, ok := pu.mutation.Config(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -244,6 +257,12 @@ type ProviderUpdateOne struct {
 // SetName sets the "name" field.
 func (puo *ProviderUpdateOne) SetName(s string) *ProviderUpdateOne {
 	puo.mutation.SetName(s)
+	return puo
+}
+
+// SetType sets the "type" field.
+func (puo *ProviderUpdateOne) SetType(s string) *ProviderUpdateOne {
+	puo.mutation.SetType(s)
 	return puo
 }
 
@@ -395,6 +414,13 @@ func (puo *ProviderUpdateOne) sqlSave(ctx context.Context) (_node *Provider, err
 			Type:   field.TypeString,
 			Value:  value,
 			Column: provider.FieldName,
+		})
+	}
+	if value, ok := puo.mutation.GetType(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: provider.FieldType,
 		})
 	}
 	if value, ok := puo.mutation.Config(); ok {

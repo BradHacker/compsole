@@ -27,6 +27,12 @@ func (pc *ProviderCreate) SetName(s string) *ProviderCreate {
 	return pc
 }
 
+// SetType sets the "type" field.
+func (pc *ProviderCreate) SetType(s string) *ProviderCreate {
+	pc.mutation.SetType(s)
+	return pc
+}
+
 // SetConfig sets the "config" field.
 func (pc *ProviderCreate) SetConfig(s string) *ProviderCreate {
 	pc.mutation.SetConfig(s)
@@ -144,6 +150,9 @@ func (pc *ProviderCreate) check() error {
 	if _, ok := pc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Provider.name"`)}
 	}
+	if _, ok := pc.mutation.GetType(); !ok {
+		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Provider.type"`)}
+	}
 	if _, ok := pc.mutation.Config(); !ok {
 		return &ValidationError{Name: "config", err: errors.New(`ent: missing required field "Provider.config"`)}
 	}
@@ -190,6 +199,14 @@ func (pc *ProviderCreate) createSpec() (*Provider, *sqlgraph.CreateSpec) {
 			Column: provider.FieldName,
 		})
 		_node.Name = value
+	}
+	if value, ok := pc.mutation.GetType(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: provider.FieldType,
+		})
+		_node.Type = value
 	}
 	if value, ok := pc.mutation.Config(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

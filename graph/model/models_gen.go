@@ -9,8 +9,16 @@ import (
 )
 
 type CompetitionInput struct {
-	ID   *string `json:"ID"`
-	Name string  `json:"Name"`
+	ID                    *string `json:"ID"`
+	Name                  string  `json:"Name"`
+	CompetitionToProvider string  `json:"CompetitionToProvider"`
+}
+
+type ProviderInput struct {
+	ID     *string `json:"ID"`
+	Name   string  `json:"Name"`
+	Type   string  `json:"Type"`
+	Config string  `json:"Config"`
 }
 
 type TeamInput struct {
@@ -21,13 +29,13 @@ type TeamInput struct {
 }
 
 type UserInput struct {
-	ID         *string  `json:"ID"`
-	Username   string   `json:"Username"`
-	FirstName  string   `json:"FirstName"`
-	LastName   string   `json:"LastName"`
-	Role       Role     `json:"Role"`
-	Provider   Provider `json:"Provider"`
-	UserToTeam *string  `json:"UserToTeam"`
+	ID         *string      `json:"ID"`
+	Username   string       `json:"Username"`
+	FirstName  string       `json:"FirstName"`
+	LastName   string       `json:"LastName"`
+	Role       Role         `json:"Role"`
+	Provider   AuthProvider `json:"Provider"`
+	UserToTeam *string      `json:"UserToTeam"`
 }
 
 type VMObjectInput struct {
@@ -36,6 +44,49 @@ type VMObjectInput struct {
 	Identifier     string   `json:"Identifier"`
 	IPAddresses    []string `json:"IPAddresses"`
 	VMObjectToTeam *string  `json:"VmObjectToTeam"`
+}
+
+type AuthProvider string
+
+const (
+	AuthProviderLocal     AuthProvider = "LOCAL"
+	AuthProviderGitlab    AuthProvider = "GITLAB"
+	AuthProviderUndefined AuthProvider = "UNDEFINED"
+)
+
+var AllAuthProvider = []AuthProvider{
+	AuthProviderLocal,
+	AuthProviderGitlab,
+	AuthProviderUndefined,
+}
+
+func (e AuthProvider) IsValid() bool {
+	switch e {
+	case AuthProviderLocal, AuthProviderGitlab, AuthProviderUndefined:
+		return true
+	}
+	return false
+}
+
+func (e AuthProvider) String() string {
+	return string(e)
+}
+
+func (e *AuthProvider) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuthProvider(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuthProvider", str)
+	}
+	return nil
+}
+
+func (e AuthProvider) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type ConsoleType string
@@ -82,49 +133,6 @@ func (e *ConsoleType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e ConsoleType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type Provider string
-
-const (
-	ProviderLocal     Provider = "LOCAL"
-	ProviderGitlab    Provider = "GITLAB"
-	ProviderUndefined Provider = "UNDEFINED"
-)
-
-var AllProvider = []Provider{
-	ProviderLocal,
-	ProviderGitlab,
-	ProviderUndefined,
-}
-
-func (e Provider) IsValid() bool {
-	switch e {
-	case ProviderLocal, ProviderGitlab, ProviderUndefined:
-		return true
-	}
-	return false
-}
-
-func (e Provider) String() string {
-	return string(e)
-}
-
-func (e *Provider) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Provider(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Provider", str)
-	}
-	return nil
-}
-
-func (e Provider) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
