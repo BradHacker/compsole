@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/google/uuid"
 )
@@ -24,18 +25,6 @@ type CompetitionCreate struct {
 // SetName sets the "name" field.
 func (cc *CompetitionCreate) SetName(s string) *CompetitionCreate {
 	cc.mutation.SetName(s)
-	return cc
-}
-
-// SetProviderType sets the "provider_type" field.
-func (cc *CompetitionCreate) SetProviderType(s string) *CompetitionCreate {
-	cc.mutation.SetProviderType(s)
-	return cc
-}
-
-// SetProviderConfigFile sets the "provider_config_file" field.
-func (cc *CompetitionCreate) SetProviderConfigFile(s string) *CompetitionCreate {
-	cc.mutation.SetProviderConfigFile(s)
 	return cc
 }
 
@@ -66,6 +55,21 @@ func (cc *CompetitionCreate) AddCompetitionToTeams(t ...*Team) *CompetitionCreat
 		ids[i] = t[i].ID
 	}
 	return cc.AddCompetitionToTeamIDs(ids...)
+}
+
+// AddCompetitionToProviderIDs adds the "CompetitionToProvider" edge to the Provider entity by IDs.
+func (cc *CompetitionCreate) AddCompetitionToProviderIDs(ids ...uuid.UUID) *CompetitionCreate {
+	cc.mutation.AddCompetitionToProviderIDs(ids...)
+	return cc
+}
+
+// AddCompetitionToProvider adds the "CompetitionToProvider" edges to the Provider entity.
+func (cc *CompetitionCreate) AddCompetitionToProvider(p ...*Provider) *CompetitionCreate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return cc.AddCompetitionToProviderIDs(ids...)
 }
 
 // Mutation returns the CompetitionMutation object of the builder.
@@ -150,11 +154,8 @@ func (cc *CompetitionCreate) check() error {
 	if _, ok := cc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Competition.name"`)}
 	}
-	if _, ok := cc.mutation.ProviderType(); !ok {
-		return &ValidationError{Name: "provider_type", err: errors.New(`ent: missing required field "Competition.provider_type"`)}
-	}
-	if _, ok := cc.mutation.ProviderConfigFile(); !ok {
-		return &ValidationError{Name: "provider_config_file", err: errors.New(`ent: missing required field "Competition.provider_config_file"`)}
+	if len(cc.mutation.CompetitionToProviderIDs()) == 0 {
+		return &ValidationError{Name: "CompetitionToProvider", err: errors.New(`ent: missing required edge "Competition.CompetitionToProvider"`)}
 	}
 	return nil
 }
@@ -200,22 +201,6 @@ func (cc *CompetitionCreate) createSpec() (*Competition, *sqlgraph.CreateSpec) {
 		})
 		_node.Name = value
 	}
-	if value, ok := cc.mutation.ProviderType(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldProviderType,
-		})
-		_node.ProviderType = value
-	}
-	if value, ok := cc.mutation.ProviderConfigFile(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldProviderConfigFile,
-		})
-		_node.ProviderConfigFile = value
-	}
 	if nodes := cc.mutation.CompetitionToTeamsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -227,6 +212,25 @@ func (cc *CompetitionCreate) createSpec() (*Competition, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := cc.mutation.CompetitionToProviderIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
 				},
 			},
 		}

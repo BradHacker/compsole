@@ -10,6 +10,7 @@ import (
 
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -29,6 +30,7 @@ const (
 
 	// Node types.
 	TypeCompetition = "Competition"
+	TypeProvider    = "Provider"
 	TypeTeam        = "Team"
 	TypeToken       = "Token"
 	TypeUser        = "User"
@@ -38,19 +40,20 @@ const (
 // CompetitionMutation represents an operation that mutates the Competition nodes in the graph.
 type CompetitionMutation struct {
 	config
-	op                         Op
-	typ                        string
-	id                         *uuid.UUID
-	name                       *string
-	provider_type              *string
-	provider_config_file       *string
-	clearedFields              map[string]struct{}
-	_CompetitionToTeams        map[uuid.UUID]struct{}
-	removed_CompetitionToTeams map[uuid.UUID]struct{}
-	cleared_CompetitionToTeams bool
-	done                       bool
-	oldValue                   func(context.Context) (*Competition, error)
-	predicates                 []predicate.Competition
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	name                          *string
+	clearedFields                 map[string]struct{}
+	_CompetitionToTeams           map[uuid.UUID]struct{}
+	removed_CompetitionToTeams    map[uuid.UUID]struct{}
+	cleared_CompetitionToTeams    bool
+	_CompetitionToProvider        map[uuid.UUID]struct{}
+	removed_CompetitionToProvider map[uuid.UUID]struct{}
+	cleared_CompetitionToProvider bool
+	done                          bool
+	oldValue                      func(context.Context) (*Competition, error)
+	predicates                    []predicate.Competition
 }
 
 var _ ent.Mutation = (*CompetitionMutation)(nil)
@@ -193,78 +196,6 @@ func (m *CompetitionMutation) ResetName() {
 	m.name = nil
 }
 
-// SetProviderType sets the "provider_type" field.
-func (m *CompetitionMutation) SetProviderType(s string) {
-	m.provider_type = &s
-}
-
-// ProviderType returns the value of the "provider_type" field in the mutation.
-func (m *CompetitionMutation) ProviderType() (r string, exists bool) {
-	v := m.provider_type
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldProviderType returns the old "provider_type" field's value of the Competition entity.
-// If the Competition object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CompetitionMutation) OldProviderType(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProviderType is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProviderType requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProviderType: %w", err)
-	}
-	return oldValue.ProviderType, nil
-}
-
-// ResetProviderType resets all changes to the "provider_type" field.
-func (m *CompetitionMutation) ResetProviderType() {
-	m.provider_type = nil
-}
-
-// SetProviderConfigFile sets the "provider_config_file" field.
-func (m *CompetitionMutation) SetProviderConfigFile(s string) {
-	m.provider_config_file = &s
-}
-
-// ProviderConfigFile returns the value of the "provider_config_file" field in the mutation.
-func (m *CompetitionMutation) ProviderConfigFile() (r string, exists bool) {
-	v := m.provider_config_file
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldProviderConfigFile returns the old "provider_config_file" field's value of the Competition entity.
-// If the Competition object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CompetitionMutation) OldProviderConfigFile(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldProviderConfigFile is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldProviderConfigFile requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldProviderConfigFile: %w", err)
-	}
-	return oldValue.ProviderConfigFile, nil
-}
-
-// ResetProviderConfigFile resets all changes to the "provider_config_file" field.
-func (m *CompetitionMutation) ResetProviderConfigFile() {
-	m.provider_config_file = nil
-}
-
 // AddCompetitionToTeamIDs adds the "CompetitionToTeams" edge to the Team entity by ids.
 func (m *CompetitionMutation) AddCompetitionToTeamIDs(ids ...uuid.UUID) {
 	if m._CompetitionToTeams == nil {
@@ -319,6 +250,60 @@ func (m *CompetitionMutation) ResetCompetitionToTeams() {
 	m.removed_CompetitionToTeams = nil
 }
 
+// AddCompetitionToProviderIDs adds the "CompetitionToProvider" edge to the Provider entity by ids.
+func (m *CompetitionMutation) AddCompetitionToProviderIDs(ids ...uuid.UUID) {
+	if m._CompetitionToProvider == nil {
+		m._CompetitionToProvider = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._CompetitionToProvider[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCompetitionToProvider clears the "CompetitionToProvider" edge to the Provider entity.
+func (m *CompetitionMutation) ClearCompetitionToProvider() {
+	m.cleared_CompetitionToProvider = true
+}
+
+// CompetitionToProviderCleared reports if the "CompetitionToProvider" edge to the Provider entity was cleared.
+func (m *CompetitionMutation) CompetitionToProviderCleared() bool {
+	return m.cleared_CompetitionToProvider
+}
+
+// RemoveCompetitionToProviderIDs removes the "CompetitionToProvider" edge to the Provider entity by IDs.
+func (m *CompetitionMutation) RemoveCompetitionToProviderIDs(ids ...uuid.UUID) {
+	if m.removed_CompetitionToProvider == nil {
+		m.removed_CompetitionToProvider = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._CompetitionToProvider, ids[i])
+		m.removed_CompetitionToProvider[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCompetitionToProvider returns the removed IDs of the "CompetitionToProvider" edge to the Provider entity.
+func (m *CompetitionMutation) RemovedCompetitionToProviderIDs() (ids []uuid.UUID) {
+	for id := range m.removed_CompetitionToProvider {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CompetitionToProviderIDs returns the "CompetitionToProvider" edge IDs in the mutation.
+func (m *CompetitionMutation) CompetitionToProviderIDs() (ids []uuid.UUID) {
+	for id := range m._CompetitionToProvider {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCompetitionToProvider resets all changes to the "CompetitionToProvider" edge.
+func (m *CompetitionMutation) ResetCompetitionToProvider() {
+	m._CompetitionToProvider = nil
+	m.cleared_CompetitionToProvider = false
+	m.removed_CompetitionToProvider = nil
+}
+
 // Where appends a list predicates to the CompetitionMutation builder.
 func (m *CompetitionMutation) Where(ps ...predicate.Competition) {
 	m.predicates = append(m.predicates, ps...)
@@ -338,15 +323,9 @@ func (m *CompetitionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CompetitionMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 1)
 	if m.name != nil {
 		fields = append(fields, competition.FieldName)
-	}
-	if m.provider_type != nil {
-		fields = append(fields, competition.FieldProviderType)
-	}
-	if m.provider_config_file != nil {
-		fields = append(fields, competition.FieldProviderConfigFile)
 	}
 	return fields
 }
@@ -358,10 +337,6 @@ func (m *CompetitionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case competition.FieldName:
 		return m.Name()
-	case competition.FieldProviderType:
-		return m.ProviderType()
-	case competition.FieldProviderConfigFile:
-		return m.ProviderConfigFile()
 	}
 	return nil, false
 }
@@ -373,10 +348,6 @@ func (m *CompetitionMutation) OldField(ctx context.Context, name string) (ent.Va
 	switch name {
 	case competition.FieldName:
 		return m.OldName(ctx)
-	case competition.FieldProviderType:
-		return m.OldProviderType(ctx)
-	case competition.FieldProviderConfigFile:
-		return m.OldProviderConfigFile(ctx)
 	}
 	return nil, fmt.Errorf("unknown Competition field %s", name)
 }
@@ -392,20 +363,6 @@ func (m *CompetitionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
-		return nil
-	case competition.FieldProviderType:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetProviderType(v)
-		return nil
-	case competition.FieldProviderConfigFile:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetProviderConfigFile(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Competition field %s", name)
@@ -459,21 +416,18 @@ func (m *CompetitionMutation) ResetField(name string) error {
 	case competition.FieldName:
 		m.ResetName()
 		return nil
-	case competition.FieldProviderType:
-		m.ResetProviderType()
-		return nil
-	case competition.FieldProviderConfigFile:
-		m.ResetProviderConfigFile()
-		return nil
 	}
 	return fmt.Errorf("unknown Competition field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CompetitionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m._CompetitionToTeams != nil {
 		edges = append(edges, competition.EdgeCompetitionToTeams)
+	}
+	if m._CompetitionToProvider != nil {
+		edges = append(edges, competition.EdgeCompetitionToProvider)
 	}
 	return edges
 }
@@ -488,15 +442,24 @@ func (m *CompetitionMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case competition.EdgeCompetitionToProvider:
+		ids := make([]ent.Value, 0, len(m._CompetitionToProvider))
+		for id := range m._CompetitionToProvider {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CompetitionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removed_CompetitionToTeams != nil {
 		edges = append(edges, competition.EdgeCompetitionToTeams)
+	}
+	if m.removed_CompetitionToProvider != nil {
+		edges = append(edges, competition.EdgeCompetitionToProvider)
 	}
 	return edges
 }
@@ -511,15 +474,24 @@ func (m *CompetitionMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case competition.EdgeCompetitionToProvider:
+		ids := make([]ent.Value, 0, len(m.removed_CompetitionToProvider))
+		for id := range m.removed_CompetitionToProvider {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CompetitionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.cleared_CompetitionToTeams {
 		edges = append(edges, competition.EdgeCompetitionToTeams)
+	}
+	if m.cleared_CompetitionToProvider {
+		edges = append(edges, competition.EdgeCompetitionToProvider)
 	}
 	return edges
 }
@@ -530,6 +502,8 @@ func (m *CompetitionMutation) EdgeCleared(name string) bool {
 	switch name {
 	case competition.EdgeCompetitionToTeams:
 		return m.cleared_CompetitionToTeams
+	case competition.EdgeCompetitionToProvider:
+		return m.cleared_CompetitionToProvider
 	}
 	return false
 }
@@ -549,8 +523,475 @@ func (m *CompetitionMutation) ResetEdge(name string) error {
 	case competition.EdgeCompetitionToTeams:
 		m.ResetCompetitionToTeams()
 		return nil
+	case competition.EdgeCompetitionToProvider:
+		m.ResetCompetitionToProvider()
+		return nil
 	}
 	return fmt.Errorf("unknown Competition edge %s", name)
+}
+
+// ProviderMutation represents an operation that mutates the Provider nodes in the graph.
+type ProviderMutation struct {
+	config
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	name                          *string
+	_config                       *string
+	clearedFields                 map[string]struct{}
+	_ProviderToCompetition        map[uuid.UUID]struct{}
+	removed_ProviderToCompetition map[uuid.UUID]struct{}
+	cleared_ProviderToCompetition bool
+	done                          bool
+	oldValue                      func(context.Context) (*Provider, error)
+	predicates                    []predicate.Provider
+}
+
+var _ ent.Mutation = (*ProviderMutation)(nil)
+
+// providerOption allows management of the mutation configuration using functional options.
+type providerOption func(*ProviderMutation)
+
+// newProviderMutation creates new mutation for the Provider entity.
+func newProviderMutation(c config, op Op, opts ...providerOption) *ProviderMutation {
+	m := &ProviderMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeProvider,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withProviderID sets the ID field of the mutation.
+func withProviderID(id uuid.UUID) providerOption {
+	return func(m *ProviderMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Provider
+		)
+		m.oldValue = func(ctx context.Context) (*Provider, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Provider.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withProvider sets the old Provider of the mutation.
+func withProvider(node *Provider) providerOption {
+	return func(m *ProviderMutation) {
+		m.oldValue = func(context.Context) (*Provider, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ProviderMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ProviderMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Provider entities.
+func (m *ProviderMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ProviderMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ProviderMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Provider.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *ProviderMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *ProviderMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Provider entity.
+// If the Provider object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProviderMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *ProviderMutation) ResetName() {
+	m.name = nil
+}
+
+// SetConfig sets the "config" field.
+func (m *ProviderMutation) SetConfig(s string) {
+	m._config = &s
+}
+
+// Config returns the value of the "config" field in the mutation.
+func (m *ProviderMutation) Config() (r string, exists bool) {
+	v := m._config
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfig returns the old "config" field's value of the Provider entity.
+// If the Provider object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProviderMutation) OldConfig(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfig is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfig requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfig: %w", err)
+	}
+	return oldValue.Config, nil
+}
+
+// ResetConfig resets all changes to the "config" field.
+func (m *ProviderMutation) ResetConfig() {
+	m._config = nil
+}
+
+// AddProviderToCompetitionIDs adds the "ProviderToCompetition" edge to the Competition entity by ids.
+func (m *ProviderMutation) AddProviderToCompetitionIDs(ids ...uuid.UUID) {
+	if m._ProviderToCompetition == nil {
+		m._ProviderToCompetition = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._ProviderToCompetition[ids[i]] = struct{}{}
+	}
+}
+
+// ClearProviderToCompetition clears the "ProviderToCompetition" edge to the Competition entity.
+func (m *ProviderMutation) ClearProviderToCompetition() {
+	m.cleared_ProviderToCompetition = true
+}
+
+// ProviderToCompetitionCleared reports if the "ProviderToCompetition" edge to the Competition entity was cleared.
+func (m *ProviderMutation) ProviderToCompetitionCleared() bool {
+	return m.cleared_ProviderToCompetition
+}
+
+// RemoveProviderToCompetitionIDs removes the "ProviderToCompetition" edge to the Competition entity by IDs.
+func (m *ProviderMutation) RemoveProviderToCompetitionIDs(ids ...uuid.UUID) {
+	if m.removed_ProviderToCompetition == nil {
+		m.removed_ProviderToCompetition = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._ProviderToCompetition, ids[i])
+		m.removed_ProviderToCompetition[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedProviderToCompetition returns the removed IDs of the "ProviderToCompetition" edge to the Competition entity.
+func (m *ProviderMutation) RemovedProviderToCompetitionIDs() (ids []uuid.UUID) {
+	for id := range m.removed_ProviderToCompetition {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ProviderToCompetitionIDs returns the "ProviderToCompetition" edge IDs in the mutation.
+func (m *ProviderMutation) ProviderToCompetitionIDs() (ids []uuid.UUID) {
+	for id := range m._ProviderToCompetition {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetProviderToCompetition resets all changes to the "ProviderToCompetition" edge.
+func (m *ProviderMutation) ResetProviderToCompetition() {
+	m._ProviderToCompetition = nil
+	m.cleared_ProviderToCompetition = false
+	m.removed_ProviderToCompetition = nil
+}
+
+// Where appends a list predicates to the ProviderMutation builder.
+func (m *ProviderMutation) Where(ps ...predicate.Provider) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ProviderMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Provider).
+func (m *ProviderMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ProviderMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.name != nil {
+		fields = append(fields, provider.FieldName)
+	}
+	if m._config != nil {
+		fields = append(fields, provider.FieldConfig)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ProviderMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case provider.FieldName:
+		return m.Name()
+	case provider.FieldConfig:
+		return m.Config()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ProviderMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case provider.FieldName:
+		return m.OldName(ctx)
+	case provider.FieldConfig:
+		return m.OldConfig(ctx)
+	}
+	return nil, fmt.Errorf("unknown Provider field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProviderMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case provider.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case provider.FieldConfig:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfig(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Provider field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ProviderMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ProviderMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProviderMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Provider numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ProviderMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ProviderMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ProviderMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Provider nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ProviderMutation) ResetField(name string) error {
+	switch name {
+	case provider.FieldName:
+		m.ResetName()
+		return nil
+	case provider.FieldConfig:
+		m.ResetConfig()
+		return nil
+	}
+	return fmt.Errorf("unknown Provider field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ProviderMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m._ProviderToCompetition != nil {
+		edges = append(edges, provider.EdgeProviderToCompetition)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ProviderMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case provider.EdgeProviderToCompetition:
+		ids := make([]ent.Value, 0, len(m._ProviderToCompetition))
+		for id := range m._ProviderToCompetition {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ProviderMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removed_ProviderToCompetition != nil {
+		edges = append(edges, provider.EdgeProviderToCompetition)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ProviderMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case provider.EdgeProviderToCompetition:
+		ids := make([]ent.Value, 0, len(m.removed_ProviderToCompetition))
+		for id := range m.removed_ProviderToCompetition {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ProviderMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleared_ProviderToCompetition {
+		edges = append(edges, provider.EdgeProviderToCompetition)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ProviderMutation) EdgeCleared(name string) bool {
+	switch name {
+	case provider.EdgeProviderToCompetition:
+		return m.cleared_ProviderToCompetition
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ProviderMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Provider unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ProviderMutation) ResetEdge(name string) error {
+	switch name {
+	case provider.EdgeProviderToCompetition:
+		m.ResetProviderToCompetition()
+		return nil
+	}
+	return fmt.Errorf("unknown Provider edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/schema"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
@@ -22,6 +23,12 @@ func init() {
 	competitionDescID := competitionFields[0].Descriptor()
 	// competition.DefaultID holds the default value on creation for the id field.
 	competition.DefaultID = competitionDescID.Default.(func() uuid.UUID)
+	providerFields := schema.Provider{}.Fields()
+	_ = providerFields
+	// providerDescID is the schema descriptor for id field.
+	providerDescID := providerFields[0].Descriptor()
+	// provider.DefaultID holds the default value on creation for the id field.
+	provider.DefaultID = providerDescID.Default.(func() uuid.UUID)
 	teamFields := schema.Team{}.Fields()
 	_ = teamFields
 	// teamDescID is the schema descriptor for id field.

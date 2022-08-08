@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -461,6 +462,233 @@ func (c *Competition) ToEdge(order *CompetitionOrder) *CompetitionEdge {
 	return &CompetitionEdge{
 		Node:   c,
 		Cursor: order.Field.toCursor(c),
+	}
+}
+
+// ProviderEdge is the edge representation of Provider.
+type ProviderEdge struct {
+	Node   *Provider `json:"node"`
+	Cursor Cursor    `json:"cursor"`
+}
+
+// ProviderConnection is the connection containing edges to Provider.
+type ProviderConnection struct {
+	Edges      []*ProviderEdge `json:"edges"`
+	PageInfo   PageInfo        `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
+// ProviderPaginateOption enables pagination customization.
+type ProviderPaginateOption func(*providerPager) error
+
+// WithProviderOrder configures pagination ordering.
+func WithProviderOrder(order *ProviderOrder) ProviderPaginateOption {
+	if order == nil {
+		order = DefaultProviderOrder
+	}
+	o := *order
+	return func(pager *providerPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultProviderOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithProviderFilter configures pagination filter.
+func WithProviderFilter(filter func(*ProviderQuery) (*ProviderQuery, error)) ProviderPaginateOption {
+	return func(pager *providerPager) error {
+		if filter == nil {
+			return errors.New("ProviderQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type providerPager struct {
+	order  *ProviderOrder
+	filter func(*ProviderQuery) (*ProviderQuery, error)
+}
+
+func newProviderPager(opts []ProviderPaginateOption) (*providerPager, error) {
+	pager := &providerPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultProviderOrder
+	}
+	return pager, nil
+}
+
+func (p *providerPager) applyFilter(query *ProviderQuery) (*ProviderQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *providerPager) toCursor(pr *Provider) Cursor {
+	return p.order.Field.toCursor(pr)
+}
+
+func (p *providerPager) applyCursors(query *ProviderQuery, after, before *Cursor) *ProviderQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultProviderOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *providerPager) applyOrder(query *ProviderQuery, reverse bool) *ProviderQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultProviderOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultProviderOrder.Field.field))
+	}
+	return query
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Provider.
+func (pr *ProviderQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ProviderPaginateOption,
+) (*ProviderConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newProviderPager(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if pr, err = pager.applyFilter(pr); err != nil {
+		return nil, err
+	}
+
+	conn := &ProviderConnection{Edges: []*ProviderEdge{}}
+	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
+		if hasCollectedField(ctx, totalCountField) ||
+			hasCollectedField(ctx, pageInfoField) {
+			count, err := pr.Count(ctx)
+			if err != nil {
+				return nil, err
+			}
+			conn.TotalCount = count
+			conn.PageInfo.HasNextPage = first != nil && count > 0
+			conn.PageInfo.HasPreviousPage = last != nil && count > 0
+		}
+		return conn, nil
+	}
+
+	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
+		count, err := pr.Clone().Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn.TotalCount = count
+	}
+
+	pr = pager.applyCursors(pr, after, before)
+	pr = pager.applyOrder(pr, last != nil)
+	var limit int
+	if first != nil {
+		limit = *first + 1
+	} else if last != nil {
+		limit = *last + 1
+	}
+	if limit > 0 {
+		pr = pr.Limit(limit)
+	}
+
+	if field := getCollectedField(ctx, edgesField, nodeField); field != nil {
+		pr = pr.collectField(graphql.GetOperationContext(ctx), *field)
+	}
+
+	nodes, err := pr.All(ctx)
+	if err != nil || len(nodes) == 0 {
+		return conn, err
+	}
+
+	if len(nodes) == limit {
+		conn.PageInfo.HasNextPage = first != nil
+		conn.PageInfo.HasPreviousPage = last != nil
+		nodes = nodes[:len(nodes)-1]
+	}
+
+	var nodeAt func(int) *Provider
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Provider {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Provider {
+			return nodes[i]
+		}
+	}
+
+	conn.Edges = make([]*ProviderEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		conn.Edges[i] = &ProviderEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+
+	conn.PageInfo.StartCursor = &conn.Edges[0].Cursor
+	conn.PageInfo.EndCursor = &conn.Edges[len(conn.Edges)-1].Cursor
+	if conn.TotalCount == 0 {
+		conn.TotalCount = len(nodes)
+	}
+
+	return conn, nil
+}
+
+// ProviderOrderField defines the ordering field of Provider.
+type ProviderOrderField struct {
+	field    string
+	toCursor func(*Provider) Cursor
+}
+
+// ProviderOrder defines the ordering of Provider.
+type ProviderOrder struct {
+	Direction OrderDirection      `json:"direction"`
+	Field     *ProviderOrderField `json:"field"`
+}
+
+// DefaultProviderOrder is the default ordering of Provider.
+var DefaultProviderOrder = &ProviderOrder{
+	Direction: OrderDirectionAsc,
+	Field: &ProviderOrderField{
+		field: provider.FieldID,
+		toCursor: func(pr *Provider) Cursor {
+			return Cursor{ID: pr.ID}
+		},
+	},
+}
+
+// ToEdge converts Provider into ProviderEdge.
+func (pr *Provider) ToEdge(order *ProviderOrder) *ProviderEdge {
+	if order == nil {
+		order = DefaultProviderOrder
+	}
+	return &ProviderEdge{
+		Node:   pr,
+		Cursor: order.Field.toCursor(pr),
 	}
 }
 

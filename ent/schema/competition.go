@@ -20,8 +20,6 @@ func (Competition) Fields() []ent.Field {
 			Default(uuid.New).
 			StorageKey("oid"),
 		field.String("name").Unique().Comment("[REQUIRED] The unique name (aka. slug) for the competition."),
-		field.String("provider_type").Comment("[REQUIRED] This is the ID of the competition provider."),
-		field.String("provider_config_file").Comment("[REQUIRED] This is the absolute path to the config file used to connect to the competition provider."),
 	}
 }
 
@@ -32,5 +30,6 @@ func (Competition) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
+		edge.To("CompetitionToProvider", Provider.Type).Required(),
 	}
 }

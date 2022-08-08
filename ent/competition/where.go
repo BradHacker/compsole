@@ -99,20 +99,6 @@ func Name(v string) predicate.Competition {
 	})
 }
 
-// ProviderType applies equality check predicate on the "provider_type" field. It's identical to ProviderTypeEQ.
-func ProviderType(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderConfigFile applies equality check predicate on the "provider_config_file" field. It's identical to ProviderConfigFileEQ.
-func ProviderConfigFile(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProviderConfigFile), v))
-	})
-}
-
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Competition {
 	return predicate.Competition(func(s *sql.Selector) {
@@ -224,228 +210,6 @@ func NameContainsFold(v string) predicate.Competition {
 	})
 }
 
-// ProviderTypeEQ applies the EQ predicate on the "provider_type" field.
-func ProviderTypeEQ(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeNEQ applies the NEQ predicate on the "provider_type" field.
-func ProviderTypeNEQ(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeIn applies the In predicate on the "provider_type" field.
-func ProviderTypeIn(vs ...string) predicate.Competition {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Competition(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldProviderType), v...))
-	})
-}
-
-// ProviderTypeNotIn applies the NotIn predicate on the "provider_type" field.
-func ProviderTypeNotIn(vs ...string) predicate.Competition {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Competition(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldProviderType), v...))
-	})
-}
-
-// ProviderTypeGT applies the GT predicate on the "provider_type" field.
-func ProviderTypeGT(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeGTE applies the GTE predicate on the "provider_type" field.
-func ProviderTypeGTE(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeLT applies the LT predicate on the "provider_type" field.
-func ProviderTypeLT(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeLTE applies the LTE predicate on the "provider_type" field.
-func ProviderTypeLTE(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeContains applies the Contains predicate on the "provider_type" field.
-func ProviderTypeContains(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeHasPrefix applies the HasPrefix predicate on the "provider_type" field.
-func ProviderTypeHasPrefix(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeHasSuffix applies the HasSuffix predicate on the "provider_type" field.
-func ProviderTypeHasSuffix(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeEqualFold applies the EqualFold predicate on the "provider_type" field.
-func ProviderTypeEqualFold(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderTypeContainsFold applies the ContainsFold predicate on the "provider_type" field.
-func ProviderTypeContainsFold(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldProviderType), v))
-	})
-}
-
-// ProviderConfigFileEQ applies the EQ predicate on the "provider_config_file" field.
-func ProviderConfigFileEQ(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileNEQ applies the NEQ predicate on the "provider_config_file" field.
-func ProviderConfigFileNEQ(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileIn applies the In predicate on the "provider_config_file" field.
-func ProviderConfigFileIn(vs ...string) predicate.Competition {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Competition(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldProviderConfigFile), v...))
-	})
-}
-
-// ProviderConfigFileNotIn applies the NotIn predicate on the "provider_config_file" field.
-func ProviderConfigFileNotIn(vs ...string) predicate.Competition {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Competition(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldProviderConfigFile), v...))
-	})
-}
-
-// ProviderConfigFileGT applies the GT predicate on the "provider_config_file" field.
-func ProviderConfigFileGT(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileGTE applies the GTE predicate on the "provider_config_file" field.
-func ProviderConfigFileGTE(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileLT applies the LT predicate on the "provider_config_file" field.
-func ProviderConfigFileLT(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileLTE applies the LTE predicate on the "provider_config_file" field.
-func ProviderConfigFileLTE(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileContains applies the Contains predicate on the "provider_config_file" field.
-func ProviderConfigFileContains(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileHasPrefix applies the HasPrefix predicate on the "provider_config_file" field.
-func ProviderConfigFileHasPrefix(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileHasSuffix applies the HasSuffix predicate on the "provider_config_file" field.
-func ProviderConfigFileHasSuffix(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileEqualFold applies the EqualFold predicate on the "provider_config_file" field.
-func ProviderConfigFileEqualFold(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldProviderConfigFile), v))
-	})
-}
-
-// ProviderConfigFileContainsFold applies the ContainsFold predicate on the "provider_config_file" field.
-func ProviderConfigFileContainsFold(v string) predicate.Competition {
-	return predicate.Competition(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldProviderConfigFile), v))
-	})
-}
-
 // HasCompetitionToTeams applies the HasEdge predicate on the "CompetitionToTeams" edge.
 func HasCompetitionToTeams() predicate.Competition {
 	return predicate.Competition(func(s *sql.Selector) {
@@ -465,6 +229,34 @@ func HasCompetitionToTeamsWith(preds ...predicate.Team) predicate.Competition {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(CompetitionToTeamsInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, CompetitionToTeamsTable, CompetitionToTeamsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCompetitionToProvider applies the HasEdge predicate on the "CompetitionToProvider" edge.
+func HasCompetitionToProvider() predicate.Competition {
+	return predicate.Competition(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(CompetitionToProviderTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, CompetitionToProviderTable, CompetitionToProviderPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCompetitionToProviderWith applies the HasEdge predicate on the "CompetitionToProvider" edge with a given conditions (other predicates).
+func HasCompetitionToProviderWith(preds ...predicate.Provider) predicate.Competition {
+	return predicate.Competition(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(CompetitionToProviderInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, CompetitionToProviderTable, CompetitionToProviderPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

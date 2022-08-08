@@ -12,14 +12,24 @@ var (
 	CompetitionsColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
 		{Name: "name", Type: field.TypeString, Unique: true},
-		{Name: "provider_type", Type: field.TypeString},
-		{Name: "provider_config_file", Type: field.TypeString},
 	}
 	// CompetitionsTable holds the schema information for the "competitions" table.
 	CompetitionsTable = &schema.Table{
 		Name:       "competitions",
 		Columns:    CompetitionsColumns,
 		PrimaryKey: []*schema.Column{CompetitionsColumns[0]},
+	}
+	// ProvidersColumns holds the columns for the "providers" table.
+	ProvidersColumns = []*schema.Column{
+		{Name: "oid", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "config", Type: field.TypeString},
+	}
+	// ProvidersTable holds the schema information for the "providers" table.
+	ProvidersTable = &schema.Table{
+		Name:       "providers",
+		Columns:    ProvidersColumns,
+		PrimaryKey: []*schema.Column{ProvidersColumns[0]},
 	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
@@ -110,13 +120,40 @@ var (
 			},
 		},
 	}
+	// CompetitionCompetitionToProviderColumns holds the columns for the "competition_CompetitionToProvider" table.
+	CompetitionCompetitionToProviderColumns = []*schema.Column{
+		{Name: "competition_id", Type: field.TypeUUID},
+		{Name: "provider_id", Type: field.TypeUUID},
+	}
+	// CompetitionCompetitionToProviderTable holds the schema information for the "competition_CompetitionToProvider" table.
+	CompetitionCompetitionToProviderTable = &schema.Table{
+		Name:       "competition_CompetitionToProvider",
+		Columns:    CompetitionCompetitionToProviderColumns,
+		PrimaryKey: []*schema.Column{CompetitionCompetitionToProviderColumns[0], CompetitionCompetitionToProviderColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "competition_CompetitionToProvider_competition_id",
+				Columns:    []*schema.Column{CompetitionCompetitionToProviderColumns[0]},
+				RefColumns: []*schema.Column{CompetitionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "competition_CompetitionToProvider_provider_id",
+				Columns:    []*schema.Column{CompetitionCompetitionToProviderColumns[1]},
+				RefColumns: []*schema.Column{ProvidersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CompetitionsTable,
+		ProvidersTable,
 		TeamsTable,
 		TokensTable,
 		UsersTable,
 		VMObjectsTable,
+		CompetitionCompetitionToProviderTable,
 	}
 )
 
@@ -125,4 +162,6 @@ func init() {
 	TokensTable.ForeignKeys[0].RefTable = UsersTable
 	UsersTable.ForeignKeys[0].RefTable = TeamsTable
 	VMObjectsTable.ForeignKeys[0].RefTable = TeamsTable
+	CompetitionCompetitionToProviderTable.ForeignKeys[0].RefTable = CompetitionsTable
+	CompetitionCompetitionToProviderTable.ForeignKeys[1].RefTable = ProvidersTable
 }

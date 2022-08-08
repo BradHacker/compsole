@@ -13,12 +13,10 @@ const (
 	FieldID = "oid"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldProviderType holds the string denoting the provider_type field in the database.
-	FieldProviderType = "provider_type"
-	// FieldProviderConfigFile holds the string denoting the provider_config_file field in the database.
-	FieldProviderConfigFile = "provider_config_file"
 	// EdgeCompetitionToTeams holds the string denoting the competitiontoteams edge name in mutations.
 	EdgeCompetitionToTeams = "CompetitionToTeams"
+	// EdgeCompetitionToProvider holds the string denoting the competitiontoprovider edge name in mutations.
+	EdgeCompetitionToProvider = "CompetitionToProvider"
 	// Table holds the table name of the competition in the database.
 	Table = "competitions"
 	// CompetitionToTeamsTable is the table that holds the CompetitionToTeams relation/edge.
@@ -28,15 +26,24 @@ const (
 	CompetitionToTeamsInverseTable = "teams"
 	// CompetitionToTeamsColumn is the table column denoting the CompetitionToTeams relation/edge.
 	CompetitionToTeamsColumn = "team_team_to_competition"
+	// CompetitionToProviderTable is the table that holds the CompetitionToProvider relation/edge. The primary key declared below.
+	CompetitionToProviderTable = "competition_CompetitionToProvider"
+	// CompetitionToProviderInverseTable is the table name for the Provider entity.
+	// It exists in this package in order to avoid circular dependency with the "provider" package.
+	CompetitionToProviderInverseTable = "providers"
 )
 
 // Columns holds all SQL columns for competition fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
-	FieldProviderType,
-	FieldProviderConfigFile,
 }
+
+var (
+	// CompetitionToProviderPrimaryKey and CompetitionToProviderColumn2 are the table columns denoting the
+	// primary key for the CompetitionToProvider relation (M2M).
+	CompetitionToProviderPrimaryKey = []string{"competition_id", "provider_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

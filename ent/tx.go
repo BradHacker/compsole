@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Competition is the client for interacting with the Competition builders.
 	Competition *CompetitionClient
+	// Provider is the client for interacting with the Provider builders.
+	Provider *ProviderClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// Token is the client for interacting with the Token builders.
@@ -158,6 +160,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Competition = NewCompetitionClient(tx.config)
+	tx.Provider = NewProviderClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.Token = NewTokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)

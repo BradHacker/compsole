@@ -21,6 +21,18 @@ func (c *CompetitionQuery) collectField(ctx *graphql.OperationContext, field gra
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (pr *ProviderQuery) CollectFields(ctx context.Context, satisfies ...string) *ProviderQuery {
+	if fc := graphql.GetFieldContext(ctx); fc != nil {
+		pr = pr.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)
+	}
+	return pr
+}
+
+func (pr *ProviderQuery) collectField(ctx *graphql.OperationContext, field graphql.CollectedField, satisfies ...string) *ProviderQuery {
+	return pr
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (t *TeamQuery) CollectFields(ctx context.Context, satisfies ...string) *TeamQuery {
 	if fc := graphql.GetFieldContext(ctx); fc != nil {
 		t = t.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)

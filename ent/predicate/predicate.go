@@ -9,6 +9,9 @@ import (
 // Competition is the predicate function for competition builders.
 type Competition func(*sql.Selector)
 
+// Provider is the predicate function for provider builders.
+type Provider func(*sql.Selector)
+
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
 

@@ -13,9 +13,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Providers are now own entity and Competitions can share a single provider
+
 ### Deprecated
 
 ### Removed
+
+- Competition `ProviderType` and `ProviderConfigFile` fields
 
 ### Fixed
 

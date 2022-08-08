@@ -12,6 +12,22 @@ func (c *Competition) CompetitionToTeams(ctx context.Context) ([]*Team, error) {
 	return result, err
 }
 
+func (c *Competition) CompetitionToProvider(ctx context.Context) ([]*Provider, error) {
+	result, err := c.Edges.CompetitionToProviderOrErr()
+	if IsNotLoaded(err) {
+		result, err = c.QueryCompetitionToProvider().All(ctx)
+	}
+	return result, err
+}
+
+func (pr *Provider) ProviderToCompetition(ctx context.Context) ([]*Competition, error) {
+	result, err := pr.Edges.ProviderToCompetitionOrErr()
+	if IsNotLoaded(err) {
+		result, err = pr.QueryProviderToCompetition().All(ctx)
+	}
+	return result, err
+}
+
 func (t *Team) TeamToCompetition(ctx context.Context) (*Competition, error) {
 	result, err := t.Edges.TeamToCompetitionOrErr()
 	if IsNotLoaded(err) {

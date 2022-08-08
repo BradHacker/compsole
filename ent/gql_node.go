@@ -10,6 +10,7 @@ import (
 	"entgo.io/contrib/entgql"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -49,8 +50,8 @@ func (c *Competition) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     c.ID,
 		Type:   "Competition",
-		Fields: make([]*Field, 3),
-		Edges:  make([]*Edge, 1),
+		Fields: make([]*Field, 1),
+		Edges:  make([]*Edge, 2),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(c.Name); err != nil {
@@ -61,28 +62,59 @@ func (c *Competition) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "name",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(c.ProviderType); err != nil {
-		return nil, err
-	}
-	node.Fields[1] = &Field{
-		Type:  "string",
-		Name:  "provider_type",
-		Value: string(buf),
-	}
-	if buf, err = json.Marshal(c.ProviderConfigFile); err != nil {
-		return nil, err
-	}
-	node.Fields[2] = &Field{
-		Type:  "string",
-		Name:  "provider_config_file",
-		Value: string(buf),
-	}
 	node.Edges[0] = &Edge{
 		Type: "Team",
 		Name: "CompetitionToTeams",
 	}
 	err = c.QueryCompetitionToTeams().
 		Select(team.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
+		Type: "Provider",
+		Name: "CompetitionToProvider",
+	}
+	err = c.QueryCompetitionToProvider().
+		Select(provider.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
+func (pr *Provider) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     pr.ID,
+		Type:   "Provider",
+		Fields: make([]*Field, 2),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(pr.Name); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(pr.Config); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "string",
+		Name:  "config",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Competition",
+		Name: "ProviderToCompetition",
+	}
+	err = pr.QueryProviderToCompetition().
+		Select(competition.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
 	if err != nil {
 		return nil, err
@@ -384,6 +416,15 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			return nil, err
 		}
 		return n, nil
+	case provider.Table:
+		n, err := c.Provider.Query().
+			Where(provider.ID(id)).
+			CollectFields(ctx, "Provider").
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case team.Table:
 		n, err := c.Team.Query().
 			Where(team.ID(id)).
@@ -497,6 +538,19 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		nodes, err := c.Competition.Query().
 			Where(competition.IDIn(ids...)).
 			CollectFields(ctx, "Competition").
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case provider.Table:
+		nodes, err := c.Provider.Query().
+			Where(provider.IDIn(ids...)).
+			CollectFields(ctx, "Provider").
 			All(ctx)
 		if err != nil {
 			return nil, err

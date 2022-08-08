@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/google/uuid"
 )
@@ -35,18 +36,6 @@ func (cu *CompetitionUpdate) SetName(s string) *CompetitionUpdate {
 	return cu
 }
 
-// SetProviderType sets the "provider_type" field.
-func (cu *CompetitionUpdate) SetProviderType(s string) *CompetitionUpdate {
-	cu.mutation.SetProviderType(s)
-	return cu
-}
-
-// SetProviderConfigFile sets the "provider_config_file" field.
-func (cu *CompetitionUpdate) SetProviderConfigFile(s string) *CompetitionUpdate {
-	cu.mutation.SetProviderConfigFile(s)
-	return cu
-}
-
 // AddCompetitionToTeamIDs adds the "CompetitionToTeams" edge to the Team entity by IDs.
 func (cu *CompetitionUpdate) AddCompetitionToTeamIDs(ids ...uuid.UUID) *CompetitionUpdate {
 	cu.mutation.AddCompetitionToTeamIDs(ids...)
@@ -60,6 +49,21 @@ func (cu *CompetitionUpdate) AddCompetitionToTeams(t ...*Team) *CompetitionUpdat
 		ids[i] = t[i].ID
 	}
 	return cu.AddCompetitionToTeamIDs(ids...)
+}
+
+// AddCompetitionToProviderIDs adds the "CompetitionToProvider" edge to the Provider entity by IDs.
+func (cu *CompetitionUpdate) AddCompetitionToProviderIDs(ids ...uuid.UUID) *CompetitionUpdate {
+	cu.mutation.AddCompetitionToProviderIDs(ids...)
+	return cu
+}
+
+// AddCompetitionToProvider adds the "CompetitionToProvider" edges to the Provider entity.
+func (cu *CompetitionUpdate) AddCompetitionToProvider(p ...*Provider) *CompetitionUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return cu.AddCompetitionToProviderIDs(ids...)
 }
 
 // Mutation returns the CompetitionMutation object of the builder.
@@ -86,6 +90,27 @@ func (cu *CompetitionUpdate) RemoveCompetitionToTeams(t ...*Team) *CompetitionUp
 		ids[i] = t[i].ID
 	}
 	return cu.RemoveCompetitionToTeamIDs(ids...)
+}
+
+// ClearCompetitionToProvider clears all "CompetitionToProvider" edges to the Provider entity.
+func (cu *CompetitionUpdate) ClearCompetitionToProvider() *CompetitionUpdate {
+	cu.mutation.ClearCompetitionToProvider()
+	return cu
+}
+
+// RemoveCompetitionToProviderIDs removes the "CompetitionToProvider" edge to Provider entities by IDs.
+func (cu *CompetitionUpdate) RemoveCompetitionToProviderIDs(ids ...uuid.UUID) *CompetitionUpdate {
+	cu.mutation.RemoveCompetitionToProviderIDs(ids...)
+	return cu
+}
+
+// RemoveCompetitionToProvider removes "CompetitionToProvider" edges to Provider entities.
+func (cu *CompetitionUpdate) RemoveCompetitionToProvider(p ...*Provider) *CompetitionUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return cu.RemoveCompetitionToProviderIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -167,20 +192,6 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: competition.FieldName,
 		})
 	}
-	if value, ok := cu.mutation.ProviderType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldProviderType,
-		})
-	}
-	if value, ok := cu.mutation.ProviderConfigFile(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldProviderConfigFile,
-		})
-	}
 	if cu.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -235,6 +246,60 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if cu.mutation.CompetitionToProviderCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.RemovedCompetitionToProviderIDs(); len(nodes) > 0 && !cu.mutation.CompetitionToProviderCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.mutation.CompetitionToProviderIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{competition.Label}
@@ -260,18 +325,6 @@ func (cuo *CompetitionUpdateOne) SetName(s string) *CompetitionUpdateOne {
 	return cuo
 }
 
-// SetProviderType sets the "provider_type" field.
-func (cuo *CompetitionUpdateOne) SetProviderType(s string) *CompetitionUpdateOne {
-	cuo.mutation.SetProviderType(s)
-	return cuo
-}
-
-// SetProviderConfigFile sets the "provider_config_file" field.
-func (cuo *CompetitionUpdateOne) SetProviderConfigFile(s string) *CompetitionUpdateOne {
-	cuo.mutation.SetProviderConfigFile(s)
-	return cuo
-}
-
 // AddCompetitionToTeamIDs adds the "CompetitionToTeams" edge to the Team entity by IDs.
 func (cuo *CompetitionUpdateOne) AddCompetitionToTeamIDs(ids ...uuid.UUID) *CompetitionUpdateOne {
 	cuo.mutation.AddCompetitionToTeamIDs(ids...)
@@ -285,6 +338,21 @@ func (cuo *CompetitionUpdateOne) AddCompetitionToTeams(t ...*Team) *CompetitionU
 		ids[i] = t[i].ID
 	}
 	return cuo.AddCompetitionToTeamIDs(ids...)
+}
+
+// AddCompetitionToProviderIDs adds the "CompetitionToProvider" edge to the Provider entity by IDs.
+func (cuo *CompetitionUpdateOne) AddCompetitionToProviderIDs(ids ...uuid.UUID) *CompetitionUpdateOne {
+	cuo.mutation.AddCompetitionToProviderIDs(ids...)
+	return cuo
+}
+
+// AddCompetitionToProvider adds the "CompetitionToProvider" edges to the Provider entity.
+func (cuo *CompetitionUpdateOne) AddCompetitionToProvider(p ...*Provider) *CompetitionUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return cuo.AddCompetitionToProviderIDs(ids...)
 }
 
 // Mutation returns the CompetitionMutation object of the builder.
@@ -311,6 +379,27 @@ func (cuo *CompetitionUpdateOne) RemoveCompetitionToTeams(t ...*Team) *Competiti
 		ids[i] = t[i].ID
 	}
 	return cuo.RemoveCompetitionToTeamIDs(ids...)
+}
+
+// ClearCompetitionToProvider clears all "CompetitionToProvider" edges to the Provider entity.
+func (cuo *CompetitionUpdateOne) ClearCompetitionToProvider() *CompetitionUpdateOne {
+	cuo.mutation.ClearCompetitionToProvider()
+	return cuo
+}
+
+// RemoveCompetitionToProviderIDs removes the "CompetitionToProvider" edge to Provider entities by IDs.
+func (cuo *CompetitionUpdateOne) RemoveCompetitionToProviderIDs(ids ...uuid.UUID) *CompetitionUpdateOne {
+	cuo.mutation.RemoveCompetitionToProviderIDs(ids...)
+	return cuo
+}
+
+// RemoveCompetitionToProvider removes "CompetitionToProvider" edges to Provider entities.
+func (cuo *CompetitionUpdateOne) RemoveCompetitionToProvider(p ...*Provider) *CompetitionUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return cuo.RemoveCompetitionToProviderIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -416,20 +505,6 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 			Column: competition.FieldName,
 		})
 	}
-	if value, ok := cuo.mutation.ProviderType(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldProviderType,
-		})
-	}
-	if value, ok := cuo.mutation.ProviderConfigFile(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: competition.FieldProviderConfigFile,
-		})
-	}
 	if cuo.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -476,6 +551,60 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if cuo.mutation.CompetitionToProviderCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.RemovedCompetitionToProviderIDs(); len(nodes) > 0 && !cuo.mutation.CompetitionToProviderCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.mutation.CompetitionToProviderIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   competition.CompetitionToProviderTable,
+			Columns: competition.CompetitionToProviderPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: provider.FieldID,
 				},
 			},
 		}

@@ -19,12 +19,6 @@ type Competition struct {
 	// Name holds the value of the "name" field.
 	// [REQUIRED] The unique name (aka. slug) for the competition.
 	Name string `json:"name,omitempty"`
-	// ProviderType holds the value of the "provider_type" field.
-	// [REQUIRED] This is the ID of the competition provider.
-	ProviderType string `json:"provider_type,omitempty"`
-	// ProviderConfigFile holds the value of the "provider_config_file" field.
-	// [REQUIRED] This is the absolute path to the config file used to connect to the competition provider.
-	ProviderConfigFile string `json:"provider_config_file,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CompetitionQuery when eager-loading is set.
 	Edges CompetitionEdges `json:"edges"`
@@ -34,9 +28,11 @@ type Competition struct {
 type CompetitionEdges struct {
 	// CompetitionToTeams holds the value of the CompetitionToTeams edge.
 	CompetitionToTeams []*Team `json:"CompetitionToTeams,omitempty"`
+	// CompetitionToProvider holds the value of the CompetitionToProvider edge.
+	CompetitionToProvider []*Provider `json:"CompetitionToProvider,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // CompetitionToTeamsOrErr returns the CompetitionToTeams value or an error if the edge
@@ -48,12 +44,21 @@ func (e CompetitionEdges) CompetitionToTeamsOrErr() ([]*Team, error) {
 	return nil, &NotLoadedError{edge: "CompetitionToTeams"}
 }
 
+// CompetitionToProviderOrErr returns the CompetitionToProvider value or an error if the edge
+// was not loaded in eager-loading.
+func (e CompetitionEdges) CompetitionToProviderOrErr() ([]*Provider, error) {
+	if e.loadedTypes[1] {
+		return e.CompetitionToProvider, nil
+	}
+	return nil, &NotLoadedError{edge: "CompetitionToProvider"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Competition) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case competition.FieldName, competition.FieldProviderType, competition.FieldProviderConfigFile:
+		case competition.FieldName:
 			values[i] = new(sql.NullString)
 		case competition.FieldID:
 			values[i] = new(uuid.UUID)
@@ -84,18 +89,6 @@ func (c *Competition) assignValues(columns []string, values []interface{}) error
 			} else if value.Valid {
 				c.Name = value.String
 			}
-		case competition.FieldProviderType:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field provider_type", values[i])
-			} else if value.Valid {
-				c.ProviderType = value.String
-			}
-		case competition.FieldProviderConfigFile:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field provider_config_file", values[i])
-			} else if value.Valid {
-				c.ProviderConfigFile = value.String
-			}
 		}
 	}
 	return nil
@@ -104,6 +97,11 @@ func (c *Competition) assignValues(columns []string, values []interface{}) error
 // QueryCompetitionToTeams queries the "CompetitionToTeams" edge of the Competition entity.
 func (c *Competition) QueryCompetitionToTeams() *TeamQuery {
 	return (&CompetitionClient{config: c.config}).QueryCompetitionToTeams(c)
+}
+
+// QueryCompetitionToProvider queries the "CompetitionToProvider" edge of the Competition entity.
+func (c *Competition) QueryCompetitionToProvider() *ProviderQuery {
+	return (&CompetitionClient{config: c.config}).QueryCompetitionToProvider(c)
 }
 
 // Update returns a builder for updating this Competition.
@@ -131,10 +129,6 @@ func (c *Competition) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", c.ID))
 	builder.WriteString(", name=")
 	builder.WriteString(c.Name)
-	builder.WriteString(", provider_type=")
-	builder.WriteString(c.ProviderType)
-	builder.WriteString(", provider_config_file=")
-	builder.WriteString(c.ProviderConfigFile)
 	builder.WriteByte(')')
 	return builder.String()
 }
