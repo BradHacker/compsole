@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Admin main list pages
+- User create/modify/change password form
+
 ### Changed
 
 ### Deprecated
