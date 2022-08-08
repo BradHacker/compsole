@@ -29,18 +29,15 @@ import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  CreateUserMutation,
   GetCompTeamSearchValuesQuery,
-  GetUserQuery,
   Provider,
   Role,
-  UpdateUserMutation,
   useCreateUserMutation,
   useGetCompTeamSearchValuesQuery,
   useGetUserLazyQuery,
-  User,
   UserInput,
   useUpdateUserMutation,
+  useChangePasswordMutation,
 } from "../../api/generated/graphql";
 
 export const UserForm: React.FC = (): React.ReactElement => {
@@ -49,12 +46,12 @@ export const UserForm: React.FC = (): React.ReactElement => {
     getUser,
     { data: getUserData, loading: getUserLoading, error: getUserError },
   ] = useGetUserLazyQuery();
-  let {
+  const {
     data: getCompTeamSearchValuesData,
     loading: getCompTeamSearchValuesLoading,
     error: getCompTeamSearchValuesError,
   } = useGetCompTeamSearchValuesQuery();
-  let [
+  const [
     updateUser,
     {
       data: updateUserData,
@@ -62,7 +59,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
       error: updateUserError,
     },
   ] = useUpdateUserMutation();
-  let [
+  const [
     createUser,
     {
       data: createUserData,
@@ -70,6 +67,14 @@ export const UserForm: React.FC = (): React.ReactElement => {
       error: createUserError,
     },
   ] = useCreateUserMutation();
+  const [
+    changePassword,
+    {
+      data: changePasswordData,
+      loading: changePasswordLoading,
+      error: changePasswordError,
+    },
+  ] = useChangePasswordMutation();
   const [user, setUser] = useState<UserInput>({
     ID: "",
     Username: "",
@@ -97,11 +102,11 @@ export const UserForm: React.FC = (): React.ReactElement => {
   }, [id]);
 
   useEffect(() => {
-    if (updateUserData && !updateUserLoading)
+    if (!updateUserLoading && updateUserData)
       enqueueSnackbar(`Updated user "${updateUserData.updateUser.Username}`, {
         variant: "success",
       });
-    if (createUserData && !createUserLoading) {
+    if (!createUserLoading && createUserData) {
       enqueueSnackbar(`Created user "${createUserData.createUser.Username}`, {
         variant: "success",
       });
@@ -110,7 +115,21 @@ export const UserForm: React.FC = (): React.ReactElement => {
         1000
       );
     }
-  }, [updateUserData, updateUserLoading, createUserData, createUserLoading]);
+    if (!changePasswordLoading && changePasswordData) {
+      enqueueSnackbar(`Password successfully changed!`, {
+        variant: "success",
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+  }, [
+    updateUserData,
+    updateUserLoading,
+    createUserData,
+    createUserLoading,
+    changePasswordData,
+    changePasswordLoading,
+  ]);
 
   useEffect(() => {
     if (getUserError)
@@ -118,22 +137,21 @@ export const UserForm: React.FC = (): React.ReactElement => {
         variant: "error",
       });
     if (updateUserError)
-      enqueueSnackbar(
-        `Failed to update user: ${updateUserError.cause?.message}`,
-        {
-          variant: "error",
-        }
-      );
+      enqueueSnackbar(`Failed to update user: ${updateUserError.message}`, {
+        variant: "error",
+      });
     if (createUserError)
+      enqueueSnackbar(`Failed to create user: ${createUserError.message}`, {
+        variant: "error",
+      });
+    if (changePasswordError)
       enqueueSnackbar(
-        `Failed to create user: ${createUserError.graphQLErrors
-          .map((e) => e.message)
-          .join("; ")}`,
+        `Failed to change password: ${changePasswordError.message}`,
         {
           variant: "error",
         }
       );
-  }, [getUserError, updateUserError, createUserError]);
+  }, [getUserError, updateUserError, createUserError, changePasswordError]);
 
   useEffect(() => {
     if (getUserData) {
@@ -171,6 +189,25 @@ export const UserForm: React.FC = (): React.ReactElement => {
           user,
         },
       });
+  };
+
+  const submitPasswordChange = () => {
+    if (newPassword != confirmPassword) {
+      enqueueSnackbar("Confirm Password must match New Password", {
+        variant: "error",
+      });
+    } else if (!id || id === "new") {
+      enqueueSnackbar("Please save the new user prior to setting a password", {
+        variant: "warning",
+      });
+    } else {
+      changePassword({
+        variables: {
+          id,
+          newPassword,
+        },
+      });
+    }
   };
 
   return (
@@ -329,6 +366,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
           sx={{
             m: 1,
           }}
+          onClick={submitPasswordChange}
         >
           Change Password
         </Button>
