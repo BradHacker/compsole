@@ -9,3 +9,14 @@ query GetCompTeamSearchValues {
     }
   }
 }
+
+query GetCompetitions {
+  competitions {
+    ID
+    Name
+    ProviderType
+    CompetitionToTeams {
+      ID
+    }
+  }
+}

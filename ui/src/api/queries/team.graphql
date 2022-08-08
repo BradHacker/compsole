@@ -1,0 +1,11 @@
+query GetTeams {
+  teams {
+    ID
+    TeamNumber
+    Name
+    TeamToCompetition {
+      ID
+      Name
+    }
+  }
+}

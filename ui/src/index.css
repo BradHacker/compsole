@@ -24,3 +24,18 @@ body,
   background-color: #ea9a97 !important;
   color: #000 !important;
 }
+
+code {
+  direction: ltr;
+  display: inline-block;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: 0px;
+  font-family: Consolas, Menlo, Monaco, "Andale Mono", "Ubuntu Mono", monospace !important;
+  font-weight: 400 !important;
+  -webkit-font-smoothing: subpixel-antialiased;
+  padding: 0px 0.5rem;
+  border-radius: 0.5rem;
+  color: rgb(255, 255, 255);
+  background-color: rgba(102, 178, 255, 0.15);
+}

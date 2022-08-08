@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { useGetCurrentUserQuery, User } from "./api/generated/graphql";
+import { Role, useGetCurrentUserQuery, User } from "./api/generated/graphql";
 import { Loading } from "./pages/loading";
 import { UserContext } from "./user-context";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -98,6 +98,11 @@ function App() {
               <Button href="/" color="inherit">
                 Dashboard
               </Button>
+              {user && user.Role === Role.Admin && (
+                <Button href="/admin" color="inherit">
+                  Admin
+                </Button>
+              )}
               <Divider orientation="vertical" variant="middle" flexItem />
               {/*
               <Typography

@@ -19,6 +19,8 @@ import { Auth, Signin, Signup } from "./pages/auth";
 import { Dashboard } from "./pages/dashboard";
 import { SnackbarProvider } from "notistack";
 import { Console } from "./pages/console";
+import { Admin, AdminProtected } from "./pages/admin";
+import { UserForm } from "./pages/admin/user-form";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -88,6 +90,11 @@ root.render(
               <Route path="/" element={<App />}>
                 <Route index element={<Dashboard />} />
                 <Route path="console/:id" element={<Console />} />
+                <Route path="admin" element={<Admin />}>
+                  <Route index element={<AdminProtected />} />
+                  <Route path="user/new" element={<UserForm />} />
+                  <Route path="user/:id" element={<UserForm />} />
+                </Route>
               </Route>
               {/* Unprotected App Routes (No Auth Required) */}
               <Route path="/auth" element={<Auth />}>

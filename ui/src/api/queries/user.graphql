@@ -1,10 +1,55 @@
+fragment UserFragment on User {
+  ID
+  Username
+  FirstName
+  LastName
+  Provider
+  Role
+}
+
+fragment AdminUserFragment on User {
+  ...UserFragment
+  UserToTeam {
+    ID
+    Name
+    TeamNumber
+    TeamToCompetition {
+      ID
+      Name
+    }
+  }
+}
+
 query GetCurrentUser {
   me {
-    ID
-    Username
-    FirstName
-    LastName
-    Provider
-    Role
+    ...UserFragment
   }
+}
+
+query GetUsers {
+  users {
+    ...AdminUserFragment
+  }
+}
+
+query GetUser($id: ID!) {
+  getUser(id: $id) {
+    ...AdminUserFragment
+  }
+}
+
+mutation UpdateUser($user: UserInput!) {
+  updateUser(input: $user) {
+    ...AdminUserFragment
+  }
+}
+
+mutation CreateUser($user: UserInput!) {
+  createUser(input: $user) {
+    ...AdminUserFragment
+  }
+}
+
+mutation ChangePassword($id: ID!, $newPassword: String!) {
+  changePassword(id: $id, password: $newPassword)
 }
