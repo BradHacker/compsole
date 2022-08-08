@@ -23,7 +23,6 @@ type TeamInput struct {
 type UserInput struct {
 	ID         *string  `json:"ID"`
 	Username   string   `json:"Username"`
-	Password   string   `json:"Password"`
 	FirstName  string   `json:"FirstName"`
 	LastName   string   `json:"LastName"`
 	Role       Role     `json:"Role"`

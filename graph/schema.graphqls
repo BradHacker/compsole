@@ -21,6 +21,7 @@ type Team {
 type Competition {
   ID: ID!
   Name: String!
+  ProviderType: String!
   CompetitionToTeams: [Team]!
 }
 
@@ -43,6 +44,7 @@ type User {
   LastName: String!
   Role: Role!
   Provider: Provider!
+  UserToTeam: Team
 }
 
 enum ConsoleType {
@@ -84,7 +86,6 @@ enum RebootType {
 input UserInput {
   ID: ID
   Username: String!
-  Password: String!
   FirstName: String!
   LastName: String!
   Role: Role!
@@ -121,6 +122,7 @@ type Mutation {
   createUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  changePassword(id: ID!, password: String!): Boolean! @hasRole(roles: [ADMIN])
   createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   updateTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   deleteTeam(id: ID!): Boolean! @hasRole(roles: [ADMIN])

@@ -158,12 +158,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 			return nil, fmt.Errorf("failed to query team: %v", err)
 		}
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), 8)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %v", err)
-	}
-	password := string(hashedPassword[:])
-	entUser, err := r.client.User.Create().SetUsername(input.Username).SetPassword(password).SetFirstName(input.FirstName).SetLastName(input.LastName).SetRole(user.Role(input.Role)).SetProvider(user.Provider(input.Provider)).SetUserToTeam(entTeam).Save(ctx)
+	entUser, err := r.client.User.Create().SetUsername(input.Username).SetPassword("").SetFirstName(input.FirstName).SetLastName(input.LastName).SetRole(user.Role(input.Role)).SetProvider(user.Provider(input.Provider)).SetUserToTeam(entTeam).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
@@ -194,12 +189,18 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput
 			return nil, fmt.Errorf("failed to query team: %v", err)
 		}
 	}
-	entUser, err = entUser.Update().
+	entUserUpdate := entUser.Update().
 		SetFirstName(input.FirstName).
 		SetLastName(input.LastName).
 		SetRole(user.Role(input.Role)).
-		SetProvider(user.Provider(input.Provider)).
-		SetUserToTeam(entTeam).
+		SetProvider(user.Provider(input.Provider))
+	if entTeam != nil {
+		entUserUpdate = entUserUpdate.
+			SetUserToTeam(entTeam)
+	} else {
+		entUserUpdate = entUserUpdate.ClearUserToTeam()
+	}
+	entUser, err = entUserUpdate.
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user: %v", err)
@@ -216,6 +217,29 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete user: %v", err)
+	}
+	return true, nil
+}
+
+// ChangePassword is the resolver for the changePassword field.
+func (r *mutationResolver) ChangePassword(ctx context.Context, id string, password string) (bool, error) {
+	userUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	if err != nil {
+		return false, fmt.Errorf("failed to hash default admin password")
+	}
+	newPassword := string(hashedPassword[:])
+
+	entUser, err := r.client.User.Query().Where(user.IDEQ(userUuid)).Only(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to query user: %v", err)
+	}
+	err = entUser.Update().SetPassword(newPassword).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to update password: %v", err)
 	}
 	return true, nil
 }
