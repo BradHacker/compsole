@@ -1,4 +1,4 @@
-import { Save } from "@mui/icons-material";
+import { ArrowBack, ArrowBackTwoTone, Save } from "@mui/icons-material";
 import {
   Container,
   TextField,
@@ -141,19 +141,27 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
   ]);
 
   useEffect(() => {
-    if (getCompetitionData)
+    if (getCompetitionData) {
       setCompetition({
         ...getCompetitionData.getCompetition,
         CompetitionToProvider:
           getCompetitionData.getCompetition.CompetitionToProvider.ID,
       } as CompetitionInput);
-    else
+      if (listProvidersData)
+        setViewProvider(
+          listProvidersData.providers.find(
+            (v) =>
+              v.ID ===
+              getCompetitionData.getCompetition.CompetitionToProvider.ID
+          ) as ListProvidersQuery["providers"][0]
+        );
+    } else
       setCompetition({
         ID: "",
         Name: "",
         CompetitionToProvider: "",
       });
-  }, [getCompetitionData]);
+  }, [getCompetitionData, listProvidersData]);
 
   const submitCompetition = () => {
     if (competition.ID)
@@ -183,6 +191,9 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
             alignItems: "center",
           }}
         >
+          <Button variant="text" sx={{ mr: 1 }} href="/admin">
+            <ArrowBackTwoTone />
+          </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>
             {id ? `Edit Competition: ` : "New Competition"}
           </Typography>

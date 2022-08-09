@@ -7,13 +7,12 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Paper,
   Toolbar,
   Tooltip,
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Role, useGetCurrentUserQuery, User } from "./api/generated/graphql";
 import { Loading } from "./pages/loading";
 import { UserContext } from "./user-context";
@@ -31,6 +30,7 @@ function App() {
     error: currentUserError,
   } = useGetCurrentUserQuery();
   let navigate = useNavigate();
+  let location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   let [user, setUser] = useState<User | null | undefined>();
   let [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
@@ -41,10 +41,14 @@ function App() {
   // Ensure the user cannot access protected App without authentication
   useEffect(() => {
     if (!currentUserLoading && (currentUserError || !currentUser))
-      navigate("/auth/signin");
+      navigate("/auth/signin", {
+        state: {
+          from: location,
+        },
+      });
     else if (!currentUserLoading && !currentUserError && currentUser)
       setUser(currentUser.me);
-  }, [currentUser, currentUserLoading, currentUserError, navigate]);
+  }, [currentUser, currentUserLoading, currentUserError, navigate, location]);
 
   const handleSignOut = () => {
     Logout().then(
@@ -99,9 +103,14 @@ function App() {
                 Dashboard
               </Button>
               {user && user.Role === Role.Admin && (
-                <Button href="/admin" color="inherit">
-                  Admin
-                </Button>
+                <>
+                  <Button href="/admin" color="inherit">
+                    Admin
+                  </Button>
+                  <Button href="/admin/ingest" color="inherit">
+                    Ingest VMs
+                  </Button>
+                </>
               )}
               <Divider orientation="vertical" variant="middle" flexItem />
               {/*

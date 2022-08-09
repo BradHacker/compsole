@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import * as React from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LocalLogin } from "../../api";
 import Logo from "../../res/logo512.png";
 
@@ -37,6 +37,7 @@ export const Auth: React.FC = (): React.ReactElement => {
 
 export const Signin: React.FC = (): React.ReactElement => {
   let navigate = useNavigate();
+  let location = useLocation();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,7 +45,10 @@ export const Signin: React.FC = (): React.ReactElement => {
     LocalLogin(
       data.get("username")?.toString() ?? "",
       data.get("password")?.toString() ?? ""
-    ).then(() => navigate("/"), console.error);
+    ).then(
+      () => navigate(((location?.state as any).from as Location) || "/"),
+      console.error
+    );
   };
 
   return (

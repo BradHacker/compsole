@@ -21,6 +21,14 @@ query ValidateConfig($type: String!, $config: String!) {
   validateConfig(type: $type, config: $config)
 }
 
+query ListProviderVms($id: ID!) {
+  listProviderVms(id: $id) {
+    Identifier
+    Name
+    IPAddresses
+  }
+}
+
 mutation UpdateProvider($provider: ProviderInput!) {
   updateProvider(input: $provider) {
     ...ProviderFragment

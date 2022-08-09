@@ -25,6 +25,8 @@ query ListCompetitions {
     ...CompetitionFragment
     CompetitionToTeams {
       ID
+      Name
+      TeamNumber
     }
   }
 }

@@ -47,3 +47,9 @@ mutation PowerOnVm($vmObjectId: ID!) {
 mutation PowerOffVm($vmObjectId: ID!) {
   powerOff(vmObjectId: $vmObjectId)
 }
+
+mutation BatchCreateVmObjects($vmObjects: [VmObjectInput!]!) {
+  batchCreateVmObjects(input: $vmObjects) {
+    ...VmObjectFragment
+  }
+}

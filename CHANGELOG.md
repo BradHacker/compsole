@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 - Admin main list pages
 - User create/modify/change password form
+- UI to ingest VMs into Compsole
 
 ### Changed
 
@@ -18,6 +19,8 @@ All notable changes to this project will be documented in this file.
 - Providers now store config in database instead of using filesystem
 
 ### Deprecated
+
+- Compsole CLI tool
 
 ### Removed
 

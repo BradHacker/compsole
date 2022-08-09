@@ -270,7 +270,6 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput
 	if teamExists {
 		return nil, fmt.Errorf("failed to create team: team already exists")
 	}
-
 	entCompetition, err := r.client.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query competition: %v", err)
@@ -280,6 +279,59 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 	return entTeam, nil
+}
+
+// BatchCreateTeams is the resolver for the batchCreateTeams field.
+func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.TeamInput) ([]*ent.Team, error) {
+	entTeams := make([]*ent.Team, len(input))
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ent transactional client: %v", err)
+	}
+	for _, inputTeam := range input {
+		competitionUuid, err := uuid.Parse(inputTeam.TeamToCompetition)
+		if err != nil {
+			err = tx.Rollback()
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse competition UUID: failed to rollback db: %v", err)
+			}
+			return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
+		}
+		teamExists, err := tx.Team.Query().Where(team.And(team.TeamNumberEQ(inputTeam.TeamNumber), team.HasTeamToCompetitionWith(competition.IDEQ(competitionUuid)))).Exist(ctx)
+		if err != nil {
+			err = tx.Rollback()
+			if err != nil {
+				return nil, fmt.Errorf("failed to query if team already exists: failed to rollback db: %v", err)
+			}
+			return nil, fmt.Errorf("failed to query if team already exists: %v", err)
+		}
+		if teamExists {
+			err = tx.Rollback()
+			if err != nil {
+				return nil, fmt.Errorf("failed to create team: team already exists: failed to rollback db: %v", err)
+			}
+			return nil, fmt.Errorf("failed to create team: team already exists")
+		}
+		entCompetition, err := tx.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
+		if err != nil {
+			err = tx.Rollback()
+			if err != nil {
+				return nil, fmt.Errorf("failed to query competition: team already exists: failed to rollback db: %v", err)
+			}
+			return nil, fmt.Errorf("failed to query competition: %v", err)
+		}
+		entTeam, err := tx.Team.Create().SetTeamNumber(inputTeam.TeamNumber).SetName(*inputTeam.Name).SetTeamToCompetition(entCompetition).Save(ctx)
+		if err != nil {
+			err = tx.Rollback()
+			if err != nil {
+				return nil, fmt.Errorf("failed to create team: team already exists: failed to rollback db: %v", err)
+			}
+			return nil, fmt.Errorf("failed to create team: %v", err)
+		}
+		entTeams = append(entTeams, entTeam)
+	}
+	tx.Commit()
+	return entTeams, nil
 }
 
 // UpdateTeam is the resolver for the updateTeam field.
@@ -404,6 +456,43 @@ func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObj
 		return nil, fmt.Errorf("failed to create vm object: %v", err)
 	}
 	return entVmObject, nil
+}
+
+// BatchCreateVMObjects is the resolver for the batchCreateVmObjects field.
+func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*model.VMObjectInput) ([]*ent.VmObject, error) {
+	entVmObjects := make([]*ent.VmObject, len(input))
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ent transactional client: %v", err)
+	}
+	for _, inputVmObject := range input {
+		var entTeam *ent.Team = nil
+		if inputVmObject.VMObjectToTeam != nil {
+			teamUuid, err := uuid.Parse(*inputVmObject.VMObjectToTeam)
+			if err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("failed to parse team UUID: %v", err)
+			}
+			entTeam, err = tx.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
+			if err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("failed to query team: %v", err)
+			}
+		}
+		entVmObject, err := tx.VmObject.Create().
+			SetName(inputVmObject.Name).
+			SetIdentifier(inputVmObject.Identifier).
+			SetIPAddresses(inputVmObject.IPAddresses).
+			SetVmObjectToTeam(entTeam).
+			Save(ctx)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("failed to create vm object: %v", err)
+		}
+		entVmObjects = append(entVmObjects, entVmObject)
+	}
+	tx.Commit()
+	return entVmObjects, nil
 }
 
 // UpdateVMObject is the resolver for the updateVmObject field.
@@ -741,6 +830,35 @@ func (r *queryResolver) ValidateConfig(ctx context.Context, typeArg string, conf
 	return true, nil
 }
 
+// ListProviderVms is the resolver for the listProviderVms field.
+func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*model.SkeletonVMObject, error) {
+	providerUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse provider UUID: %v", err)
+	}
+	entProvider, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query provider: %v", err)
+	}
+	prov, err := providers.NewProvider(entProvider.Type, entProvider.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to instantiate provider: %v", err)
+	}
+	vmObjects, err := prov.ListVMs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list vms from provider: %v", err)
+	}
+	skeletonVmObjects := make([]*model.SkeletonVMObject, len(vmObjects))
+	for i, vmObject := range vmObjects {
+		skeletonVmObjects[i] = &model.SkeletonVMObject{
+			Name:        vmObject.Name,
+			Identifier:  vmObject.Identifier,
+			IPAddresses: vmObject.IPAddresses,
+		}
+	}
+	return skeletonVmObjects, nil
+}
+
 // ID is the resolver for the ID field.
 func (r *teamResolver) ID(ctx context.Context, obj *ent.Team) (string, error) {
 	return obj.ID.String(), nil
@@ -794,13 +912,3 @@ type queryResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type vmObjectResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *competitionResolver) CompetitionToProvider(ctx context.Context, obj *ent.Competition) (*ent.Provider, error) {
-	panic(fmt.Errorf("not implemented"))
-}

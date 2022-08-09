@@ -23,6 +23,7 @@ import { Admin, AdminProtected } from "./pages/admin";
 import { UserForm } from "./pages/admin/user-form";
 import { CompetitionForm } from "./pages/admin/competition-form";
 import { ProviderForm } from "./pages/admin/provider-form";
+import { IngestVMs } from "./pages/admin/ingest-vms";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -100,6 +101,7 @@ root.render(
                   <Route path="competition/:id" element={<CompetitionForm />} />
                   <Route path="provider/new" element={<ProviderForm />} />
                   <Route path="provider/:id" element={<ProviderForm />} />
+                  <Route path="ingest" element={<IngestVMs />} />
                 </Route>
               </Route>
               {/* Unprotected App Routes (No Auth Required) */}

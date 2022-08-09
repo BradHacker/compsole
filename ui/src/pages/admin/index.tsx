@@ -102,7 +102,7 @@ const createCompetitionData = (
     name: competition.Name,
     providerType: `${
       competition.CompetitionToProvider.Name
-    }:${competition.CompetitionToProvider.Type.toLocaleUpperCase()}`,
+    } (${competition.CompetitionToProvider.Type.toLocaleUpperCase()})`,
     teamCount: competition.CompetitionToTeams.length,
   };
 };
@@ -362,8 +362,12 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                     </TableCell>
                     <TableCell align="right">
                       <ButtonGroup size="small">
-                        <Button variant="outlined" color="primary">
-                          <InfoTwoTone />
+                        <Button
+                          variant="outlined"
+                          color="secondary"
+                          href={`/admin/competition/${row.id}`}
+                        >
+                          <EditTwoTone />
                         </Button>
                       </ButtonGroup>
                     </TableCell>
@@ -550,7 +554,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                     </TableCell>
                     <TableCell align="center">{row.name}</TableCell>
                     <TableCell align="center">
-                      <Chip label={row.type} color="error" size="small" />
+                      <Chip label={row.type} color="warning" size="small" />
                     </TableCell>
                     <TableCell align="right">
                       <ButtonGroup size="small">

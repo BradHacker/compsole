@@ -1,11 +1,21 @@
+fragment TeamFragment on Team {
+  ID
+  TeamNumber
+  Name
+  TeamToCompetition {
+    ID
+    Name
+  }
+}
+
 query ListTeams {
   teams {
-    ID
-    TeamNumber
-    Name
-    TeamToCompetition {
-      ID
-      Name
-    }
+    ...TeamFragment
+  }
+}
+
+mutation BatchCreateTeams($teams: [TeamInput!]!) {
+  batchCreateTeams(input: $teams) {
+    ...TeamFragment
   }
 }

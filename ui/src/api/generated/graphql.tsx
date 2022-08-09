@@ -45,6 +45,8 @@ export enum ConsoleType {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  batchCreateTeams: Array<Team>;
+  batchCreateVmObjects: Array<VmObject>;
   changePassword: Scalars['Boolean'];
   createCompetition: Competition;
   createProvider: Provider;
@@ -64,6 +66,16 @@ export type Mutation = {
   updateTeam: Team;
   updateUser: User;
   updateVmObject: VmObject;
+};
+
+
+export type MutationBatchCreateTeamsArgs = {
+  input: Array<TeamInput>;
+};
+
+
+export type MutationBatchCreateVmObjectsArgs = {
+  input: Array<VmObjectInput>;
 };
 
 
@@ -187,6 +199,7 @@ export type Query = {
   getTeam: Team;
   getUser: User;
   getVmObject: VmObject;
+  listProviderVms: Array<SkeletonVmObject>;
   me: User;
   myCompetition: Competition;
   myTeam: Team;
@@ -231,6 +244,11 @@ export type QueryGetVmObjectArgs = {
 };
 
 
+export type QueryListProviderVmsArgs = {
+  id: Scalars['ID'];
+};
+
+
 export type QueryValidateConfigArgs = {
   config: Scalars['String'];
   type: Scalars['String'];
@@ -251,6 +269,13 @@ export enum Role {
   Undefined = 'UNDEFINED',
   User = 'USER'
 }
+
+export type SkeletonVmObject = {
+  __typename?: 'SkeletonVmObject';
+  IPAddresses: Array<Scalars['String']>;
+  Identifier: Scalars['String'];
+  Name: Scalars['String'];
+};
 
 export type Team = {
   __typename?: 'Team';
@@ -316,7 +341,7 @@ export type GetCompTeamSearchValuesQuery = { __typename?: 'Query', teams: Array<
 export type ListCompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListCompetitionsQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name: string, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string } | null>, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } }> };
+export type ListCompetitionsQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name: string, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number } | null>, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } }> };
 
 export type GetCompetitionQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -361,6 +386,13 @@ export type ValidateConfigQueryVariables = Exact<{
 
 export type ValidateConfigQuery = { __typename?: 'Query', validateConfig: boolean };
 
+export type ListProviderVmsQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type ListProviderVmsQuery = { __typename?: 'Query', listProviderVms: Array<{ __typename?: 'SkeletonVmObject', Identifier: string, Name: string, IPAddresses: Array<string> }> };
+
 export type UpdateProviderMutationVariables = Exact<{
   provider: ProviderInput;
 }>;
@@ -375,10 +407,19 @@ export type CreateProviderMutationVariables = Exact<{
 
 export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
 
+export type TeamFragmentFragment = { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } };
+
 export type ListTeamsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ListTeamsQuery = { __typename?: 'Query', teams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
+
+export type BatchCreateTeamsMutationVariables = Exact<{
+  teams: Array<TeamInput> | TeamInput;
+}>;
+
+
+export type BatchCreateTeamsMutation = { __typename?: 'Mutation', batchCreateTeams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
 
 export type UserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role };
 
@@ -472,6 +513,13 @@ export type PowerOffVmMutationVariables = Exact<{
 
 export type PowerOffVmMutation = { __typename?: 'Mutation', powerOff: boolean };
 
+export type BatchCreateVmObjectsMutationVariables = Exact<{
+  vmObjects: Array<VmObjectInput> | VmObjectInput;
+}>;
+
+
+export type BatchCreateVmObjectsMutation = { __typename?: 'Mutation', batchCreateVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
+
 export const CompetitionFragmentFragmentDoc = gql`
     fragment CompetitionFragment on Competition {
   ID
@@ -489,6 +537,17 @@ export const ProviderFragmentFragmentDoc = gql`
   Name
   Type
   Config
+}
+    `;
+export const TeamFragmentFragmentDoc = gql`
+    fragment TeamFragment on Team {
+  ID
+  TeamNumber
+  Name
+  TeamToCompetition {
+    ID
+    Name
+  }
 }
     `;
 export const UserFragmentFragmentDoc = gql`
@@ -578,6 +637,8 @@ export const ListCompetitionsDocument = gql`
     ...CompetitionFragment
     CompetitionToTeams {
       ID
+      Name
+      TeamNumber
     }
   }
 }
@@ -813,6 +874,43 @@ export function useValidateConfigLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type ValidateConfigQueryHookResult = ReturnType<typeof useValidateConfigQuery>;
 export type ValidateConfigLazyQueryHookResult = ReturnType<typeof useValidateConfigLazyQuery>;
 export type ValidateConfigQueryResult = Apollo.QueryResult<ValidateConfigQuery, ValidateConfigQueryVariables>;
+export const ListProviderVmsDocument = gql`
+    query ListProviderVms($id: ID!) {
+  listProviderVms(id: $id) {
+    Identifier
+    Name
+    IPAddresses
+  }
+}
+    `;
+
+/**
+ * __useListProviderVmsQuery__
+ *
+ * To run a query within a React component, call `useListProviderVmsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListProviderVmsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListProviderVmsQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useListProviderVmsQuery(baseOptions: Apollo.QueryHookOptions<ListProviderVmsQuery, ListProviderVmsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ListProviderVmsQuery, ListProviderVmsQueryVariables>(ListProviderVmsDocument, options);
+      }
+export function useListProviderVmsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListProviderVmsQuery, ListProviderVmsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ListProviderVmsQuery, ListProviderVmsQueryVariables>(ListProviderVmsDocument, options);
+        }
+export type ListProviderVmsQueryHookResult = ReturnType<typeof useListProviderVmsQuery>;
+export type ListProviderVmsLazyQueryHookResult = ReturnType<typeof useListProviderVmsLazyQuery>;
+export type ListProviderVmsQueryResult = Apollo.QueryResult<ListProviderVmsQuery, ListProviderVmsQueryVariables>;
 export const UpdateProviderDocument = gql`
     mutation UpdateProvider($provider: ProviderInput!) {
   updateProvider(input: $provider) {
@@ -882,16 +980,10 @@ export type CreateProviderMutationOptions = Apollo.BaseMutationOptions<CreatePro
 export const ListTeamsDocument = gql`
     query ListTeams {
   teams {
-    ID
-    TeamNumber
-    Name
-    TeamToCompetition {
-      ID
-      Name
-    }
+    ...TeamFragment
   }
 }
-    `;
+    ${TeamFragmentFragmentDoc}`;
 
 /**
  * __useListTeamsQuery__
@@ -919,6 +1011,39 @@ export function useListTeamsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
 export type ListTeamsQueryHookResult = ReturnType<typeof useListTeamsQuery>;
 export type ListTeamsLazyQueryHookResult = ReturnType<typeof useListTeamsLazyQuery>;
 export type ListTeamsQueryResult = Apollo.QueryResult<ListTeamsQuery, ListTeamsQueryVariables>;
+export const BatchCreateTeamsDocument = gql`
+    mutation BatchCreateTeams($teams: [TeamInput!]!) {
+  batchCreateTeams(input: $teams) {
+    ...TeamFragment
+  }
+}
+    ${TeamFragmentFragmentDoc}`;
+export type BatchCreateTeamsMutationFn = Apollo.MutationFunction<BatchCreateTeamsMutation, BatchCreateTeamsMutationVariables>;
+
+/**
+ * __useBatchCreateTeamsMutation__
+ *
+ * To run a mutation, you first call `useBatchCreateTeamsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBatchCreateTeamsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [batchCreateTeamsMutation, { data, loading, error }] = useBatchCreateTeamsMutation({
+ *   variables: {
+ *      teams: // value for 'teams'
+ *   },
+ * });
+ */
+export function useBatchCreateTeamsMutation(baseOptions?: Apollo.MutationHookOptions<BatchCreateTeamsMutation, BatchCreateTeamsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BatchCreateTeamsMutation, BatchCreateTeamsMutationVariables>(BatchCreateTeamsDocument, options);
+      }
+export type BatchCreateTeamsMutationHookResult = ReturnType<typeof useBatchCreateTeamsMutation>;
+export type BatchCreateTeamsMutationResult = Apollo.MutationResult<BatchCreateTeamsMutation>;
+export type BatchCreateTeamsMutationOptions = Apollo.BaseMutationOptions<BatchCreateTeamsMutation, BatchCreateTeamsMutationVariables>;
 export const GetCurrentUserDocument = gql`
     query GetCurrentUser {
   me {
@@ -1351,3 +1476,36 @@ export function usePowerOffVmMutation(baseOptions?: Apollo.MutationHookOptions<P
 export type PowerOffVmMutationHookResult = ReturnType<typeof usePowerOffVmMutation>;
 export type PowerOffVmMutationResult = Apollo.MutationResult<PowerOffVmMutation>;
 export type PowerOffVmMutationOptions = Apollo.BaseMutationOptions<PowerOffVmMutation, PowerOffVmMutationVariables>;
+export const BatchCreateVmObjectsDocument = gql`
+    mutation BatchCreateVmObjects($vmObjects: [VmObjectInput!]!) {
+  batchCreateVmObjects(input: $vmObjects) {
+    ...VmObjectFragment
+  }
+}
+    ${VmObjectFragmentFragmentDoc}`;
+export type BatchCreateVmObjectsMutationFn = Apollo.MutationFunction<BatchCreateVmObjectsMutation, BatchCreateVmObjectsMutationVariables>;
+
+/**
+ * __useBatchCreateVmObjectsMutation__
+ *
+ * To run a mutation, you first call `useBatchCreateVmObjectsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBatchCreateVmObjectsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [batchCreateVmObjectsMutation, { data, loading, error }] = useBatchCreateVmObjectsMutation({
+ *   variables: {
+ *      vmObjects: // value for 'vmObjects'
+ *   },
+ * });
+ */
+export function useBatchCreateVmObjectsMutation(baseOptions?: Apollo.MutationHookOptions<BatchCreateVmObjectsMutation, BatchCreateVmObjectsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BatchCreateVmObjectsMutation, BatchCreateVmObjectsMutationVariables>(BatchCreateVmObjectsDocument, options);
+      }
+export type BatchCreateVmObjectsMutationHookResult = ReturnType<typeof useBatchCreateVmObjectsMutation>;
+export type BatchCreateVmObjectsMutationResult = Apollo.MutationResult<BatchCreateVmObjectsMutation>;
+export type BatchCreateVmObjectsMutationOptions = Apollo.BaseMutationOptions<BatchCreateVmObjectsMutation, BatchCreateVmObjectsMutationVariables>;

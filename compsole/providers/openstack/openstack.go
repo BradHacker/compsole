@@ -199,9 +199,13 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 				return false, fmt.Errorf("failed to iterate over ip addresses: %v", err)
 			}
 			serverList = append(serverList, &ent.VmObject{
-				Identifier:  s.ID,
+				ID:          [16]byte{},
 				Name:        s.Name,
+				Identifier:  s.ID,
 				IPAddresses: ipAddresses,
+				Edges: ent.VmObjectEdges{
+					VmObjectToTeam: nil,
+				},
 			})
 		}
 		return true, nil

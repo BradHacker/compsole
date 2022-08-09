@@ -21,6 +21,12 @@ type ProviderInput struct {
 	Config string  `json:"Config"`
 }
 
+type SkeletonVMObject struct {
+	Name        string   `json:"Name"`
+	Identifier  string   `json:"Identifier"`
+	IPAddresses []string `json:"IPAddresses"`
+}
+
 type TeamInput struct {
 	ID                *string `json:"ID"`
 	TeamNumber        int     `json:"TeamNumber"`
