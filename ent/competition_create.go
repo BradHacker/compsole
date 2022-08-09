@@ -57,19 +57,15 @@ func (cc *CompetitionCreate) AddCompetitionToTeams(t ...*Team) *CompetitionCreat
 	return cc.AddCompetitionToTeamIDs(ids...)
 }
 
-// AddCompetitionToProviderIDs adds the "CompetitionToProvider" edge to the Provider entity by IDs.
-func (cc *CompetitionCreate) AddCompetitionToProviderIDs(ids ...uuid.UUID) *CompetitionCreate {
-	cc.mutation.AddCompetitionToProviderIDs(ids...)
+// SetCompetitionToProviderID sets the "CompetitionToProvider" edge to the Provider entity by ID.
+func (cc *CompetitionCreate) SetCompetitionToProviderID(id uuid.UUID) *CompetitionCreate {
+	cc.mutation.SetCompetitionToProviderID(id)
 	return cc
 }
 
-// AddCompetitionToProvider adds the "CompetitionToProvider" edges to the Provider entity.
-func (cc *CompetitionCreate) AddCompetitionToProvider(p ...*Provider) *CompetitionCreate {
-	ids := make([]uuid.UUID, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return cc.AddCompetitionToProviderIDs(ids...)
+// SetCompetitionToProvider sets the "CompetitionToProvider" edge to the Provider entity.
+func (cc *CompetitionCreate) SetCompetitionToProvider(p *Provider) *CompetitionCreate {
+	return cc.SetCompetitionToProviderID(p.ID)
 }
 
 // Mutation returns the CompetitionMutation object of the builder.
@@ -154,7 +150,7 @@ func (cc *CompetitionCreate) check() error {
 	if _, ok := cc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Competition.name"`)}
 	}
-	if len(cc.mutation.CompetitionToProviderIDs()) == 0 {
+	if _, ok := cc.mutation.CompetitionToProviderID(); !ok {
 		return &ValidationError{Name: "CompetitionToProvider", err: errors.New(`ent: missing required edge "Competition.CompetitionToProvider"`)}
 	}
 	return nil
@@ -222,10 +218,10 @@ func (cc *CompetitionCreate) createSpec() (*Competition, *sqlgraph.CreateSpec) {
 	}
 	if nodes := cc.mutation.CompetitionToProviderIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   competition.CompetitionToProviderTable,
-			Columns: competition.CompetitionToProviderPrimaryKey,
+			Columns: []string{competition.CompetitionToProviderColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -237,6 +233,7 @@ func (cc *CompetitionCreate) createSpec() (*Competition, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.competition_competition_to_provider = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

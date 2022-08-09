@@ -21,11 +21,13 @@ const (
 	EdgeProviderToCompetition = "ProviderToCompetition"
 	// Table holds the table name of the provider in the database.
 	Table = "providers"
-	// ProviderToCompetitionTable is the table that holds the ProviderToCompetition relation/edge. The primary key declared below.
-	ProviderToCompetitionTable = "competition_CompetitionToProvider"
+	// ProviderToCompetitionTable is the table that holds the ProviderToCompetition relation/edge.
+	ProviderToCompetitionTable = "competitions"
 	// ProviderToCompetitionInverseTable is the table name for the Competition entity.
 	// It exists in this package in order to avoid circular dependency with the "competition" package.
 	ProviderToCompetitionInverseTable = "competitions"
+	// ProviderToCompetitionColumn is the table column denoting the ProviderToCompetition relation/edge.
+	ProviderToCompetitionColumn = "competition_competition_to_provider"
 )
 
 // Columns holds all SQL columns for provider fields.
@@ -35,12 +37,6 @@ var Columns = []string{
 	FieldType,
 	FieldConfig,
 }
-
-var (
-	// ProviderToCompetitionPrimaryKey and ProviderToCompetitionColumn2 are the table columns denoting the
-	// primary key for the ProviderToCompetition relation (M2M).
-	ProviderToCompetitionPrimaryKey = []string{"competition_id", "provider_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

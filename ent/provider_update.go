@@ -183,10 +183,10 @@ func (pu *ProviderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.ProviderToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -199,10 +199,10 @@ func (pu *ProviderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := pu.mutation.RemovedProviderToCompetitionIDs(); len(nodes) > 0 && !pu.mutation.ProviderToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -218,10 +218,10 @@ func (pu *ProviderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := pu.mutation.ProviderToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -432,10 +432,10 @@ func (puo *ProviderUpdateOne) sqlSave(ctx context.Context) (_node *Provider, err
 	}
 	if puo.mutation.ProviderToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -448,10 +448,10 @@ func (puo *ProviderUpdateOne) sqlSave(ctx context.Context) (_node *Provider, err
 	}
 	if nodes := puo.mutation.RemovedProviderToCompetitionIDs(); len(nodes) > 0 && !puo.mutation.ProviderToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -467,10 +467,10 @@ func (puo *ProviderUpdateOne) sqlSave(ctx context.Context) (_node *Provider, err
 	}
 	if nodes := puo.mutation.ProviderToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

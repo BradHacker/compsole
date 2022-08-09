@@ -268,7 +268,7 @@ func (c *CompetitionClient) QueryCompetitionToProvider(co *Competition) *Provide
 		step := sqlgraph.NewStep(
 			sqlgraph.From(competition.Table, competition.FieldID, id),
 			sqlgraph.To(provider.Table, provider.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, competition.CompetitionToProviderTable, competition.CompetitionToProviderPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, false, competition.CompetitionToProviderTable, competition.CompetitionToProviderColumn),
 		)
 		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
 		return fromV, nil
@@ -374,7 +374,7 @@ func (c *ProviderClient) QueryProviderToCompetition(pr *Provider) *CompetitionQu
 		step := sqlgraph.NewStep(
 			sqlgraph.From(provider.Table, provider.FieldID, id),
 			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, provider.ProviderToCompetitionTable, provider.ProviderToCompetitionPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, provider.ProviderToCompetitionTable, provider.ProviderToCompetitionColumn),
 		)
 		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
 		return fromV, nil

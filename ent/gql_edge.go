@@ -12,10 +12,10 @@ func (c *Competition) CompetitionToTeams(ctx context.Context) ([]*Team, error) {
 	return result, err
 }
 
-func (c *Competition) CompetitionToProvider(ctx context.Context) ([]*Provider, error) {
+func (c *Competition) CompetitionToProvider(ctx context.Context) (*Provider, error) {
 	result, err := c.Edges.CompetitionToProviderOrErr()
 	if IsNotLoaded(err) {
-		result, err = c.QueryCompetitionToProvider().All(ctx)
+		result, err = c.QueryCompetitionToProvider().Only(ctx)
 	}
 	return result, err
 }

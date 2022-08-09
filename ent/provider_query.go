@@ -79,7 +79,7 @@ func (pq *ProviderQuery) QueryProviderToCompetition() *CompetitionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(provider.Table, provider.FieldID, selector),
 			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, provider.ProviderToCompetitionTable, provider.ProviderToCompetitionPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, provider.ProviderToCompetitionTable, provider.ProviderToCompetitionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -378,66 +378,30 @@ func (pq *ProviderQuery) sqlAll(ctx context.Context) ([]*Provider, error) {
 
 	if query := pq.withProviderToCompetition; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[uuid.UUID]*Provider, len(nodes))
-		for _, node := range nodes {
-			ids[node.ID] = node
-			fks = append(fks, node.ID)
-			node.Edges.ProviderToCompetition = []*Competition{}
+		nodeids := make(map[uuid.UUID]*Provider)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.ProviderToCompetition = []*Competition{}
 		}
-		var (
-			edgeids []uuid.UUID
-			edges   = make(map[uuid.UUID][]*Provider)
-		)
-		_spec := &sqlgraph.EdgeQuerySpec{
-			Edge: &sqlgraph.EdgeSpec{
-				Inverse: true,
-				Table:   provider.ProviderToCompetitionTable,
-				Columns: provider.ProviderToCompetitionPrimaryKey,
-			},
-			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(provider.ProviderToCompetitionPrimaryKey[1], fks...))
-			},
-			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
-			},
-			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*uuid.UUID)
-				if !ok || eout == nil {
-					return fmt.Errorf("unexpected id value for edge-out")
-				}
-				ein, ok := in.(*uuid.UUID)
-				if !ok || ein == nil {
-					return fmt.Errorf("unexpected id value for edge-in")
-				}
-				outValue := *eout
-				inValue := *ein
-				node, ok := ids[outValue]
-				if !ok {
-					return fmt.Errorf("unexpected node id in edges: %v", outValue)
-				}
-				if _, ok := edges[inValue]; !ok {
-					edgeids = append(edgeids, inValue)
-				}
-				edges[inValue] = append(edges[inValue], node)
-				return nil
-			},
-		}
-		if err := sqlgraph.QueryEdges(ctx, pq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "ProviderToCompetition": %w`, err)
-		}
-		query.Where(competition.IDIn(edgeids...))
+		query.withFKs = true
+		query.Where(predicate.Competition(func(s *sql.Selector) {
+			s.Where(sql.InValues(provider.ProviderToCompetitionColumn, fks...))
+		}))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			nodes, ok := edges[n.ID]
+			fk := n.competition_competition_to_provider
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "competition_competition_to_provider" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected "ProviderToCompetition" node returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "competition_competition_to_provider" returned %v for node %v`, *fk, n.ID)
 			}
-			for i := range nodes {
-				nodes[i].Edges.ProviderToCompetition = append(nodes[i].Edges.ProviderToCompetition, n)
-			}
+			node.Edges.ProviderToCompetition = append(node.Edges.ProviderToCompetition, n)
 		}
 	}
 

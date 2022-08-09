@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/BradHacker/compsole/ent/competition"
+	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/google/uuid"
 )
 
@@ -21,7 +22,8 @@ type Competition struct {
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CompetitionQuery when eager-loading is set.
-	Edges CompetitionEdges `json:"edges"`
+	Edges                               CompetitionEdges `json:"edges"`
+	competition_competition_to_provider *uuid.UUID
 }
 
 // CompetitionEdges holds the relations/edges for other nodes in the graph.
@@ -29,7 +31,7 @@ type CompetitionEdges struct {
 	// CompetitionToTeams holds the value of the CompetitionToTeams edge.
 	CompetitionToTeams []*Team `json:"CompetitionToTeams,omitempty"`
 	// CompetitionToProvider holds the value of the CompetitionToProvider edge.
-	CompetitionToProvider []*Provider `json:"CompetitionToProvider,omitempty"`
+	CompetitionToProvider *Provider `json:"CompetitionToProvider,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -45,9 +47,14 @@ func (e CompetitionEdges) CompetitionToTeamsOrErr() ([]*Team, error) {
 }
 
 // CompetitionToProviderOrErr returns the CompetitionToProvider value or an error if the edge
-// was not loaded in eager-loading.
-func (e CompetitionEdges) CompetitionToProviderOrErr() ([]*Provider, error) {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CompetitionEdges) CompetitionToProviderOrErr() (*Provider, error) {
 	if e.loadedTypes[1] {
+		if e.CompetitionToProvider == nil {
+			// The edge CompetitionToProvider was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: provider.Label}
+		}
 		return e.CompetitionToProvider, nil
 	}
 	return nil, &NotLoadedError{edge: "CompetitionToProvider"}
@@ -62,6 +69,8 @@ func (*Competition) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case competition.FieldID:
 			values[i] = new(uuid.UUID)
+		case competition.ForeignKeys[0]: // competition_competition_to_provider
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Competition", columns[i])
 		}
@@ -88,6 +97,13 @@ func (c *Competition) assignValues(columns []string, values []interface{}) error
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				c.Name = value.String
+			}
+		case competition.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field competition_competition_to_provider", values[i])
+			} else if value.Valid {
+				c.competition_competition_to_provider = new(uuid.UUID)
+				*c.competition_competition_to_provider = *value.S.(*uuid.UUID)
 			}
 		}
 	}

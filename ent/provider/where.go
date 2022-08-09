@@ -452,7 +452,7 @@ func HasProviderToCompetition() predicate.Provider {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(ProviderToCompetitionTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, ProviderToCompetitionTable, ProviderToCompetitionPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, ProviderToCompetitionTable, ProviderToCompetitionColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -464,7 +464,7 @@ func HasProviderToCompetitionWith(preds ...predicate.Competition) predicate.Prov
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(ProviderToCompetitionInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, ProviderToCompetitionTable, ProviderToCompetitionPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, ProviderToCompetitionTable, ProviderToCompetitionColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

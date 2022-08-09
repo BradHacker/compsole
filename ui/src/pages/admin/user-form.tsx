@@ -38,6 +38,7 @@ import {
   UserInput,
   useUpdateUserMutation,
   useChangePasswordMutation,
+  AuthProvider,
 } from "../../api/generated/graphql";
 
 export const UserForm: React.FC = (): React.ReactElement => {
@@ -80,7 +81,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
     Username: "",
     FirstName: "",
     LastName: "",
-    Provider: Provider.Local, // TODO: Add other providers
+    Provider: AuthProvider.Local, // TODO: Add other providers
     Role: Role.Undefined,
     UserToTeam: undefined,
   });
@@ -103,11 +104,11 @@ export const UserForm: React.FC = (): React.ReactElement => {
 
   useEffect(() => {
     if (!updateUserLoading && updateUserData)
-      enqueueSnackbar(`Updated user "${updateUserData.updateUser.Username}`, {
+      enqueueSnackbar(`Updated user "${updateUserData.updateUser.Username}"`, {
         variant: "success",
       });
     if (!createUserLoading && createUserData) {
-      enqueueSnackbar(`Created user "${createUserData.createUser.Username}`, {
+      enqueueSnackbar(`Created user "${createUserData.createUser.Username}"`, {
         variant: "success",
       });
       setTimeout(
@@ -171,7 +172,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
         Username: "",
         FirstName: "",
         LastName: "",
-        Provider: Provider.Local, // TODO: Add other providers
+        Provider: AuthProvider.Local, // TODO: Add other providers
         Role: Role.Undefined,
       });
   }, [getUserData, getCompTeamSearchValuesData]);
@@ -254,14 +255,12 @@ export const UserForm: React.FC = (): React.ReactElement => {
       >
         <TextField
           label="First Name"
-          defaultValue=""
           variant="filled"
           value={user.FirstName}
           onChange={(e) => setUser({ ...user, FirstName: e.target.value })}
         />
         <TextField
           label="Last Name"
-          defaultValue=""
           variant="filled"
           value={user.LastName}
           onChange={(e) => setUser({ ...user, LastName: e.target.value })}
@@ -269,7 +268,6 @@ export const UserForm: React.FC = (): React.ReactElement => {
         <TextField
           required
           label="Username"
-          defaultValue=""
           variant="filled"
           value={user.Username}
           onChange={(e) => setUser({ ...user, Username: e.target.value })}
@@ -346,7 +344,6 @@ export const UserForm: React.FC = (): React.ReactElement => {
         <TextField
           label="New Password"
           type="password"
-          defaultValue=""
           variant="filled"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -354,7 +351,6 @@ export const UserForm: React.FC = (): React.ReactElement => {
         <TextField
           label="Confirm New Password"
           type="password"
-          defaultValue=""
           variant="filled"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

@@ -21,6 +21,8 @@ import { SnackbarProvider } from "notistack";
 import { Console } from "./pages/console";
 import { Admin, AdminProtected } from "./pages/admin";
 import { UserForm } from "./pages/admin/user-form";
+import { CompetitionForm } from "./pages/admin/competition-form";
+import { ProviderForm } from "./pages/admin/provider-form";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -94,6 +96,10 @@ root.render(
                   <Route index element={<AdminProtected />} />
                   <Route path="user/new" element={<UserForm />} />
                   <Route path="user/:id" element={<UserForm />} />
+                  <Route path="competition/new" element={<CompetitionForm />} />
+                  <Route path="competition/:id" element={<CompetitionForm />} />
+                  <Route path="provider/new" element={<ProviderForm />} />
+                  <Route path="provider/:id" element={<ProviderForm />} />
                 </Route>
               </Route>
               {/* Unprotected App Routes (No Auth Required) */}

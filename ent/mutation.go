@@ -48,8 +48,7 @@ type CompetitionMutation struct {
 	_CompetitionToTeams           map[uuid.UUID]struct{}
 	removed_CompetitionToTeams    map[uuid.UUID]struct{}
 	cleared_CompetitionToTeams    bool
-	_CompetitionToProvider        map[uuid.UUID]struct{}
-	removed_CompetitionToProvider map[uuid.UUID]struct{}
+	_CompetitionToProvider        *uuid.UUID
 	cleared_CompetitionToProvider bool
 	done                          bool
 	oldValue                      func(context.Context) (*Competition, error)
@@ -250,14 +249,9 @@ func (m *CompetitionMutation) ResetCompetitionToTeams() {
 	m.removed_CompetitionToTeams = nil
 }
 
-// AddCompetitionToProviderIDs adds the "CompetitionToProvider" edge to the Provider entity by ids.
-func (m *CompetitionMutation) AddCompetitionToProviderIDs(ids ...uuid.UUID) {
-	if m._CompetitionToProvider == nil {
-		m._CompetitionToProvider = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m._CompetitionToProvider[ids[i]] = struct{}{}
-	}
+// SetCompetitionToProviderID sets the "CompetitionToProvider" edge to the Provider entity by id.
+func (m *CompetitionMutation) SetCompetitionToProviderID(id uuid.UUID) {
+	m._CompetitionToProvider = &id
 }
 
 // ClearCompetitionToProvider clears the "CompetitionToProvider" edge to the Provider entity.
@@ -270,29 +264,20 @@ func (m *CompetitionMutation) CompetitionToProviderCleared() bool {
 	return m.cleared_CompetitionToProvider
 }
 
-// RemoveCompetitionToProviderIDs removes the "CompetitionToProvider" edge to the Provider entity by IDs.
-func (m *CompetitionMutation) RemoveCompetitionToProviderIDs(ids ...uuid.UUID) {
-	if m.removed_CompetitionToProvider == nil {
-		m.removed_CompetitionToProvider = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m._CompetitionToProvider, ids[i])
-		m.removed_CompetitionToProvider[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedCompetitionToProvider returns the removed IDs of the "CompetitionToProvider" edge to the Provider entity.
-func (m *CompetitionMutation) RemovedCompetitionToProviderIDs() (ids []uuid.UUID) {
-	for id := range m.removed_CompetitionToProvider {
-		ids = append(ids, id)
+// CompetitionToProviderID returns the "CompetitionToProvider" edge ID in the mutation.
+func (m *CompetitionMutation) CompetitionToProviderID() (id uuid.UUID, exists bool) {
+	if m._CompetitionToProvider != nil {
+		return *m._CompetitionToProvider, true
 	}
 	return
 }
 
 // CompetitionToProviderIDs returns the "CompetitionToProvider" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CompetitionToProviderID instead. It exists only for internal usage by the builders.
 func (m *CompetitionMutation) CompetitionToProviderIDs() (ids []uuid.UUID) {
-	for id := range m._CompetitionToProvider {
-		ids = append(ids, id)
+	if id := m._CompetitionToProvider; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -301,7 +286,6 @@ func (m *CompetitionMutation) CompetitionToProviderIDs() (ids []uuid.UUID) {
 func (m *CompetitionMutation) ResetCompetitionToProvider() {
 	m._CompetitionToProvider = nil
 	m.cleared_CompetitionToProvider = false
-	m.removed_CompetitionToProvider = nil
 }
 
 // Where appends a list predicates to the CompetitionMutation builder.
@@ -443,11 +427,9 @@ func (m *CompetitionMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case competition.EdgeCompetitionToProvider:
-		ids := make([]ent.Value, 0, len(m._CompetitionToProvider))
-		for id := range m._CompetitionToProvider {
-			ids = append(ids, id)
+		if id := m._CompetitionToProvider; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -457,9 +439,6 @@ func (m *CompetitionMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
 	if m.removed_CompetitionToTeams != nil {
 		edges = append(edges, competition.EdgeCompetitionToTeams)
-	}
-	if m.removed_CompetitionToProvider != nil {
-		edges = append(edges, competition.EdgeCompetitionToProvider)
 	}
 	return edges
 }
@@ -471,12 +450,6 @@ func (m *CompetitionMutation) RemovedIDs(name string) []ent.Value {
 	case competition.EdgeCompetitionToTeams:
 		ids := make([]ent.Value, 0, len(m.removed_CompetitionToTeams))
 		for id := range m.removed_CompetitionToTeams {
-			ids = append(ids, id)
-		}
-		return ids
-	case competition.EdgeCompetitionToProvider:
-		ids := make([]ent.Value, 0, len(m.removed_CompetitionToProvider))
-		for id := range m.removed_CompetitionToProvider {
 			ids = append(ids, id)
 		}
 		return ids
@@ -512,6 +485,9 @@ func (m *CompetitionMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *CompetitionMutation) ClearEdge(name string) error {
 	switch name {
+	case competition.EdgeCompetitionToProvider:
+		m.ClearCompetitionToProvider()
+		return nil
 	}
 	return fmt.Errorf("unknown Competition unique edge %s", name)
 }

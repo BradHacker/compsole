@@ -27,11 +27,6 @@ func (r *competitionResolver) ID(ctx context.Context, obj *ent.Competition) (str
 	return obj.ID.String(), nil
 }
 
-// CompetitionToProvider is the resolver for the CompetitionToProvider field.
-func (r *competitionResolver) CompetitionToProvider(ctx context.Context, obj *ent.Competition) (*ent.Provider, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 // Reboot is the resolver for the reboot field.
 func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, rebootType model.RebootType) (bool, error) {
 	entUser, err := auth.ForContext(ctx)
@@ -330,7 +325,15 @@ func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, err
 
 // CreateCompetition is the resolver for the createCompetition field.
 func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
-	entCompetition, err := r.client.Competition.Create().SetName(input.Name).Save(ctx)
+	providerUuid, err := uuid.Parse(input.CompetitionToProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse provider UUID: %v", err)
+	}
+	entProvider, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query provider: %v", err)
+	}
+	entCompetition, err := r.client.Competition.Create().SetName(input.Name).SetCompetitionToProvider(entProvider).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create competition: %v", err)
 	}
@@ -350,7 +353,15 @@ func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.Co
 	if err != nil {
 		return nil, fmt.Errorf("failed to query competition: %v", err)
 	}
-	entCompetition, err = entCompetition.Update().SetName(input.Name).Save(ctx)
+	providerUuid, err := uuid.Parse(input.CompetitionToProvider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse provider UUID: %v", err)
+	}
+	entProvider, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query provider: %v", err)
+	}
+	entCompetition, err = entCompetition.Update().SetName(input.Name).SetCompetitionToProvider(entProvider).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update team: %v", err)
 	}
@@ -701,12 +712,33 @@ func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Com
 
 // Providers is the resolver for the providers field.
 func (r *queryResolver) Providers(ctx context.Context) ([]*ent.Provider, error) {
-	panic(fmt.Errorf("not implemented"))
+	entProviders, err := r.client.Provider.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query providers: %v", err)
+	}
+	return entProviders, nil
 }
 
 // GetProvider is the resolver for the getProvider field.
 func (r *queryResolver) GetProvider(ctx context.Context, id string) (*ent.Provider, error) {
-	panic(fmt.Errorf("not implemented"))
+	providerUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	entProvider, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query provider: %v", err)
+	}
+	return entProvider, nil
+}
+
+// ValidateConfig is the resolver for the validateConfig field.
+func (r *queryResolver) ValidateConfig(ctx context.Context, typeArg string, config string) (bool, error) {
+	err := providers.ValidateConfig(typeArg, config)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse config: %v", err)
+	}
+	return true, nil
 }
 
 // ID is the resolver for the ID field.
@@ -762,3 +794,13 @@ type queryResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type vmObjectResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *competitionResolver) CompetitionToProvider(ctx context.Context, obj *ent.Competition) (*ent.Provider, error) {
+	panic(fmt.Errorf("not implemented"))
+}

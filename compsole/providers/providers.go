@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/BradHacker/compsole/compsole/providers/openstack"
@@ -27,5 +28,15 @@ func NewProvider(providerType string, config string) (provider CompsoleProvider,
 	default:
 		err = fmt.Errorf("invalid provider type")
 		return
+	}
+}
+
+func ValidateConfig(providerType string, config string) error {
+	switch providerType {
+	case openstack.ID:
+		var openstackConfig openstack.OpenstackConfig
+		return json.Unmarshal([]byte(config), &openstackConfig)
+	default:
+		return fmt.Errorf("invalid provider type")
 	}
 }

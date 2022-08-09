@@ -30,6 +30,6 @@ func (Competition) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
-		edge.To("CompetitionToProvider", Provider.Type).Required(),
+		edge.To("CompetitionToProvider", Provider.Type).Unique().Required(),
 	}
 }

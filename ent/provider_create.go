@@ -218,10 +218,10 @@ func (pc *ProviderCreate) createSpec() (*Provider, *sqlgraph.CreateSpec) {
 	}
 	if nodes := pc.mutation.ProviderToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: true,
 			Table:   provider.ProviderToCompetitionTable,
-			Columns: provider.ProviderToCompetitionPrimaryKey,
+			Columns: []string{provider.ProviderToCompetitionColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

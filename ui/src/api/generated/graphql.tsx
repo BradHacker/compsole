@@ -15,15 +15,22 @@ export type Scalars = {
   Float: number;
 };
 
+export enum AuthProvider {
+  Gitlab = 'GITLAB',
+  Local = 'LOCAL',
+  Undefined = 'UNDEFINED'
+}
+
 export type Competition = {
   __typename?: 'Competition';
+  CompetitionToProvider: Provider;
   CompetitionToTeams: Array<Maybe<Team>>;
   ID: Scalars['ID'];
   Name: Scalars['String'];
-  ProviderType: Scalars['String'];
 };
 
 export type CompetitionInput = {
+  CompetitionToProvider: Scalars['ID'];
   ID?: InputMaybe<Scalars['ID']>;
   Name: Scalars['String'];
 };
@@ -40,10 +47,12 @@ export type Mutation = {
   __typename?: 'Mutation';
   changePassword: Scalars['Boolean'];
   createCompetition: Competition;
+  createProvider: Provider;
   createTeam: Team;
   createUser: User;
   createVmObject: VmObject;
   deleteCompetition: Scalars['Boolean'];
+  deleteProvider: Scalars['Boolean'];
   deleteTeam: Scalars['Boolean'];
   deleteUser: Scalars['Boolean'];
   deleteVmObject: Scalars['Boolean'];
@@ -51,6 +60,7 @@ export type Mutation = {
   powerOn: Scalars['Boolean'];
   reboot: Scalars['Boolean'];
   updateCompetition: Competition;
+  updateProvider: Provider;
   updateTeam: Team;
   updateUser: User;
   updateVmObject: VmObject;
@@ -65,6 +75,11 @@ export type MutationChangePasswordArgs = {
 
 export type MutationCreateCompetitionArgs = {
   input: CompetitionInput;
+};
+
+
+export type MutationCreateProviderArgs = {
+  input: ProviderInput;
 };
 
 
@@ -84,6 +99,11 @@ export type MutationCreateVmObjectArgs = {
 
 
 export type MutationDeleteCompetitionArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type MutationDeleteProviderArgs = {
   id: Scalars['ID'];
 };
 
@@ -124,6 +144,11 @@ export type MutationUpdateCompetitionArgs = {
 };
 
 
+export type MutationUpdateProviderArgs = {
+  input: ProviderInput;
+};
+
+
 export type MutationUpdateTeamArgs = {
   input: TeamInput;
 };
@@ -138,17 +163,27 @@ export type MutationUpdateVmObjectArgs = {
   input: VmObjectInput;
 };
 
-export enum Provider {
-  Gitlab = 'GITLAB',
-  Local = 'LOCAL',
-  Undefined = 'UNDEFINED'
-}
+export type Provider = {
+  __typename?: 'Provider';
+  Config: Scalars['String'];
+  ID: Scalars['ID'];
+  Name: Scalars['String'];
+  Type: Scalars['String'];
+};
+
+export type ProviderInput = {
+  Config: Scalars['String'];
+  ID?: InputMaybe<Scalars['ID']>;
+  Name: Scalars['String'];
+  Type: Scalars['String'];
+};
 
 export type Query = {
   __typename?: 'Query';
   competitions: Array<Competition>;
   console: Scalars['String'];
   getCompetition: Competition;
+  getProvider: Provider;
   getTeam: Team;
   getUser: User;
   getVmObject: VmObject;
@@ -156,8 +191,10 @@ export type Query = {
   myCompetition: Competition;
   myTeam: Team;
   myVmObjects: Array<VmObject>;
+  providers: Array<Provider>;
   teams: Array<Team>;
   users: Array<User>;
+  validateConfig: Scalars['Boolean'];
   vmObject: VmObject;
   vmObjects: Array<VmObject>;
 };
@@ -174,6 +211,11 @@ export type QueryGetCompetitionArgs = {
 };
 
 
+export type QueryGetProviderArgs = {
+  id: Scalars['ID'];
+};
+
+
 export type QueryGetTeamArgs = {
   id: Scalars['ID'];
 };
@@ -186,6 +228,12 @@ export type QueryGetUserArgs = {
 
 export type QueryGetVmObjectArgs = {
   id: Scalars['ID'];
+};
+
+
+export type QueryValidateConfigArgs = {
+  config: Scalars['String'];
+  type: Scalars['String'];
 };
 
 
@@ -225,7 +273,7 @@ export type User = {
   FirstName: Scalars['String'];
   ID: Scalars['ID'];
   LastName: Scalars['String'];
-  Provider: Provider;
+  Provider: AuthProvider;
   Role: Role;
   UserToTeam?: Maybe<Team>;
   Username: Scalars['String'];
@@ -235,7 +283,7 @@ export type UserInput = {
   FirstName: Scalars['String'];
   ID?: InputMaybe<Scalars['ID']>;
   LastName: Scalars['String'];
-  Provider: Provider;
+  Provider: AuthProvider;
   Role: Role;
   UserToTeam?: InputMaybe<Scalars['ID']>;
   Username: Scalars['String'];
@@ -258,55 +306,114 @@ export type VmObjectInput = {
   VmObjectToTeam?: InputMaybe<Scalars['ID']>;
 };
 
+export type CompetitionFragmentFragment = { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } };
+
 export type GetCompTeamSearchValuesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetCompTeamSearchValuesQuery = { __typename?: 'Query', teams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
 
-export type GetCompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
+export type ListCompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCompetitionsQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name: string, ProviderType: string, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string } | null> }> };
+export type ListCompetitionsQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name: string, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string } | null>, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } }> };
 
-export type GetTeamsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetCompetitionQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
 
 
-export type GetTeamsQuery = { __typename?: 'Query', teams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
+export type GetCompetitionQuery = { __typename?: 'Query', getCompetition: { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } } };
 
-export type UserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role };
+export type UpdateCompetitionMutationVariables = Exact<{
+  competition: CompetitionInput;
+}>;
 
-export type AdminUserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
+
+export type UpdateCompetitionMutation = { __typename?: 'Mutation', updateCompetition: { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } } };
+
+export type CreateCompetitionMutationVariables = Exact<{
+  competition: CompetitionInput;
+}>;
+
+
+export type CreateCompetitionMutation = { __typename?: 'Mutation', createCompetition: { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } } };
+
+export type ProviderFragmentFragment = { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string };
+
+export type ListProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string }> };
+
+export type GetProviderQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type GetProviderQuery = { __typename?: 'Query', getProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
+
+export type ValidateConfigQueryVariables = Exact<{
+  type: Scalars['String'];
+  config: Scalars['String'];
+}>;
+
+
+export type ValidateConfigQuery = { __typename?: 'Query', validateConfig: boolean };
+
+export type UpdateProviderMutationVariables = Exact<{
+  provider: ProviderInput;
+}>;
+
+
+export type UpdateProviderMutation = { __typename?: 'Mutation', updateProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
+
+export type CreateProviderMutationVariables = Exact<{
+  provider: ProviderInput;
+}>;
+
+
+export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
+
+export type ListTeamsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListTeamsQuery = { __typename?: 'Query', teams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
+
+export type UserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role };
+
+export type AdminUserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
 
 export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCurrentUserQuery = { __typename?: 'Query', me: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role } };
+export type GetCurrentUserQuery = { __typename?: 'Query', me: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role } };
 
-export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
+export type ListUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
+export type ListUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
 
 export type GetUserQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type UpdateUserMutationVariables = Exact<{
   user: UserInput;
 }>;
 
 
-export type UpdateUserMutation = { __typename?: 'Mutation', updateUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+export type UpdateUserMutation = { __typename?: 'Mutation', updateUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type CreateUserMutationVariables = Exact<{
   user: UserInput;
 }>;
 
 
-export type CreateUserMutation = { __typename?: 'Mutation', createUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: Provider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+export type CreateUserMutation = { __typename?: 'Mutation', createUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type ChangePasswordMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -365,6 +472,25 @@ export type PowerOffVmMutationVariables = Exact<{
 
 export type PowerOffVmMutation = { __typename?: 'Mutation', powerOff: boolean };
 
+export const CompetitionFragmentFragmentDoc = gql`
+    fragment CompetitionFragment on Competition {
+  ID
+  Name
+  CompetitionToProvider {
+    ID
+    Name
+    Type
+  }
+}
+    `;
+export const ProviderFragmentFragmentDoc = gql`
+    fragment ProviderFragment on Provider {
+  ID
+  Name
+  Type
+  Config
+}
+    `;
 export const UserFragmentFragmentDoc = gql`
     fragment UserFragment on User {
   ID
@@ -446,47 +572,315 @@ export function useGetCompTeamSearchValuesLazyQuery(baseOptions?: Apollo.LazyQue
 export type GetCompTeamSearchValuesQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesQuery>;
 export type GetCompTeamSearchValuesLazyQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesLazyQuery>;
 export type GetCompTeamSearchValuesQueryResult = Apollo.QueryResult<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>;
-export const GetCompetitionsDocument = gql`
-    query GetCompetitions {
+export const ListCompetitionsDocument = gql`
+    query ListCompetitions {
   competitions {
-    ID
-    Name
-    ProviderType
+    ...CompetitionFragment
     CompetitionToTeams {
       ID
     }
   }
 }
-    `;
+    ${CompetitionFragmentFragmentDoc}`;
 
 /**
- * __useGetCompetitionsQuery__
+ * __useListCompetitionsQuery__
  *
- * To run a query within a React component, call `useGetCompetitionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetCompetitionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useListCompetitionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListCompetitionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetCompetitionsQuery({
+ * const { data, loading, error } = useListCompetitionsQuery({
  *   variables: {
  *   },
  * });
  */
-export function useGetCompetitionsQuery(baseOptions?: Apollo.QueryHookOptions<GetCompetitionsQuery, GetCompetitionsQueryVariables>) {
+export function useListCompetitionsQuery(baseOptions?: Apollo.QueryHookOptions<ListCompetitionsQuery, ListCompetitionsQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetCompetitionsQuery, GetCompetitionsQueryVariables>(GetCompetitionsDocument, options);
+        return Apollo.useQuery<ListCompetitionsQuery, ListCompetitionsQueryVariables>(ListCompetitionsDocument, options);
       }
-export function useGetCompetitionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCompetitionsQuery, GetCompetitionsQueryVariables>) {
+export function useListCompetitionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListCompetitionsQuery, ListCompetitionsQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetCompetitionsQuery, GetCompetitionsQueryVariables>(GetCompetitionsDocument, options);
+          return Apollo.useLazyQuery<ListCompetitionsQuery, ListCompetitionsQueryVariables>(ListCompetitionsDocument, options);
         }
-export type GetCompetitionsQueryHookResult = ReturnType<typeof useGetCompetitionsQuery>;
-export type GetCompetitionsLazyQueryHookResult = ReturnType<typeof useGetCompetitionsLazyQuery>;
-export type GetCompetitionsQueryResult = Apollo.QueryResult<GetCompetitionsQuery, GetCompetitionsQueryVariables>;
-export const GetTeamsDocument = gql`
-    query GetTeams {
+export type ListCompetitionsQueryHookResult = ReturnType<typeof useListCompetitionsQuery>;
+export type ListCompetitionsLazyQueryHookResult = ReturnType<typeof useListCompetitionsLazyQuery>;
+export type ListCompetitionsQueryResult = Apollo.QueryResult<ListCompetitionsQuery, ListCompetitionsQueryVariables>;
+export const GetCompetitionDocument = gql`
+    query GetCompetition($id: ID!) {
+  getCompetition(id: $id) {
+    ...CompetitionFragment
+  }
+}
+    ${CompetitionFragmentFragmentDoc}`;
+
+/**
+ * __useGetCompetitionQuery__
+ *
+ * To run a query within a React component, call `useGetCompetitionQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCompetitionQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCompetitionQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetCompetitionQuery(baseOptions: Apollo.QueryHookOptions<GetCompetitionQuery, GetCompetitionQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCompetitionQuery, GetCompetitionQueryVariables>(GetCompetitionDocument, options);
+      }
+export function useGetCompetitionLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCompetitionQuery, GetCompetitionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCompetitionQuery, GetCompetitionQueryVariables>(GetCompetitionDocument, options);
+        }
+export type GetCompetitionQueryHookResult = ReturnType<typeof useGetCompetitionQuery>;
+export type GetCompetitionLazyQueryHookResult = ReturnType<typeof useGetCompetitionLazyQuery>;
+export type GetCompetitionQueryResult = Apollo.QueryResult<GetCompetitionQuery, GetCompetitionQueryVariables>;
+export const UpdateCompetitionDocument = gql`
+    mutation UpdateCompetition($competition: CompetitionInput!) {
+  updateCompetition(input: $competition) {
+    ...CompetitionFragment
+  }
+}
+    ${CompetitionFragmentFragmentDoc}`;
+export type UpdateCompetitionMutationFn = Apollo.MutationFunction<UpdateCompetitionMutation, UpdateCompetitionMutationVariables>;
+
+/**
+ * __useUpdateCompetitionMutation__
+ *
+ * To run a mutation, you first call `useUpdateCompetitionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCompetitionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCompetitionMutation, { data, loading, error }] = useUpdateCompetitionMutation({
+ *   variables: {
+ *      competition: // value for 'competition'
+ *   },
+ * });
+ */
+export function useUpdateCompetitionMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCompetitionMutation, UpdateCompetitionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCompetitionMutation, UpdateCompetitionMutationVariables>(UpdateCompetitionDocument, options);
+      }
+export type UpdateCompetitionMutationHookResult = ReturnType<typeof useUpdateCompetitionMutation>;
+export type UpdateCompetitionMutationResult = Apollo.MutationResult<UpdateCompetitionMutation>;
+export type UpdateCompetitionMutationOptions = Apollo.BaseMutationOptions<UpdateCompetitionMutation, UpdateCompetitionMutationVariables>;
+export const CreateCompetitionDocument = gql`
+    mutation CreateCompetition($competition: CompetitionInput!) {
+  createCompetition(input: $competition) {
+    ...CompetitionFragment
+  }
+}
+    ${CompetitionFragmentFragmentDoc}`;
+export type CreateCompetitionMutationFn = Apollo.MutationFunction<CreateCompetitionMutation, CreateCompetitionMutationVariables>;
+
+/**
+ * __useCreateCompetitionMutation__
+ *
+ * To run a mutation, you first call `useCreateCompetitionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCompetitionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCompetitionMutation, { data, loading, error }] = useCreateCompetitionMutation({
+ *   variables: {
+ *      competition: // value for 'competition'
+ *   },
+ * });
+ */
+export function useCreateCompetitionMutation(baseOptions?: Apollo.MutationHookOptions<CreateCompetitionMutation, CreateCompetitionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCompetitionMutation, CreateCompetitionMutationVariables>(CreateCompetitionDocument, options);
+      }
+export type CreateCompetitionMutationHookResult = ReturnType<typeof useCreateCompetitionMutation>;
+export type CreateCompetitionMutationResult = Apollo.MutationResult<CreateCompetitionMutation>;
+export type CreateCompetitionMutationOptions = Apollo.BaseMutationOptions<CreateCompetitionMutation, CreateCompetitionMutationVariables>;
+export const ListProvidersDocument = gql`
+    query ListProviders {
+  providers {
+    ...ProviderFragment
+  }
+}
+    ${ProviderFragmentFragmentDoc}`;
+
+/**
+ * __useListProvidersQuery__
+ *
+ * To run a query within a React component, call `useListProvidersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListProvidersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListProvidersQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useListProvidersQuery(baseOptions?: Apollo.QueryHookOptions<ListProvidersQuery, ListProvidersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ListProvidersQuery, ListProvidersQueryVariables>(ListProvidersDocument, options);
+      }
+export function useListProvidersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListProvidersQuery, ListProvidersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ListProvidersQuery, ListProvidersQueryVariables>(ListProvidersDocument, options);
+        }
+export type ListProvidersQueryHookResult = ReturnType<typeof useListProvidersQuery>;
+export type ListProvidersLazyQueryHookResult = ReturnType<typeof useListProvidersLazyQuery>;
+export type ListProvidersQueryResult = Apollo.QueryResult<ListProvidersQuery, ListProvidersQueryVariables>;
+export const GetProviderDocument = gql`
+    query GetProvider($id: ID!) {
+  getProvider(id: $id) {
+    ...ProviderFragment
+  }
+}
+    ${ProviderFragmentFragmentDoc}`;
+
+/**
+ * __useGetProviderQuery__
+ *
+ * To run a query within a React component, call `useGetProviderQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProviderQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProviderQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetProviderQuery(baseOptions: Apollo.QueryHookOptions<GetProviderQuery, GetProviderQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProviderQuery, GetProviderQueryVariables>(GetProviderDocument, options);
+      }
+export function useGetProviderLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProviderQuery, GetProviderQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProviderQuery, GetProviderQueryVariables>(GetProviderDocument, options);
+        }
+export type GetProviderQueryHookResult = ReturnType<typeof useGetProviderQuery>;
+export type GetProviderLazyQueryHookResult = ReturnType<typeof useGetProviderLazyQuery>;
+export type GetProviderQueryResult = Apollo.QueryResult<GetProviderQuery, GetProviderQueryVariables>;
+export const ValidateConfigDocument = gql`
+    query ValidateConfig($type: String!, $config: String!) {
+  validateConfig(type: $type, config: $config)
+}
+    `;
+
+/**
+ * __useValidateConfigQuery__
+ *
+ * To run a query within a React component, call `useValidateConfigQuery` and pass it any options that fit your needs.
+ * When your component renders, `useValidateConfigQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useValidateConfigQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *      config: // value for 'config'
+ *   },
+ * });
+ */
+export function useValidateConfigQuery(baseOptions: Apollo.QueryHookOptions<ValidateConfigQuery, ValidateConfigQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ValidateConfigQuery, ValidateConfigQueryVariables>(ValidateConfigDocument, options);
+      }
+export function useValidateConfigLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ValidateConfigQuery, ValidateConfigQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ValidateConfigQuery, ValidateConfigQueryVariables>(ValidateConfigDocument, options);
+        }
+export type ValidateConfigQueryHookResult = ReturnType<typeof useValidateConfigQuery>;
+export type ValidateConfigLazyQueryHookResult = ReturnType<typeof useValidateConfigLazyQuery>;
+export type ValidateConfigQueryResult = Apollo.QueryResult<ValidateConfigQuery, ValidateConfigQueryVariables>;
+export const UpdateProviderDocument = gql`
+    mutation UpdateProvider($provider: ProviderInput!) {
+  updateProvider(input: $provider) {
+    ...ProviderFragment
+  }
+}
+    ${ProviderFragmentFragmentDoc}`;
+export type UpdateProviderMutationFn = Apollo.MutationFunction<UpdateProviderMutation, UpdateProviderMutationVariables>;
+
+/**
+ * __useUpdateProviderMutation__
+ *
+ * To run a mutation, you first call `useUpdateProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateProviderMutation, { data, loading, error }] = useUpdateProviderMutation({
+ *   variables: {
+ *      provider: // value for 'provider'
+ *   },
+ * });
+ */
+export function useUpdateProviderMutation(baseOptions?: Apollo.MutationHookOptions<UpdateProviderMutation, UpdateProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateProviderMutation, UpdateProviderMutationVariables>(UpdateProviderDocument, options);
+      }
+export type UpdateProviderMutationHookResult = ReturnType<typeof useUpdateProviderMutation>;
+export type UpdateProviderMutationResult = Apollo.MutationResult<UpdateProviderMutation>;
+export type UpdateProviderMutationOptions = Apollo.BaseMutationOptions<UpdateProviderMutation, UpdateProviderMutationVariables>;
+export const CreateProviderDocument = gql`
+    mutation CreateProvider($provider: ProviderInput!) {
+  createProvider(input: $provider) {
+    ...ProviderFragment
+  }
+}
+    ${ProviderFragmentFragmentDoc}`;
+export type CreateProviderMutationFn = Apollo.MutationFunction<CreateProviderMutation, CreateProviderMutationVariables>;
+
+/**
+ * __useCreateProviderMutation__
+ *
+ * To run a mutation, you first call `useCreateProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createProviderMutation, { data, loading, error }] = useCreateProviderMutation({
+ *   variables: {
+ *      provider: // value for 'provider'
+ *   },
+ * });
+ */
+export function useCreateProviderMutation(baseOptions?: Apollo.MutationHookOptions<CreateProviderMutation, CreateProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateProviderMutation, CreateProviderMutationVariables>(CreateProviderDocument, options);
+      }
+export type CreateProviderMutationHookResult = ReturnType<typeof useCreateProviderMutation>;
+export type CreateProviderMutationResult = Apollo.MutationResult<CreateProviderMutation>;
+export type CreateProviderMutationOptions = Apollo.BaseMutationOptions<CreateProviderMutation, CreateProviderMutationVariables>;
+export const ListTeamsDocument = gql`
+    query ListTeams {
   teams {
     ID
     TeamNumber
@@ -500,31 +894,31 @@ export const GetTeamsDocument = gql`
     `;
 
 /**
- * __useGetTeamsQuery__
+ * __useListTeamsQuery__
  *
- * To run a query within a React component, call `useGetTeamsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetTeamsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useListTeamsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListTeamsQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetTeamsQuery({
+ * const { data, loading, error } = useListTeamsQuery({
  *   variables: {
  *   },
  * });
  */
-export function useGetTeamsQuery(baseOptions?: Apollo.QueryHookOptions<GetTeamsQuery, GetTeamsQueryVariables>) {
+export function useListTeamsQuery(baseOptions?: Apollo.QueryHookOptions<ListTeamsQuery, ListTeamsQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetTeamsQuery, GetTeamsQueryVariables>(GetTeamsDocument, options);
+        return Apollo.useQuery<ListTeamsQuery, ListTeamsQueryVariables>(ListTeamsDocument, options);
       }
-export function useGetTeamsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetTeamsQuery, GetTeamsQueryVariables>) {
+export function useListTeamsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListTeamsQuery, ListTeamsQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetTeamsQuery, GetTeamsQueryVariables>(GetTeamsDocument, options);
+          return Apollo.useLazyQuery<ListTeamsQuery, ListTeamsQueryVariables>(ListTeamsDocument, options);
         }
-export type GetTeamsQueryHookResult = ReturnType<typeof useGetTeamsQuery>;
-export type GetTeamsLazyQueryHookResult = ReturnType<typeof useGetTeamsLazyQuery>;
-export type GetTeamsQueryResult = Apollo.QueryResult<GetTeamsQuery, GetTeamsQueryVariables>;
+export type ListTeamsQueryHookResult = ReturnType<typeof useListTeamsQuery>;
+export type ListTeamsLazyQueryHookResult = ReturnType<typeof useListTeamsLazyQuery>;
+export type ListTeamsQueryResult = Apollo.QueryResult<ListTeamsQuery, ListTeamsQueryVariables>;
 export const GetCurrentUserDocument = gql`
     query GetCurrentUser {
   me {
@@ -559,8 +953,8 @@ export function useGetCurrentUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type GetCurrentUserQueryHookResult = ReturnType<typeof useGetCurrentUserQuery>;
 export type GetCurrentUserLazyQueryHookResult = ReturnType<typeof useGetCurrentUserLazyQuery>;
 export type GetCurrentUserQueryResult = Apollo.QueryResult<GetCurrentUserQuery, GetCurrentUserQueryVariables>;
-export const GetUsersDocument = gql`
-    query GetUsers {
+export const ListUsersDocument = gql`
+    query ListUsers {
   users {
     ...AdminUserFragment
   }
@@ -568,31 +962,31 @@ export const GetUsersDocument = gql`
     ${AdminUserFragmentFragmentDoc}`;
 
 /**
- * __useGetUsersQuery__
+ * __useListUsersQuery__
  *
- * To run a query within a React component, call `useGetUsersQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetUsersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useListUsersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListUsersQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetUsersQuery({
+ * const { data, loading, error } = useListUsersQuery({
  *   variables: {
  *   },
  * });
  */
-export function useGetUsersQuery(baseOptions?: Apollo.QueryHookOptions<GetUsersQuery, GetUsersQueryVariables>) {
+export function useListUsersQuery(baseOptions?: Apollo.QueryHookOptions<ListUsersQuery, ListUsersQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetUsersQuery, GetUsersQueryVariables>(GetUsersDocument, options);
+        return Apollo.useQuery<ListUsersQuery, ListUsersQueryVariables>(ListUsersDocument, options);
       }
-export function useGetUsersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUsersQuery, GetUsersQueryVariables>) {
+export function useListUsersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListUsersQuery, ListUsersQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetUsersQuery, GetUsersQueryVariables>(GetUsersDocument, options);
+          return Apollo.useLazyQuery<ListUsersQuery, ListUsersQueryVariables>(ListUsersDocument, options);
         }
-export type GetUsersQueryHookResult = ReturnType<typeof useGetUsersQuery>;
-export type GetUsersLazyQueryHookResult = ReturnType<typeof useGetUsersLazyQuery>;
-export type GetUsersQueryResult = Apollo.QueryResult<GetUsersQuery, GetUsersQueryVariables>;
+export type ListUsersQueryHookResult = ReturnType<typeof useListUsersQuery>;
+export type ListUsersLazyQueryHookResult = ReturnType<typeof useListUsersLazyQuery>;
+export type ListUsersQueryResult = Apollo.QueryResult<ListUsersQuery, ListUsersQueryVariables>;
 export const GetUserDocument = gql`
     query GetUser($id: ID!) {
   getUser(id: $id) {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Provider, Role, User } from "./api/generated/graphql";
+import { AuthProvider, Role, User } from "./api/generated/graphql";
 
 export const UserContext = React.createContext({
   ID: "",
@@ -7,5 +7,5 @@ export const UserContext = React.createContext({
   FirstName: "",
   LastName: "",
   Role: Role.Undefined,
-  Provider: Provider.Undefined,
+  Provider: AuthProvider.Undefined,
 } as User);

@@ -1,3 +1,13 @@
+fragment CompetitionFragment on Competition {
+  ID
+  Name
+  CompetitionToProvider {
+    ID
+    Name
+    Type
+  }
+}
+
 query GetCompTeamSearchValues {
   teams {
     ID
@@ -10,13 +20,29 @@ query GetCompTeamSearchValues {
   }
 }
 
-query GetCompetitions {
+query ListCompetitions {
   competitions {
-    ID
-    Name
-    ProviderType
+    ...CompetitionFragment
     CompetitionToTeams {
       ID
     }
+  }
+}
+
+query GetCompetition($id: ID!) {
+  getCompetition(id: $id) {
+    ...CompetitionFragment
+  }
+}
+
+mutation UpdateCompetition($competition: CompetitionInput!) {
+  updateCompetition(input: $competition) {
+    ...CompetitionFragment
+  }
+}
+
+mutation CreateCompetition($competition: CompetitionInput!) {
+  createCompetition(input: $competition) {
+    ...CompetitionFragment
   }
 }

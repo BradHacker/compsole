@@ -25,19 +25,19 @@ import {
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import React, { useContext, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import {
   Role,
-  useGetUsersQuery,
-  useGetCompetitionsQuery,
-  User,
-  Competition,
-  GetCompetitionsQuery,
-  GetUsersQuery,
-  useGetTeamsQuery,
-  GetTeamsQuery,
   AllVmObjectsQuery,
   useAllVmObjectsQuery,
+  useListUsersQuery,
+  useListCompetitionsQuery,
+  useListTeamsQuery,
+  ListTeamsQuery,
+  ListCompetitionsQuery,
+  ListUsersQuery,
+  ListProvidersQuery,
+  useListProvidersQuery,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
 
@@ -68,7 +68,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const createUserData = (
-  user: GetUsersQuery["users"][0]
+  user: ListUsersQuery["users"][0]
 ): {
   id: string;
   username: string;
@@ -90,7 +90,7 @@ const createUserData = (
 };
 
 const createCompetitionData = (
-  competition: GetCompetitionsQuery["competitions"][0]
+  competition: ListCompetitionsQuery["competitions"][0]
 ): {
   id: string;
   name: string;
@@ -100,13 +100,15 @@ const createCompetitionData = (
   return {
     id: competition.ID,
     name: competition.Name,
-    providerType: competition.ProviderType,
+    providerType: `${
+      competition.CompetitionToProvider.Name
+    }:${competition.CompetitionToProvider.Type.toLocaleUpperCase()}`,
     teamCount: competition.CompetitionToTeams.length,
   };
 };
 
 const createTeamData = (
-  team: GetTeamsQuery["teams"][0]
+  team: ListTeamsQuery["teams"][0]
 ): {
   id: string;
   number: number;
@@ -139,51 +141,109 @@ const createVmObjectData = (
   };
 };
 
+const createProviderData = (
+  provider: ListProvidersQuery["providers"][0]
+): {
+  id: ListProvidersQuery["providers"][0]["ID"];
+  name: ListProvidersQuery["providers"][0]["Name"];
+  type: ListProvidersQuery["providers"][0]["Type"];
+} => {
+  return {
+    id: provider.ID,
+    name: provider.Name,
+    type: provider.Type,
+  };
+};
+
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const {
-    data: getUsersData,
-    loading: getUsersLoading,
-    error: getUsersError,
-  } = useGetUsersQuery();
+    data: listUsersData,
+    loading: listUsersLoading,
+    error: listUsersError,
+  } = useListUsersQuery();
   const {
-    data: getCompetitionsData,
-    loading: getCompetitionsLoading,
-    error: getCompetitionsError,
-  } = useGetCompetitionsQuery();
+    data: listCompetitionsData,
+    loading: listCompetitionsLoading,
+    error: listCompetitionsError,
+  } = useListCompetitionsQuery();
   const {
-    data: getTeamsData,
-    loading: getTeamsLoading,
-    error: getTeamsError,
-  } = useGetTeamsQuery();
+    data: listTeamsData,
+    loading: listTeamsLoading,
+    error: listTeamsError,
+  } = useListTeamsQuery();
   const {
     data: allVmObjectsData,
     loading: allVmObjectsLoading,
     error: allVmObjectsError,
   } = useAllVmObjectsQuery();
+  const {
+    data: listProvidersData,
+    loading: listProvidersLoading,
+    error: listProvidersError,
+  } = useListProvidersQuery();
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (getUsersError)
-      enqueueSnackbar(`Couldn't get users: ${getUsersError.message}`, {
+    if (listUsersError)
+      enqueueSnackbar(`Couldn't get users: ${listUsersError.message}`, {
         variant: "error",
       });
-    if (getCompetitionsError)
+    if (listCompetitionsError)
       enqueueSnackbar(
-        `Couldn't get competitions: ${getCompetitionsError.message}`,
+        `Couldn't get competitions: ${listCompetitionsError.message}`,
         {
           variant: "error",
         }
       );
-    if (getTeamsError)
-      enqueueSnackbar(`Couldn't get teams: ${getTeamsError.message}`, {
+    if (listTeamsError)
+      enqueueSnackbar(`Couldn't get teams: ${listTeamsError.message}`, {
         variant: "error",
       });
-  }, [getUsersError, getCompetitionsError, getTeamsError]);
+    if (allVmObjectsError)
+      enqueueSnackbar(`Couldn't get vm objects: ${allVmObjectsError.message}`, {
+        variant: "error",
+      });
+    if (listProvidersError)
+      enqueueSnackbar(`Couldn't get providers: ${listProvidersError.message}`, {
+        variant: "error",
+      });
+  }, [
+    listUsersError,
+    listCompetitionsError,
+    listTeamsError,
+    allVmObjectsError,
+    listProvidersError,
+  ]);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
+
+  const addObject = () => {
+    switch (selectedTab) {
+      case 0:
+        navigate("/admin/user/new");
+        break;
+      case 1:
+        navigate("/admin/competition/new");
+        break;
+      case 2:
+        navigate("/admin/team/new");
+        break;
+      case 3:
+        navigate("/admin/vm-object/new");
+        break;
+      case 4:
+        navigate("/admin/provider/new");
+        break;
+      default:
+        navigate("/admin");
+        break;
+    }
+  };
+
   return (
     <Container
       component="main"
@@ -194,13 +254,14 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
           value={selectedTab}
-          onChange={handleChange}
+          onChange={handleTabChange}
           aria-label="admin pages"
         >
           <Tab label="Users" />
           <Tab label="Competitions" />
           <Tab label="Teams" />
           <Tab label="VM Objects" />
+          <Tab label="Providers" />
         </Tabs>
       </Box>
       <TabPanel value={selectedTab} index={0}>
@@ -218,7 +279,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {getUsersData?.users.map(createUserData).map((row) => (
+              {listUsersData?.users.map(createUserData).map((row) => (
                 <TableRow
                   key={row.id}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -256,7 +317,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                   No Users Found
                 </TableCell>
               )}
-              {getUsersLoading && (
+              {listUsersLoading && (
                 <TableCell colSpan={5} sx={{ textAlign: "center" }}>
                   <CircularProgress />
                 </TableCell>
@@ -278,7 +339,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {getCompetitionsData?.competitions
+              {listCompetitionsData?.competitions
                 .map(createCompetitionData)
                 .map((row) => (
                   <TableRow
@@ -312,7 +373,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                   No Competitions Found
                 </TableCell>
               )}
-              {getCompetitionsLoading && (
+              {listCompetitionsLoading && (
                 <TableCell colSpan={5} sx={{ textAlign: "center" }}>
                   <CircularProgress />
                 </TableCell>
@@ -334,7 +395,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {getTeamsData?.teams.map(createTeamData).map((row) => (
+              {listTeamsData?.teams.map(createTeamData).map((row) => (
                 <TableRow
                   key={row.id}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -366,7 +427,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                   No Teams Found
                 </TableCell>
               )}
-              {getTeamsLoading && (
+              {listTeamsLoading && (
                 <TableCell colSpan={5} sx={{ textAlign: "center" }}>
                   <CircularProgress />
                 </TableCell>
@@ -456,7 +517,59 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                   No Teams Found
                 </TableCell>
               )}
-              {getTeamsLoading && (
+              {listTeamsLoading && (
+                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                  <CircularProgress />
+                </TableCell>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </TabPanel>
+      <TabPanel value={selectedTab} index={4}>
+        <TableContainer component={Paper}>
+          <Table sx={{ width: "100%" }} aria-label="providers table">
+            <TableHead>
+              <TableRow>
+                <TableCell align="left">ID</TableCell>
+                <TableCell align="center">Name</TableCell>
+                <TableCell align="center">Type</TableCell>
+                <TableCell align="right">Controls</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {listProvidersData?.providers
+                .map(createProviderData)
+                .map((row) => (
+                  <TableRow
+                    key={row.id}
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {row.id}
+                    </TableCell>
+                    <TableCell align="center">{row.name}</TableCell>
+                    <TableCell align="center">
+                      <Chip label={row.type} color="error" size="small" />
+                    </TableCell>
+                    <TableCell align="right">
+                      <ButtonGroup size="small">
+                        <Button
+                          variant="outlined"
+                          color="secondary"
+                          href={`/admin/provider/${row.id}`}
+                        >
+                          <EditTwoTone />
+                        </Button>
+                      </ButtonGroup>
+                    </TableCell>
+                  </TableRow>
+                )) ?? (
+                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                  No Providers Found
+                </TableCell>
+              )}
+              {listProvidersLoading && (
                 <TableCell colSpan={5} sx={{ textAlign: "center" }}>
                   <CircularProgress />
                 </TableCell>
@@ -473,7 +586,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         }}
         color="secondary"
         aria-label="add"
-        href="/admin/user/new"
+        onClick={addObject}
       >
         <Add />
       </Fab>

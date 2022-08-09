@@ -31,6 +31,7 @@ type CompetitionQuery struct {
 	// eager-loading edges.
 	withCompetitionToTeams    *TeamQuery
 	withCompetitionToProvider *ProviderQuery
+	withFKs                   bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -103,7 +104,7 @@ func (cq *CompetitionQuery) QueryCompetitionToProvider() *ProviderQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(competition.Table, competition.FieldID, selector),
 			sqlgraph.To(provider.Table, provider.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, competition.CompetitionToProviderTable, competition.CompetitionToProviderPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, false, competition.CompetitionToProviderTable, competition.CompetitionToProviderColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -387,12 +388,19 @@ func (cq *CompetitionQuery) prepareQuery(ctx context.Context) error {
 func (cq *CompetitionQuery) sqlAll(ctx context.Context) ([]*Competition, error) {
 	var (
 		nodes       = []*Competition{}
+		withFKs     = cq.withFKs
 		_spec       = cq.querySpec()
 		loadedTypes = [2]bool{
 			cq.withCompetitionToTeams != nil,
 			cq.withCompetitionToProvider != nil,
 		}
 	)
+	if cq.withCompetitionToProvider != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, competition.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Competition{config: cq.config}
 		nodes = append(nodes, node)
@@ -443,66 +451,30 @@ func (cq *CompetitionQuery) sqlAll(ctx context.Context) ([]*Competition, error) 
 	}
 
 	if query := cq.withCompetitionToProvider; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[uuid.UUID]*Competition, len(nodes))
-		for _, node := range nodes {
-			ids[node.ID] = node
-			fks = append(fks, node.ID)
-			node.Edges.CompetitionToProvider = []*Provider{}
+		ids := make([]uuid.UUID, 0, len(nodes))
+		nodeids := make(map[uuid.UUID][]*Competition)
+		for i := range nodes {
+			if nodes[i].competition_competition_to_provider == nil {
+				continue
+			}
+			fk := *nodes[i].competition_competition_to_provider
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
-		var (
-			edgeids []uuid.UUID
-			edges   = make(map[uuid.UUID][]*Competition)
-		)
-		_spec := &sqlgraph.EdgeQuerySpec{
-			Edge: &sqlgraph.EdgeSpec{
-				Inverse: false,
-				Table:   competition.CompetitionToProviderTable,
-				Columns: competition.CompetitionToProviderPrimaryKey,
-			},
-			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(competition.CompetitionToProviderPrimaryKey[0], fks...))
-			},
-			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
-			},
-			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*uuid.UUID)
-				if !ok || eout == nil {
-					return fmt.Errorf("unexpected id value for edge-out")
-				}
-				ein, ok := in.(*uuid.UUID)
-				if !ok || ein == nil {
-					return fmt.Errorf("unexpected id value for edge-in")
-				}
-				outValue := *eout
-				inValue := *ein
-				node, ok := ids[outValue]
-				if !ok {
-					return fmt.Errorf("unexpected node id in edges: %v", outValue)
-				}
-				if _, ok := edges[inValue]; !ok {
-					edgeids = append(edgeids, inValue)
-				}
-				edges[inValue] = append(edges[inValue], node)
-				return nil
-			},
-		}
-		if err := sqlgraph.QueryEdges(ctx, cq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "CompetitionToProvider": %w`, err)
-		}
-		query.Where(provider.IDIn(edgeids...))
+		query.Where(provider.IDIn(ids...))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			nodes, ok := edges[n.ID]
+			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected "CompetitionToProvider" node returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "competition_competition_to_provider" returned %v`, n.ID)
 			}
 			for i := range nodes {
-				nodes[i].Edges.CompetitionToProvider = append(nodes[i].Edges.CompetitionToProvider, n)
+				nodes[i].Edges.CompetitionToProvider = n
 			}
 		}
 	}

@@ -1,0 +1,34 @@
+fragment ProviderFragment on Provider {
+  ID
+  Name
+  Type
+  Config
+}
+
+query ListProviders {
+  providers {
+    ...ProviderFragment
+  }
+}
+
+query GetProvider($id: ID!) {
+  getProvider(id: $id) {
+    ...ProviderFragment
+  }
+}
+
+query ValidateConfig($type: String!, $config: String!) {
+  validateConfig(type: $type, config: $config)
+}
+
+mutation UpdateProvider($provider: ProviderInput!) {
+  updateProvider(input: $provider) {
+    ...ProviderFragment
+  }
+}
+
+mutation CreateProvider($provider: ProviderInput!) {
+  createProvider(input: $provider) {
+    ...ProviderFragment
+  }
+}

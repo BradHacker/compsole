@@ -28,6 +28,7 @@ type Competition {
 type Provider {
   ID: ID!
   Name: String!
+  Type: String!
   Config: String!
 }
 
@@ -89,6 +90,7 @@ type Query {
   #   Providers
   providers: [Provider!]! @hasRole(roles: [ADMIN])
   getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
+  validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
