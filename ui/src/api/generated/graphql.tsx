@@ -513,6 +513,20 @@ export type PowerOffVmMutationVariables = Exact<{
 
 export type PowerOffVmMutation = { __typename?: 'Mutation', powerOff: boolean };
 
+export type UpdateVmObjectMutationVariables = Exact<{
+  vmObject: VmObjectInput;
+}>;
+
+
+export type UpdateVmObjectMutation = { __typename?: 'Mutation', updateVmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+
+export type CreateVmObjectMutationVariables = Exact<{
+  vmObject: VmObjectInput;
+}>;
+
+
+export type CreateVmObjectMutation = { __typename?: 'Mutation', createVmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+
 export type BatchCreateVmObjectsMutationVariables = Exact<{
   vmObjects: Array<VmObjectInput> | VmObjectInput;
 }>;
@@ -1476,6 +1490,72 @@ export function usePowerOffVmMutation(baseOptions?: Apollo.MutationHookOptions<P
 export type PowerOffVmMutationHookResult = ReturnType<typeof usePowerOffVmMutation>;
 export type PowerOffVmMutationResult = Apollo.MutationResult<PowerOffVmMutation>;
 export type PowerOffVmMutationOptions = Apollo.BaseMutationOptions<PowerOffVmMutation, PowerOffVmMutationVariables>;
+export const UpdateVmObjectDocument = gql`
+    mutation UpdateVmObject($vmObject: VmObjectInput!) {
+  updateVmObject(input: $vmObject) {
+    ...VmObjectFragment
+  }
+}
+    ${VmObjectFragmentFragmentDoc}`;
+export type UpdateVmObjectMutationFn = Apollo.MutationFunction<UpdateVmObjectMutation, UpdateVmObjectMutationVariables>;
+
+/**
+ * __useUpdateVmObjectMutation__
+ *
+ * To run a mutation, you first call `useUpdateVmObjectMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateVmObjectMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateVmObjectMutation, { data, loading, error }] = useUpdateVmObjectMutation({
+ *   variables: {
+ *      vmObject: // value for 'vmObject'
+ *   },
+ * });
+ */
+export function useUpdateVmObjectMutation(baseOptions?: Apollo.MutationHookOptions<UpdateVmObjectMutation, UpdateVmObjectMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateVmObjectMutation, UpdateVmObjectMutationVariables>(UpdateVmObjectDocument, options);
+      }
+export type UpdateVmObjectMutationHookResult = ReturnType<typeof useUpdateVmObjectMutation>;
+export type UpdateVmObjectMutationResult = Apollo.MutationResult<UpdateVmObjectMutation>;
+export type UpdateVmObjectMutationOptions = Apollo.BaseMutationOptions<UpdateVmObjectMutation, UpdateVmObjectMutationVariables>;
+export const CreateVmObjectDocument = gql`
+    mutation CreateVmObject($vmObject: VmObjectInput!) {
+  createVmObject(input: $vmObject) {
+    ...VmObjectFragment
+  }
+}
+    ${VmObjectFragmentFragmentDoc}`;
+export type CreateVmObjectMutationFn = Apollo.MutationFunction<CreateVmObjectMutation, CreateVmObjectMutationVariables>;
+
+/**
+ * __useCreateVmObjectMutation__
+ *
+ * To run a mutation, you first call `useCreateVmObjectMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateVmObjectMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createVmObjectMutation, { data, loading, error }] = useCreateVmObjectMutation({
+ *   variables: {
+ *      vmObject: // value for 'vmObject'
+ *   },
+ * });
+ */
+export function useCreateVmObjectMutation(baseOptions?: Apollo.MutationHookOptions<CreateVmObjectMutation, CreateVmObjectMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateVmObjectMutation, CreateVmObjectMutationVariables>(CreateVmObjectDocument, options);
+      }
+export type CreateVmObjectMutationHookResult = ReturnType<typeof useCreateVmObjectMutation>;
+export type CreateVmObjectMutationResult = Apollo.MutationResult<CreateVmObjectMutation>;
+export type CreateVmObjectMutationOptions = Apollo.BaseMutationOptions<CreateVmObjectMutation, CreateVmObjectMutationVariables>;
 export const BatchCreateVmObjectsDocument = gql`
     mutation BatchCreateVmObjects($vmObjects: [VmObjectInput!]!) {
   batchCreateVmObjects(input: $vmObjects) {

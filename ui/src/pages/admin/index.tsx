@@ -510,8 +510,12 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                     </TableCell>
                     <TableCell align="right">
                       <ButtonGroup size="small">
-                        <Button variant="outlined" color="primary">
-                          <InfoTwoTone />
+                        <Button
+                          variant="outlined"
+                          color="secondary"
+                          href={`/admin/vm-object/${row.id}`}
+                        >
+                          <EditTwoTone />
                         </Button>
                       </ButtonGroup>
                     </TableCell>

@@ -48,6 +48,18 @@ mutation PowerOffVm($vmObjectId: ID!) {
   powerOff(vmObjectId: $vmObjectId)
 }
 
+mutation UpdateVmObject($vmObject: VmObjectInput!) {
+  updateVmObject(input: $vmObject) {
+    ...VmObjectFragment
+  }
+}
+
+mutation CreateVmObject($vmObject: VmObjectInput!) {
+  createVmObject(input: $vmObject) {
+    ...VmObjectFragment
+  }
+}
+
 mutation BatchCreateVmObjects($vmObjects: [VmObjectInput!]!) {
   batchCreateVmObjects(input: $vmObjects) {
     ...VmObjectFragment
