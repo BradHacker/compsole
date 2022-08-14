@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
 
 - Admin main list pages
 - User create/modify/change password form
+- Update/Create form for:
+  - Users
+  - Competitions
+  - Teams
+  - Vm Objects
+  - Providers
 - UI to ingest VMs into Compsole
 
 ### Changed
