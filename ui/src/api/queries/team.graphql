@@ -14,6 +14,24 @@ query ListTeams {
   }
 }
 
+query GetTeam($id: ID!) {
+  getTeam(id: $id) {
+    ...TeamFragment
+  }
+}
+
+mutation UpdateTeam($team: TeamInput!) {
+  updateTeam(input: $team) {
+    ...TeamFragment
+  }
+}
+
+mutation CreateTeam($team: TeamInput!) {
+  createTeam(input: $team) {
+    ...TeamFragment
+  }
+}
+
 mutation BatchCreateTeams($teams: [TeamInput!]!) {
   batchCreateTeams(input: $teams) {
     ...TeamFragment
