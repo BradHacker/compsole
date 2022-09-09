@@ -58,6 +58,8 @@ export type Mutation = {
   deleteTeam: Scalars['Boolean'];
   deleteUser: Scalars['Boolean'];
   deleteVmObject: Scalars['Boolean'];
+  lockoutCompetition: Scalars['Boolean'];
+  lockoutVm: Scalars['Boolean'];
   powerOff: Scalars['Boolean'];
   powerOn: Scalars['Boolean'];
   reboot: Scalars['Boolean'];
@@ -132,6 +134,18 @@ export type MutationDeleteUserArgs = {
 
 export type MutationDeleteVmObjectArgs = {
   id: Scalars['ID'];
+};
+
+
+export type MutationLockoutCompetitionArgs = {
+  id: Scalars['ID'];
+  locked: Scalars['Boolean'];
+};
+
+
+export type MutationLockoutVmArgs = {
+  id: Scalars['ID'];
+  locked: Scalars['Boolean'];
 };
 
 
@@ -277,13 +291,23 @@ export type SkeletonVmObject = {
   Name: Scalars['String'];
 };
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  lockout: VmObject;
+};
+
+
+export type SubscriptionLockoutArgs = {
+  id: Scalars['ID'];
+};
+
 export type Team = {
   __typename?: 'Team';
   ID: Scalars['ID'];
   Name?: Maybe<Scalars['String']>;
   TeamNumber: Scalars['Int'];
   TeamToCompetition: Competition;
-  TeamToVmObjects: Array<Maybe<VmObject>>;
+  TeamToVmObjects?: Maybe<Array<Maybe<VmObject>>>;
 };
 
 export type TeamInput = {
@@ -319,6 +343,7 @@ export type VmObject = {
   ID: Scalars['ID'];
   IPAddresses: Array<Scalars['String']>;
   Identifier: Scalars['String'];
+  Locked?: Maybe<Scalars['Boolean']>;
   Name: Scalars['String'];
   VmObjectToTeam?: Maybe<Team>;
 };
@@ -363,6 +388,14 @@ export type CreateCompetitionMutationVariables = Exact<{
 
 
 export type CreateCompetitionMutation = { __typename?: 'Mutation', createCompetition: { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } } };
+
+export type LockoutCompetitionMutationVariables = Exact<{
+  competitionId: Scalars['ID'];
+  locked: Scalars['Boolean'];
+}>;
+
+
+export type LockoutCompetitionMutation = { __typename?: 'Mutation', lockoutCompetition: boolean };
 
 export type ProviderFragmentFragment = { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string };
 
@@ -485,24 +518,24 @@ export type ChangePasswordMutationVariables = Exact<{
 
 export type ChangePasswordMutation = { __typename?: 'Mutation', changePassword: boolean };
 
-export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
+export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
 
 export type MyVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyVmObjectsQuery = { __typename?: 'Query', myVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
+export type MyVmObjectsQuery = { __typename?: 'Query', myVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
 
 export type AllVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AllVmObjectsQuery = { __typename?: 'Query', vmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
+export type AllVmObjectsQuery = { __typename?: 'Query', vmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
 
 export type GetVmObjectQueryVariables = Exact<{
   vmObjectId: Scalars['ID'];
 }>;
 
 
-export type GetVmObjectQuery = { __typename?: 'Query', vmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+export type GetVmObjectQuery = { __typename?: 'Query', vmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type GetVmConsoleQueryVariables = Exact<{
   vmObjectId: Scalars['ID'];
@@ -539,21 +572,36 @@ export type UpdateVmObjectMutationVariables = Exact<{
 }>;
 
 
-export type UpdateVmObjectMutation = { __typename?: 'Mutation', updateVmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+export type UpdateVmObjectMutation = { __typename?: 'Mutation', updateVmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type CreateVmObjectMutationVariables = Exact<{
   vmObject: VmObjectInput;
 }>;
 
 
-export type CreateVmObjectMutation = { __typename?: 'Mutation', createVmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+export type CreateVmObjectMutation = { __typename?: 'Mutation', createVmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type BatchCreateVmObjectsMutationVariables = Exact<{
   vmObjects: Array<VmObjectInput> | VmObjectInput;
 }>;
 
 
-export type BatchCreateVmObjectsMutation = { __typename?: 'Mutation', batchCreateVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
+export type BatchCreateVmObjectsMutation = { __typename?: 'Mutation', batchCreateVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
+
+export type LockoutVmMutationVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+  locked: Scalars['Boolean'];
+}>;
+
+
+export type LockoutVmMutation = { __typename?: 'Mutation', lockoutVm: boolean };
+
+export type LockoutSubscriptionVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type LockoutSubscription = { __typename?: 'Subscription', lockout: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export const CompetitionFragmentFragmentDoc = gql`
     fragment CompetitionFragment on Competition {
@@ -615,6 +663,7 @@ export const VmObjectFragmentFragmentDoc = gql`
   Identifier
   Name
   IPAddresses
+  Locked
   VmObjectToTeam {
     ID
     TeamNumber
@@ -806,6 +855,38 @@ export function useCreateCompetitionMutation(baseOptions?: Apollo.MutationHookOp
 export type CreateCompetitionMutationHookResult = ReturnType<typeof useCreateCompetitionMutation>;
 export type CreateCompetitionMutationResult = Apollo.MutationResult<CreateCompetitionMutation>;
 export type CreateCompetitionMutationOptions = Apollo.BaseMutationOptions<CreateCompetitionMutation, CreateCompetitionMutationVariables>;
+export const LockoutCompetitionDocument = gql`
+    mutation LockoutCompetition($competitionId: ID!, $locked: Boolean!) {
+  lockoutCompetition(id: $competitionId, locked: $locked)
+}
+    `;
+export type LockoutCompetitionMutationFn = Apollo.MutationFunction<LockoutCompetitionMutation, LockoutCompetitionMutationVariables>;
+
+/**
+ * __useLockoutCompetitionMutation__
+ *
+ * To run a mutation, you first call `useLockoutCompetitionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLockoutCompetitionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [lockoutCompetitionMutation, { data, loading, error }] = useLockoutCompetitionMutation({
+ *   variables: {
+ *      competitionId: // value for 'competitionId'
+ *      locked: // value for 'locked'
+ *   },
+ * });
+ */
+export function useLockoutCompetitionMutation(baseOptions?: Apollo.MutationHookOptions<LockoutCompetitionMutation, LockoutCompetitionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LockoutCompetitionMutation, LockoutCompetitionMutationVariables>(LockoutCompetitionDocument, options);
+      }
+export type LockoutCompetitionMutationHookResult = ReturnType<typeof useLockoutCompetitionMutation>;
+export type LockoutCompetitionMutationResult = Apollo.MutationResult<LockoutCompetitionMutation>;
+export type LockoutCompetitionMutationOptions = Apollo.BaseMutationOptions<LockoutCompetitionMutation, LockoutCompetitionMutationVariables>;
 export const ListProvidersDocument = gql`
     query ListProviders {
   providers {
@@ -1711,3 +1792,65 @@ export function useBatchCreateVmObjectsMutation(baseOptions?: Apollo.MutationHoo
 export type BatchCreateVmObjectsMutationHookResult = ReturnType<typeof useBatchCreateVmObjectsMutation>;
 export type BatchCreateVmObjectsMutationResult = Apollo.MutationResult<BatchCreateVmObjectsMutation>;
 export type BatchCreateVmObjectsMutationOptions = Apollo.BaseMutationOptions<BatchCreateVmObjectsMutation, BatchCreateVmObjectsMutationVariables>;
+export const LockoutVmDocument = gql`
+    mutation LockoutVm($vmObjectId: ID!, $locked: Boolean!) {
+  lockoutVm(id: $vmObjectId, locked: $locked)
+}
+    `;
+export type LockoutVmMutationFn = Apollo.MutationFunction<LockoutVmMutation, LockoutVmMutationVariables>;
+
+/**
+ * __useLockoutVmMutation__
+ *
+ * To run a mutation, you first call `useLockoutVmMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLockoutVmMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [lockoutVmMutation, { data, loading, error }] = useLockoutVmMutation({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *      locked: // value for 'locked'
+ *   },
+ * });
+ */
+export function useLockoutVmMutation(baseOptions?: Apollo.MutationHookOptions<LockoutVmMutation, LockoutVmMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LockoutVmMutation, LockoutVmMutationVariables>(LockoutVmDocument, options);
+      }
+export type LockoutVmMutationHookResult = ReturnType<typeof useLockoutVmMutation>;
+export type LockoutVmMutationResult = Apollo.MutationResult<LockoutVmMutation>;
+export type LockoutVmMutationOptions = Apollo.BaseMutationOptions<LockoutVmMutation, LockoutVmMutationVariables>;
+export const LockoutDocument = gql`
+    subscription Lockout($vmObjectId: ID!) {
+  lockout(id: $vmObjectId) {
+    ...VmObjectFragment
+  }
+}
+    ${VmObjectFragmentFragmentDoc}`;
+
+/**
+ * __useLockoutSubscription__
+ *
+ * To run a query within a React component, call `useLockoutSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useLockoutSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useLockoutSubscription({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function useLockoutSubscription(baseOptions: Apollo.SubscriptionHookOptions<LockoutSubscription, LockoutSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<LockoutSubscription, LockoutSubscriptionVariables>(LockoutDocument, options);
+      }
+export type LockoutSubscriptionHookResult = ReturnType<typeof useLockoutSubscription>;
+export type LockoutSubscriptionResult = Apollo.SubscriptionResult<LockoutSubscription>;

@@ -3,6 +3,7 @@ fragment VmObjectFragment on VmObject {
   Identifier
   Name
   IPAddresses
+  Locked
   VmObjectToTeam {
     ID
     TeamNumber
@@ -62,6 +63,16 @@ mutation CreateVmObject($vmObject: VmObjectInput!) {
 
 mutation BatchCreateVmObjects($vmObjects: [VmObjectInput!]!) {
   batchCreateVmObjects(input: $vmObjects) {
+    ...VmObjectFragment
+  }
+}
+
+mutation LockoutVm($vmObjectId: ID!, $locked: Boolean!) {
+  lockoutVm(id: $vmObjectId, locked: $locked)
+}
+
+subscription Lockout($vmObjectId: ID!) {
+  lockout(id: $vmObjectId) {
     ...VmObjectFragment
   }
 }

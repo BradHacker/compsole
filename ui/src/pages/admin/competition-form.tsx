@@ -1,4 +1,10 @@
-import { ArrowBack, ArrowBackTwoTone, Save } from "@mui/icons-material";
+import {
+  ArrowBack,
+  ArrowBackTwoTone,
+  LockOpenTwoTone,
+  LockTwoTone,
+  Save,
+} from "@mui/icons-material";
 import {
   Container,
   TextField,
@@ -9,6 +15,7 @@ import {
   Fab,
   CircularProgress,
   Button,
+  ButtonGroup,
 } from "@mui/material";
 import { Box } from "@mui/system";
 import { useSnackbar } from "notistack";
@@ -21,6 +28,7 @@ import {
   useListProvidersQuery,
   ListProvidersQuery,
   useCreateCompetitionMutation,
+  useLockoutCompetitionMutation,
 } from "../../api/generated/graphql";
 
 export const CompetitionForm: React.FC = (): React.ReactElement => {
@@ -54,6 +62,14 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
     loading: listProvidersLoading,
     error: listProvidersError,
   } = useListProvidersQuery();
+  const [
+    lockoutCompetition,
+    {
+      data: lockoutCompetitionData,
+      loading: lockoutCompetitionLoading,
+      error: lockoutCompetitionError,
+    },
+  ] = useLockoutCompetitionMutation();
   const [competition, setCompetition] = useState<CompetitionInput>({
     ID: "",
     Name: "",
@@ -163,6 +179,20 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       });
   }, [getCompetitionData, listProvidersData]);
 
+  useEffect(() => {
+    if (lockoutCompetitionError)
+      enqueueSnackbar(
+        `Failed to update competition lockout: ${lockoutCompetitionError.message}`,
+        {
+          variant: "error",
+        }
+      );
+    else if (lockoutCompetitionData?.lockoutCompetition)
+      enqueueSnackbar("Competition lockout updated", {
+        variant: "success",
+      });
+  }, [lockoutCompetitionData, lockoutCompetitionError]);
+
   const submitCompetition = () => {
     if (competition.ID)
       updateCompetition({
@@ -256,6 +286,74 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
           }}
         />
       </Box>
+      {id && (
+        <Box
+          component="form"
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            "& .MuiButtonGroup-root": {
+              m: 1,
+              minWidth: "40%",
+              flexGrow: 1,
+            },
+          }}
+          noValidate
+          autoComplete="off"
+        >
+          <ButtonGroup
+            variant="outlined"
+            aria-label="lockout controls"
+            sx={{
+              display: "flex",
+              "& .MuiButton-root": {
+                minWidth: "40%",
+                flexGrow: 1,
+                padding: 2,
+              },
+            }}
+          >
+            <Button
+              color="error"
+              disabled={lockoutCompetitionLoading}
+              onClick={() => {
+                lockoutCompetition({
+                  variables: {
+                    competitionId: id,
+                    locked: true,
+                  },
+                });
+              }}
+            >
+              {lockoutCompetitionLoading ? (
+                <CircularProgress />
+              ) : (
+                <LockTwoTone sx={{ mr: 1 }} />
+              )}{" "}
+              Lockout Competition
+            </Button>
+            <Button
+              color="secondary"
+              disabled={lockoutCompetitionLoading}
+              onClick={() => {
+                lockoutCompetition({
+                  variables: {
+                    competitionId: id,
+                    locked: false,
+                  },
+                });
+              }}
+            >
+              {lockoutCompetitionLoading ? (
+                <CircularProgress />
+              ) : (
+                <LockOpenTwoTone sx={{ mr: 1 }} />
+              )}{" "}
+              Unlock Competition
+            </Button>
+          </ButtonGroup>
+        </Box>
+      )}
       <Box
         sx={{
           position: "absolute",

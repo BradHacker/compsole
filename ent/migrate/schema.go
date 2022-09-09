@@ -114,6 +114,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "identifier", Type: field.TypeString},
 		{Name: "ip_addresses", Type: field.TypeJSON, Nullable: true},
+		{Name: "locked", Type: field.TypeBool, Default: false},
 		{Name: "vm_object_vm_object_to_team", Type: field.TypeUUID, Nullable: true},
 	}
 	// VMObjectsTable holds the schema information for the "vm_objects" table.
@@ -124,7 +125,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "vm_objects_teams_VmObjectToTeam",
-				Columns:    []*schema.Column{VMObjectsColumns[4]},
+				Columns:    []*schema.Column{VMObjectsColumns[5]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

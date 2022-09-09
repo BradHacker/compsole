@@ -8,6 +8,7 @@ import (
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
+	"github.com/go-redis/redis/v8"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -19,13 +20,15 @@ import (
 
 type Resolver struct {
 	client *ent.Client
+	rdb    *redis.Client
 }
 
 // NewSchema creates a graphql executable schema.
-func NewSchema(client *ent.Client) graphql.ExecutableSchema {
+func NewSchema(client *ent.Client, rdb *redis.Client) graphql.ExecutableSchema {
 	GQLConfig := generated.Config{
 		Resolvers: &Resolver{
 			client: client,
+			rdb:    rdb,
 		},
 	}
 	GQLConfig.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, roles []model.Role) (res interface{}, err error) {

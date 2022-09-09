@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -17,6 +19,8 @@ import (
 	"github.com/BradHacker/compsole/graph"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,11 +37,24 @@ func playgroundHandler() gin.HandlerFunc {
 }
 
 // Defining the Graphql handler
-func graphqlHandler(client *ent.Client) gin.HandlerFunc {
+func graphqlHandler(client *ent.Client, rdb *redis.Client) gin.HandlerFunc {
 	// NewExecutableSchema and Config are in the generated.go file
 	// Resolver is in the resolver.go file
-	h := handler.New(graph.NewSchema(client))
+	h := handler.New(graph.NewSchema(client, rdb))
 
+	h.AddTransport(&transport.Websocket{
+		Upgrader: websocket.Upgrader{
+			HandshakeTimeout: 30 * time.Second,
+			ReadBufferSize:   1024,
+			WriteBufferSize:  1024,
+			WriteBufferPool:  nil,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+			EnableCompression: false,
+		},
+		KeepAlivePingInterval: 1 * time.Second,
+	})
 	h.AddTransport(transport.GET{})
 	h.AddTransport(transport.POST{})
 	h.AddTransport(transport.MultipartForm{})
@@ -60,7 +77,7 @@ func main() {
 
 	// Create the ent client
 	pgHost, ok := os.LookupEnv("PG_URI")
-	client := &ent.Client{}
+	var client *ent.Client = nil
 
 	if !ok {
 		logrus.Fatalf("no value set for PG_URI env variable. please set the postgres connection uri")
@@ -113,6 +130,46 @@ func main() {
 		}).Infof("Found admin user")
 	}
 
+	redisUri := os.Getenv("REDIS_URI")
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	var rdb *redis.Client
+	if redisUri != "" && redisPassword != "" {
+		rdb = redis.NewClient(&redis.Options{
+			Addr:     redisUri,
+			Password: redisPassword,
+			DB:       0, // use default DB
+		})
+	} else if redisUri != "" {
+		rdb = redis.NewClient(&redis.Options{
+			Addr:     redisUri,
+			Password: "",
+			DB:       0, // use default DB
+		})
+	} else {
+		logrus.Fatalf("No REDIS_URI has been set")
+	}
+
+	go func() {
+		sub := rdb.Subscribe(ctx, "lockout")
+		_, err = sub.Receive(ctx)
+		if err != nil {
+			logrus.Errorf("error receiving from subscription: %v", err)
+			return
+		}
+		ch := sub.Channel()
+		for {
+			select {
+			case message := <-ch:
+				logrus.Debugf("Message %s received from %s", message.Payload, message.Channel)
+			// close when context done
+			case <-ctx.Done():
+				logrus.Infof("Main Channel CTX Closing, Closing Sub Channel")
+				sub.Close()
+				return
+			}
+		}
+	}()
+
 	auth.InitGoth()
 
 	router := gin.Default()
@@ -137,7 +194,7 @@ func main() {
 		port = defaultPort
 	}
 
-	gqlHandler := graphqlHandler(client)
+	gqlHandler := graphqlHandler(client, rdb)
 
 	authGroup := router.Group("/auth")
 	authGroup.GET("/login", func(c *gin.Context) {

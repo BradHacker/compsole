@@ -50,6 +50,9 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 	if !canAccessVm {
 		return false, fmt.Errorf("user does not have permission to access this vm")
 	}
+	if entUser.Role != user.RoleADMIN && entVmObject.Locked {
+		return false, fmt.Errorf("VM is currently locked out")
+	}
 	// Get DB objects
 	entCompetition, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().Only(ctx)
 	if err != nil {
@@ -91,6 +94,9 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 	if !canAccessVm {
 		return false, fmt.Errorf("user does not have permission to access this vm")
 	}
+	if entUser.Role != user.RoleADMIN && entVmObject.Locked {
+		return false, fmt.Errorf("VM is currently locked out")
+	}
 	// Get DB objects
 	entCompetition, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().Only(ctx)
 	if err != nil {
@@ -131,6 +137,9 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 	}
 	if !canAccessVm {
 		return false, fmt.Errorf("user does not have permission to access this vm")
+	}
+	if entUser.Role != user.RoleADMIN && entVmObject.Locked {
+		return false, fmt.Errorf("VM is currently locked out")
 	}
 	// Get DB objects
 	entCompetition, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().Only(ctx)
@@ -283,55 +292,42 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput
 
 // BatchCreateTeams is the resolver for the batchCreateTeams field.
 func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.TeamInput) ([]*ent.Team, error) {
-	entTeams := make([]*ent.Team, len(input))
+	entTeams := make([]*ent.TeamCreate, len(input))
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ent transactional client: %v", err)
 	}
-	for _, inputTeam := range input {
+	for i, inputTeam := range input {
 		competitionUuid, err := uuid.Parse(inputTeam.TeamToCompetition)
 		if err != nil {
-			err = tx.Rollback()
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse competition UUID: failed to rollback db: %v", err)
-			}
 			return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
 		}
 		teamExists, err := tx.Team.Query().Where(team.And(team.TeamNumberEQ(inputTeam.TeamNumber), team.HasTeamToCompetitionWith(competition.IDEQ(competitionUuid)))).Exist(ctx)
 		if err != nil {
-			err = tx.Rollback()
-			if err != nil {
-				return nil, fmt.Errorf("failed to query if team already exists: failed to rollback db: %v", err)
-			}
 			return nil, fmt.Errorf("failed to query if team already exists: %v", err)
 		}
 		if teamExists {
-			err = tx.Rollback()
-			if err != nil {
-				return nil, fmt.Errorf("failed to create team: team already exists: failed to rollback db: %v", err)
-			}
 			return nil, fmt.Errorf("failed to create team: team already exists")
 		}
 		entCompetition, err := tx.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
 		if err != nil {
-			err = tx.Rollback()
-			if err != nil {
-				return nil, fmt.Errorf("failed to query competition: team already exists: failed to rollback db: %v", err)
-			}
 			return nil, fmt.Errorf("failed to query competition: %v", err)
 		}
-		entTeam, err := tx.Team.Create().SetTeamNumber(inputTeam.TeamNumber).SetName(*inputTeam.Name).SetTeamToCompetition(entCompetition).Save(ctx)
+		entTeam := tx.Team.Create().SetTeamNumber(inputTeam.TeamNumber).SetName(*inputTeam.Name).SetTeamToCompetition(entCompetition)
 		if err != nil {
-			err = tx.Rollback()
-			if err != nil {
-				return nil, fmt.Errorf("failed to create team: team already exists: failed to rollback db: %v", err)
-			}
 			return nil, fmt.Errorf("failed to create team: %v", err)
 		}
-		entTeams = append(entTeams, entTeam)
+		entTeams[i] = entTeam
 	}
-	tx.Commit()
-	return entTeams, nil
+	newEntTeams, err := tx.Team.CreateBulk(entTeams...).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bulk create teams: %v", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("failed to commit transation. rolled back database: %v", err)
+	}
+	return newEntTeams, nil
 }
 
 // UpdateTeam is the resolver for the updateTeam field.
@@ -460,39 +456,39 @@ func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObj
 
 // BatchCreateVMObjects is the resolver for the batchCreateVmObjects field.
 func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*model.VMObjectInput) ([]*ent.VmObject, error) {
-	entVmObjects := make([]*ent.VmObject, len(input))
+	entVmObjects := make([]*ent.VmObjectCreate, len(input))
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ent transactional client: %v", err)
 	}
-	for _, inputVmObject := range input {
+	for i, inputVmObject := range input {
 		var entTeam *ent.Team = nil
 		if inputVmObject.VMObjectToTeam != nil {
 			teamUuid, err := uuid.Parse(*inputVmObject.VMObjectToTeam)
 			if err != nil {
-				tx.Rollback()
 				return nil, fmt.Errorf("failed to parse team UUID: %v", err)
 			}
 			entTeam, err = tx.Team.Query().Where(team.IDEQ(teamUuid)).Only(ctx)
 			if err != nil {
-				tx.Rollback()
 				return nil, fmt.Errorf("failed to query team: %v", err)
 			}
 		}
-		entVmObject, err := tx.VmObject.Create().
+		entVmObject := tx.VmObject.Create().
 			SetName(inputVmObject.Name).
 			SetIdentifier(inputVmObject.Identifier).
 			SetIPAddresses(inputVmObject.IPAddresses).
-			SetVmObjectToTeam(entTeam).
-			Save(ctx)
-		if err != nil {
-			tx.Rollback()
-			return nil, fmt.Errorf("failed to create vm object: %v", err)
-		}
-		entVmObjects = append(entVmObjects, entVmObject)
+			SetVmObjectToTeam(entTeam)
+		entVmObjects[i] = entVmObject
 	}
-	tx.Commit()
-	return entVmObjects, nil
+	newEntVmObjects, err := tx.VmObject.CreateBulk(entVmObjects...).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to bulk create vm objects: %v", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("failed to commit transation. rolled back database: %v", err)
+	}
+	return newEntVmObjects, nil
 }
 
 // UpdateVMObject is the resolver for the updateVmObject field.
@@ -587,6 +583,54 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 	return true, nil
 }
 
+// LockoutVM is the resolver for the lockoutVm field.
+func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool) (bool, error) {
+	vmObjectUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	err = r.client.VmObject.Update().Where(vmobject.IDEQ(vmObjectUuid)).SetLocked(locked).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to set vm object lock state: %v", err)
+	}
+	r.rdb.Publish(ctx, "lockout", vmObjectUuid.String())
+	return true, nil
+}
+
+// LockoutCompetition is the resolver for the lockoutCompetition field.
+func (r *mutationResolver) LockoutCompetition(ctx context.Context, id string, locked bool) (bool, error) {
+	competitionUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	err = r.client.VmObject.Update().
+		Where(
+			vmobject.HasVmObjectToTeamWith(
+				team.HasTeamToCompetitionWith(
+					competition.IDEQ(competitionUuid),
+				),
+			),
+		).SetLocked(locked).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to set competition vm objects lock state: %v", err)
+	}
+	updatedVmUuids, err := r.client.VmObject.Query().
+		Where(
+			vmobject.HasVmObjectToTeamWith(
+				team.HasTeamToCompetitionWith(
+					competition.IDEQ(competitionUuid),
+				),
+			),
+		).IDs(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to query updated vm objects: %v", err)
+	}
+	for _, vmUuid := range updatedVmUuids {
+		r.rdb.Publish(ctx, "lockout", vmUuid.String())
+	}
+	return true, nil
+}
+
 // ID is the resolver for the ID field.
 func (r *providerResolver) ID(ctx context.Context, obj *ent.Provider) (string, error) {
 	return obj.ID.String(), nil
@@ -616,6 +660,9 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 	}
 	if !canAccessVm {
 		return "", fmt.Errorf("user does not have permission to access this vm")
+	}
+	if entUser.Role != user.RoleADMIN && entVmObject.Locked {
+		return "", fmt.Errorf("VM is currently locked out")
 	}
 	// Get DB objects
 	entCompetition, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().Only(ctx)
@@ -859,6 +906,44 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 	return skeletonVmObjects, nil
 }
 
+// Lockout is the resolver for the lockout field.
+func (r *subscriptionResolver) Lockout(ctx context.Context, id string) (<-chan *ent.VmObject, error) {
+	vmObjectLockout := make(chan *ent.VmObject, 1)
+	go func() {
+		sub := r.rdb.Subscribe(ctx, "lockout")
+		_, err := sub.Receive(ctx)
+		if err != nil {
+			return
+		}
+		ch := sub.Channel()
+		for {
+			select {
+			case message := <-ch:
+				// Ignore VM's we aren't subscribed to
+				if message.Payload != id {
+					break
+				}
+				uuid, err := uuid.Parse(message.Payload)
+				if err != nil {
+					sub.Close()
+					return
+				}
+				entVmObject, err := r.client.VmObject.Get(ctx, uuid)
+				if err != nil {
+					sub.Close()
+					return
+				}
+				vmObjectLockout <- entVmObject
+			// close when context done
+			case <-ctx.Done():
+				sub.Close()
+				return
+			}
+		}
+	}()
+	return vmObjectLockout, nil
+}
+
 // ID is the resolver for the ID field.
 func (r *teamResolver) ID(ctx context.Context, obj *ent.Team) (string, error) {
 	return obj.ID.String(), nil
@@ -896,6 +981,9 @@ func (r *Resolver) Provider() generated.ProviderResolver { return &providerResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 // Team returns generated.TeamResolver implementation.
 func (r *Resolver) Team() generated.TeamResolver { return &teamResolver{r} }
 
@@ -909,6 +997,7 @@ type competitionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type providerResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type vmObjectResolver struct{ *Resolver }

@@ -48,3 +48,7 @@ mutation CreateCompetition($competition: CompetitionInput!) {
     ...CompetitionFragment
   }
 }
+
+mutation LockoutCompetition($competitionId: ID!, $locked: Boolean!) {
+  lockoutCompetition(id: $competitionId, locked: $locked)
+}

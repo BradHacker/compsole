@@ -106,6 +106,13 @@ func Identifier(v string) predicate.VmObject {
 	})
 }
 
+// Locked applies equality check predicate on the "locked" field. It's identical to LockedEQ.
+func Locked(v bool) predicate.VmObject {
+	return predicate.VmObject(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldLocked), v))
+	})
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.VmObject {
 	return predicate.VmObject(func(s *sql.Selector) {
@@ -339,6 +346,20 @@ func IPAddressesIsNil() predicate.VmObject {
 func IPAddressesNotNil() predicate.VmObject {
 	return predicate.VmObject(func(s *sql.Selector) {
 		s.Where(sql.NotNull(s.C(FieldIPAddresses)))
+	})
+}
+
+// LockedEQ applies the EQ predicate on the "locked" field.
+func LockedEQ(v bool) predicate.VmObject {
+	return predicate.VmObject(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldLocked), v))
+	})
+}
+
+// LockedNEQ applies the NEQ predicate on the "locked" field.
+func LockedNEQ(v bool) predicate.VmObject {
+	return predicate.VmObject(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldLocked), v))
 	})
 }
 

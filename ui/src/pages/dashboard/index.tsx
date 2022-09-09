@@ -174,7 +174,19 @@ export const Dashboard: React.FC = (): React.ReactElement => {
       <Stack spacing={2}>
         {user && user.Role === Role.Admin && (
           <Autocomplete
-            options={getSearchValuesData?.teams ?? []}
+            options={
+              [...(getSearchValuesData?.teams || [])].sort((a, b) =>
+                `${a.TeamToCompetition.Name}${String(a.TeamNumber).padStart(
+                  2,
+                  "0"
+                )}`.localeCompare(
+                  `${b.TeamToCompetition.Name}${String(b.TeamNumber).padStart(
+                    2,
+                    "0"
+                  )}`
+                )
+              ) ?? []
+            }
             groupBy={(t) => t.TeamToCompetition?.Name ?? "N/A"}
             getOptionLabel={(t) =>
               `${t.TeamToCompetition.Name} - ${

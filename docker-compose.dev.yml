@@ -12,7 +12,15 @@ services:
       - POSTGRES_USER=compsole
       - POSTGRES_PASSWORD=compsole
       - POSTGRES_DB=compsole
+  redis:
+    image: redis:5.0.7
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
 
 volumes:
   compsole-db:
+    driver: local
+  redis-data:
     driver: local

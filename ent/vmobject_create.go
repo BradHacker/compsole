@@ -39,6 +39,20 @@ func (voc *VmObjectCreate) SetIPAddresses(s []string) *VmObjectCreate {
 	return voc
 }
 
+// SetLocked sets the "locked" field.
+func (voc *VmObjectCreate) SetLocked(b bool) *VmObjectCreate {
+	voc.mutation.SetLocked(b)
+	return voc
+}
+
+// SetNillableLocked sets the "locked" field if the given value is not nil.
+func (voc *VmObjectCreate) SetNillableLocked(b *bool) *VmObjectCreate {
+	if b != nil {
+		voc.SetLocked(*b)
+	}
+	return voc
+}
+
 // SetID sets the "id" field.
 func (voc *VmObjectCreate) SetID(u uuid.UUID) *VmObjectCreate {
 	voc.mutation.SetID(u)
@@ -143,6 +157,10 @@ func (voc *VmObjectCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (voc *VmObjectCreate) defaults() {
+	if _, ok := voc.mutation.Locked(); !ok {
+		v := vmobject.DefaultLocked
+		voc.mutation.SetLocked(v)
+	}
 	if _, ok := voc.mutation.ID(); !ok {
 		v := vmobject.DefaultID()
 		voc.mutation.SetID(v)
@@ -156,6 +174,9 @@ func (voc *VmObjectCreate) check() error {
 	}
 	if _, ok := voc.mutation.Identifier(); !ok {
 		return &ValidationError{Name: "identifier", err: errors.New(`ent: missing required field "VmObject.identifier"`)}
+	}
+	if _, ok := voc.mutation.Locked(); !ok {
+		return &ValidationError{Name: "locked", err: errors.New(`ent: missing required field "VmObject.locked"`)}
 	}
 	return nil
 }
@@ -216,6 +237,14 @@ func (voc *VmObjectCreate) createSpec() (*VmObject, *sqlgraph.CreateSpec) {
 			Column: vmobject.FieldIPAddresses,
 		})
 		_node.IPAddresses = value
+	}
+	if value, ok := voc.mutation.Locked(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: vmobject.FieldLocked,
+		})
+		_node.Locked = value
 	}
 	if nodes := voc.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

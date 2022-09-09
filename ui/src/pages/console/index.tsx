@@ -1,6 +1,7 @@
 import {
   ArrowDropDown,
   Autorenew,
+  LockTwoTone,
   PowerInput,
   PowerOff,
   PowerSettingsNew,
@@ -23,19 +24,23 @@ import {
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   ConsoleType,
   RebootType,
+  Role,
   useGetVmConsoleLazyQuery,
   useGetVmObjectLazyQuery,
+  useLockoutSubscription,
   usePowerOffVmMutation,
   usePowerOnVmMutation,
   useRebootVmMutation,
 } from "../../api/generated/graphql";
+import { UserContext } from "../../user-context";
 
 export const Console: React.FC = (): React.ReactElement => {
+  let user = useContext(UserContext);
   let { id } = useParams();
   let [
     getVmObject,
@@ -43,6 +48,7 @@ export const Console: React.FC = (): React.ReactElement => {
       data: getVmObjectData,
       loading: getVmObjectLoading,
       error: getVmObjectError,
+      refetch: refetchVmObject,
     },
   ] = useGetVmObjectLazyQuery();
   let [
@@ -54,6 +60,16 @@ export const Console: React.FC = (): React.ReactElement => {
       refetch: getVmConsoleRefetch,
     },
   ] = useGetVmConsoleLazyQuery();
+  let [consoleUrl, setConsoleUrl] = useState<string>("");
+  let {
+    data: lockoutData,
+    loading: lockoutLoading,
+    error: lockoutError,
+  } = useLockoutSubscription({
+    variables: {
+      vmObjectId: id || "",
+    },
+  });
   const { enqueueSnackbar } = useSnackbar();
   const [consoleType, setConsoleType] = useState<ConsoleType>(
     ConsoleType.Novnc
@@ -195,14 +211,27 @@ export const Console: React.FC = (): React.ReactElement => {
   }, [id]);
 
   useEffect(() => {
-    if (id)
+    if (
+      getVmObjectData?.vmObject.ID &&
+      (!getVmObjectData.vmObject.Locked || user.Role === Role.Admin)
+    ) {
       getVmConsole({
         variables: {
-          vmObjectId: id,
+          vmObjectId: getVmObjectData?.vmObject.ID,
           consoleType,
         },
       });
-  }, [id, consoleType]);
+      handleRefreshConsoleClick();
+      enqueueSnackbar("VM Unlocked", {
+        variant: "success",
+        autoHideDuration: 2000,
+      });
+    } else if (getVmObjectData?.vmObject.Locked && user.Role !== Role.Admin)
+      enqueueSnackbar("VM Locked", {
+        variant: "warning",
+        autoHideDuration: 2000,
+      });
+  }, [getVmObjectData, consoleType]);
 
   useEffect(() => {
     if (getVmObjectError)
@@ -232,6 +261,25 @@ export const Console: React.FC = (): React.ReactElement => {
     powerOnVmError,
     powerOffVmError,
   ]);
+
+  useEffect(() => {
+    console.log(lockoutData?.lockout.Locked);
+    if (lockoutData?.lockout.Locked) {
+      setConsoleUrl("");
+      enqueueSnackbar("VM Locked", {
+        variant: "warning",
+        autoHideDuration: 2000,
+      });
+    } else if (getVmObjectData) {
+      refetchVmObject({
+        vmObjectId: getVmObjectData.vmObject.ID,
+      });
+    }
+  }, [lockoutData, getVmObjectData]);
+
+  useEffect(() => {
+    if (getVmConsoleData) setConsoleUrl(getVmConsoleData.console);
+  }, [getVmConsoleData]);
 
   return (
     <Container
@@ -294,6 +342,12 @@ export const Console: React.FC = (): React.ReactElement => {
               }
               loadingPosition="start"
               onClick={handleRefreshConsoleClick}
+              disabled={
+                !(user.Role === Role.Admin) &&
+                (lockoutData?.lockout.Locked ||
+                  getVmObjectData?.vmObject.Locked ||
+                  false)
+              }
             >
               Refresh Console
             </LoadingButton>
@@ -305,6 +359,12 @@ export const Console: React.FC = (): React.ReactElement => {
               loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
               loadingPosition="start"
               onClick={handlePowerOffClick}
+              disabled={
+                !(user.Role === Role.Admin) &&
+                (lockoutData?.lockout.Locked ||
+                  getVmObjectData?.vmObject.Locked ||
+                  false)
+              }
             >
               Shutdown
             </LoadingButton>
@@ -316,6 +376,12 @@ export const Console: React.FC = (): React.ReactElement => {
               loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
               loadingPosition="start"
               onClick={handlePowerOnClick}
+              disabled={
+                !(user.Role === Role.Admin) &&
+                (lockoutData?.lockout.Locked ||
+                  getVmObjectData?.vmObject.Locked ||
+                  false)
+              }
             >
               Power On
             </LoadingButton>
@@ -328,6 +394,12 @@ export const Console: React.FC = (): React.ReactElement => {
               loadingPosition="start"
               onClick={handleRebootClick}
               ref={rebootTypeMenuAnchorRef}
+              disabled={
+                !(user.Role === Role.Admin) &&
+                (lockoutData?.lockout.Locked ||
+                  getVmObjectData?.vmObject.Locked ||
+                  false)
+              }
             >
               {options[selectedRebootType].title}
             </LoadingButton>
@@ -341,6 +413,12 @@ export const Console: React.FC = (): React.ReactElement => {
               aria-label="select merge strategy"
               aria-haspopup="menu"
               onClick={handleToggleRebootTypeMenu}
+              disabled={
+                !(user.Role === Role.Admin) &&
+                (lockoutData?.lockout.Locked ||
+                  getVmObjectData?.vmObject.Locked ||
+                  false)
+              }
             >
               <ArrowDropDown />
             </Button>
@@ -383,12 +461,30 @@ export const Console: React.FC = (): React.ReactElement => {
           </Popper>
         </Grid>
       </Grid>
-      {getVmConsoleLoading || !getVmConsoleData ? (
-        <Skeleton width="100%" height="200" />
+      {getVmConsoleLoading || !consoleUrl ? (
+        !consoleUrl &&
+        (lockoutData?.lockout.Locked || getVmObjectData?.vmObject.Locked) ? (
+          <Paper
+            elevation={2}
+            sx={{
+              width: "100%",
+              height: "800px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
+            <LockTwoTone />
+            <Typography variant="subtitle1">VM is Locked</Typography>
+          </Paper>
+        ) : (
+          <Skeleton width="100%" height="200" />
+        )
       ) : (
         <iframe
           id="console"
-          src={getVmConsoleData.console}
+          src={consoleUrl}
           style={
             fullscreenConsole
               ? {
@@ -401,7 +497,7 @@ export const Console: React.FC = (): React.ReactElement => {
               : {}
           }
           width="100%"
-          height="800"
+          height="800px"
         />
       )}
     </Container>
