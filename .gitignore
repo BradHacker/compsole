@@ -25,3 +25,6 @@ dev/
 
 # macOS files
 .DS_Store
+
+# Docker production
+docker-compose.prod.yml
