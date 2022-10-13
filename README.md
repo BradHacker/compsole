@@ -77,6 +77,7 @@ Set the environment variable as follows:
 
 ```
 REACT_APP_SERVER_URL=http(s)://<fqdn of host>
+REACT_APP_WS_URL=ws://fqdn of host>
 ```
 
 ### Bring up the production environment
