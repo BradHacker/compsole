@@ -43,6 +43,9 @@ services:
       - PG_URI=postgresql://compsole:compsole@db/compsole
       # - PG_CONN_LIMIT=
       # - PG_IDLE_LIMIT=
+      # Redis
+      - REDIS_URI=redis:6379
+      - REDIS_PASSWORD=
   db:
     image: library/postgres:14.4-alpine
     # ports:
@@ -56,9 +59,17 @@ services:
       - POSTGRES_USER=compsole
       - POSTGRES_PASSWORD=compsole
       - POSTGRES_DB=compsole
+  redis:
+    image: redis:5.0.7
+    volumes:
+      - redis-data:/data
+    # ports:
+    #   - "6379:6379"
 
 volumes:
   compsole-db:
+    driver: local
+  redis-data:
     driver: local
 
 networks:
