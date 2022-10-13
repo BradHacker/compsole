@@ -53,6 +53,20 @@ func (vou *VmObjectUpdate) ClearIPAddresses() *VmObjectUpdate {
 	return vou
 }
 
+// SetLocked sets the "locked" field.
+func (vou *VmObjectUpdate) SetLocked(b bool) *VmObjectUpdate {
+	vou.mutation.SetLocked(b)
+	return vou
+}
+
+// SetNillableLocked sets the "locked" field if the given value is not nil.
+func (vou *VmObjectUpdate) SetNillableLocked(b *bool) *VmObjectUpdate {
+	if b != nil {
+		vou.SetLocked(*b)
+	}
+	return vou
+}
+
 // SetVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by ID.
 func (vou *VmObjectUpdate) SetVmObjectToTeamID(id uuid.UUID) *VmObjectUpdate {
 	vou.mutation.SetVmObjectToTeamID(id)
@@ -182,6 +196,13 @@ func (vou *VmObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: vmobject.FieldIPAddresses,
 		})
 	}
+	if value, ok := vou.mutation.Locked(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: vmobject.FieldLocked,
+		})
+	}
 	if vou.mutation.VmObjectToTeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -257,6 +278,20 @@ func (vouo *VmObjectUpdateOne) SetIPAddresses(s []string) *VmObjectUpdateOne {
 // ClearIPAddresses clears the value of the "ip_addresses" field.
 func (vouo *VmObjectUpdateOne) ClearIPAddresses() *VmObjectUpdateOne {
 	vouo.mutation.ClearIPAddresses()
+	return vouo
+}
+
+// SetLocked sets the "locked" field.
+func (vouo *VmObjectUpdateOne) SetLocked(b bool) *VmObjectUpdateOne {
+	vouo.mutation.SetLocked(b)
+	return vouo
+}
+
+// SetNillableLocked sets the "locked" field if the given value is not nil.
+func (vouo *VmObjectUpdateOne) SetNillableLocked(b *bool) *VmObjectUpdateOne {
+	if b != nil {
+		vouo.SetLocked(*b)
+	}
 	return vouo
 }
 
@@ -411,6 +446,13 @@ func (vouo *VmObjectUpdateOne) sqlSave(ctx context.Context) (_node *VmObject, er
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeJSON,
 			Column: vmobject.FieldIPAddresses,
+		})
+	}
+	if value, ok := vouo.mutation.Locked(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  value,
+			Column: vmobject.FieldLocked,
 		})
 	}
 	if vouo.mutation.VmObjectToTeamCleared() {

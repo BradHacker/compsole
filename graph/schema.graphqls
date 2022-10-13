@@ -3,6 +3,7 @@ type VmObject {
   Name: String!
   Identifier: String!
   IPAddresses: [String!]!
+  Locked: Boolean
   VmObjectToTeam: Team
 }
 
@@ -17,7 +18,7 @@ type Team {
   TeamNumber: Int!
   Name: String
   TeamToCompetition: Competition!
-  TeamToVmObjects: [VmObject]!
+  TeamToVmObjects: [VmObject]
 }
 
 type Competition {
@@ -168,4 +169,11 @@ type Mutation {
   createProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   updateProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  # Lockout
+  lockoutVm(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
+  lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
+}
+
+type Subscription {
+  lockout(id: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
 }

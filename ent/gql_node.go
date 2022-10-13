@@ -307,7 +307,7 @@ func (vo *VmObject) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     vo.ID,
 		Type:   "VmObject",
-		Fields: make([]*Field, 3),
+		Fields: make([]*Field, 4),
 		Edges:  make([]*Edge, 1),
 	}
 	var buf []byte
@@ -333,6 +333,14 @@ func (vo *VmObject) Node(ctx context.Context) (node *Node, err error) {
 	node.Fields[2] = &Field{
 		Type:  "[]string",
 		Name:  "ip_addresses",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(vo.Locked); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "bool",
+		Name:  "locked",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{

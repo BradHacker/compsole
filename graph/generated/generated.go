@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -41,6 +42,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Provider() ProviderResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 	Team() TeamResolver
 	User() UserResolver
 	VmObject() VmObjectResolver
@@ -72,6 +74,8 @@ type ComplexityRoot struct {
 		DeleteTeam           func(childComplexity int, id string) int
 		DeleteUser           func(childComplexity int, id string) int
 		DeleteVMObject       func(childComplexity int, id string) int
+		LockoutCompetition   func(childComplexity int, id string, locked bool) int
+		LockoutVM            func(childComplexity int, id string, locked bool) int
 		PowerOff             func(childComplexity int, vmObjectID string) int
 		PowerOn              func(childComplexity int, vmObjectID string) int
 		Reboot               func(childComplexity int, vmObjectID string, rebootType model.RebootType) int
@@ -116,6 +120,10 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 	}
 
+	Subscription struct {
+		Lockout func(childComplexity int, id string) int
+	}
+
 	Team struct {
 		ID                func(childComplexity int) int
 		Name              func(childComplexity int) int
@@ -138,6 +146,7 @@ type ComplexityRoot struct {
 		ID             func(childComplexity int) int
 		IPAddresses    func(childComplexity int) int
 		Identifier     func(childComplexity int) int
+		Locked         func(childComplexity int) int
 		Name           func(childComplexity int) int
 		VmObjectToTeam func(childComplexity int) int
 	}
@@ -168,6 +177,8 @@ type MutationResolver interface {
 	CreateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error)
 	UpdateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error)
 	DeleteProvider(ctx context.Context, id string) (bool, error)
+	LockoutVM(ctx context.Context, id string, locked bool) (bool, error)
+	LockoutCompetition(ctx context.Context, id string, locked bool) (bool, error)
 }
 type ProviderResolver interface {
 	ID(ctx context.Context, obj *ent.Provider) (string, error)
@@ -191,6 +202,9 @@ type QueryResolver interface {
 	GetProvider(ctx context.Context, id string) (*ent.Provider, error)
 	ValidateConfig(ctx context.Context, typeArg string, config string) (bool, error)
 	ListProviderVms(ctx context.Context, id string) ([]*model.SkeletonVMObject, error)
+}
+type SubscriptionResolver interface {
+	Lockout(ctx context.Context, id string) (<-chan *ent.VmObject, error)
 }
 type TeamResolver interface {
 	ID(ctx context.Context, obj *ent.Team) (string, error)
@@ -403,6 +417,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteVMObject(childComplexity, args["id"].(string)), true
+
+	case "Mutation.lockoutCompetition":
+		if e.complexity.Mutation.LockoutCompetition == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_lockoutCompetition_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.LockoutCompetition(childComplexity, args["id"].(string), args["locked"].(bool)), true
+
+	case "Mutation.lockoutVm":
+		if e.complexity.Mutation.LockoutVM == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_lockoutVm_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.LockoutVM(childComplexity, args["id"].(string), args["locked"].(bool)), true
 
 	case "Mutation.powerOff":
 		if e.complexity.Mutation.PowerOff == nil {
@@ -720,6 +758,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SkeletonVmObject.Name(childComplexity), true
 
+	case "Subscription.lockout":
+		if e.complexity.Subscription.Lockout == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_lockout_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Lockout(childComplexity, args["id"].(string)), true
+
 	case "Team.ID":
 		if e.complexity.Team.ID == nil {
 			break
@@ -825,6 +875,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VmObject.Identifier(childComplexity), true
 
+	case "VmObject.Locked":
+		if e.complexity.VmObject.Locked == nil {
+			break
+		}
+
+		return e.complexity.VmObject.Locked(childComplexity), true
+
 	case "VmObject.Name":
 		if e.complexity.VmObject.Name == nil {
 			break
@@ -886,6 +943,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -917,6 +991,7 @@ var sources = []*ast.Source{
   Name: String!
   Identifier: String!
   IPAddresses: [String!]!
+  Locked: Boolean
   VmObjectToTeam: Team
 }
 
@@ -931,7 +1006,7 @@ type Team {
   TeamNumber: Int!
   Name: String
   TeamToCompetition: Competition!
-  TeamToVmObjects: [VmObject]!
+  TeamToVmObjects: [VmObject]
 }
 
 type Competition {
@@ -1082,6 +1157,13 @@ type Mutation {
   createProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   updateProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  # Lockout
+  lockoutVm(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
+  lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
+}
+
+type Subscription {
+  lockout(id: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
 }
 `, BuiltIn: false},
 }
@@ -1307,6 +1389,54 @@ func (ec *executionContext) field_Mutation_deleteVmObject_args(ctx context.Conte
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_lockoutCompetition_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 bool
+	if tmp, ok := rawArgs["locked"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locked"))
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["locked"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_lockoutVm_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 bool
+	if tmp, ok := rawArgs["locked"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locked"))
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["locked"] = arg1
 	return args, nil
 }
 
@@ -1604,6 +1734,21 @@ func (ec *executionContext) field_Query_vmObject_args(ctx context.Context, rawAr
 		}
 	}
 	args["vmObjectId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_lockout_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -3108,6 +3253,8 @@ func (ec *executionContext) fieldContext_Mutation_createVmObject(ctx context.Con
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -3199,6 +3346,8 @@ func (ec *executionContext) fieldContext_Mutation_batchCreateVmObjects(ctx conte
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -3290,6 +3439,8 @@ func (ec *executionContext) fieldContext_Mutation_updateVmObject(ctx context.Con
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -3640,6 +3791,164 @@ func (ec *executionContext) fieldContext_Mutation_deleteProvider(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteProvider_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_lockoutVm(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_lockoutVm(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().LockoutVM(rctx, fc.Args["id"].(string), fc.Args["locked"].(bool))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_lockoutVm(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_lockoutVm_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_lockoutCompetition(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_lockoutCompetition(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().LockoutCompetition(rctx, fc.Args["id"].(string), fc.Args["locked"].(bool))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_lockoutCompetition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_lockoutCompetition_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -4056,6 +4365,8 @@ func (ec *executionContext) fieldContext_Query_vmObject(ctx context.Context, fie
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -4147,6 +4458,8 @@ func (ec *executionContext) fieldContext_Query_myVmObjects(ctx context.Context, 
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -4564,6 +4877,8 @@ func (ec *executionContext) fieldContext_Query_vmObjects(ctx context.Context, fi
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -4644,6 +4959,8 @@ func (ec *executionContext) fieldContext_Query_getVmObject(ctx context.Context, 
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -5596,6 +5913,113 @@ func (ec *executionContext) fieldContext_SkeletonVmObject_IPAddresses(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Subscription_lockout(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_lockout(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Subscription().Lockout(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(<-chan *ent.VmObject); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be <-chan *github.com/BradHacker/compsole/ent.VmObject`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *ent.VmObject):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_lockout(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_VmObject_ID(ctx, field)
+			case "Name":
+				return ec.fieldContext_VmObject_Name(ctx, field)
+			case "Identifier":
+				return ec.fieldContext_VmObject_Identifier(ctx, field)
+			case "IPAddresses":
+				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
+			case "VmObjectToTeam":
+				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VmObject", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_lockout_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Team_ID(ctx context.Context, field graphql.CollectedField, obj *ent.Team) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Team_ID(ctx, field)
 	if err != nil {
@@ -5800,14 +6224,11 @@ func (ec *executionContext) _Team_TeamToVmObjects(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*ent.VmObject)
 	fc.Result = res
-	return ec.marshalNVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx, field.Selections, res)
+	return ec.marshalOVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Team_TeamToVmObjects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5826,6 +6247,8 @@ func (ec *executionContext) fieldContext_Team_TeamToVmObjects(ctx context.Contex
 				return ec.fieldContext_VmObject_Identifier(ctx, field)
 			case "IPAddresses":
 				return ec.fieldContext_VmObject_IPAddresses(ctx, field)
+			case "Locked":
+				return ec.fieldContext_VmObject_Locked(ctx, field)
 			case "VmObjectToTeam":
 				return ec.fieldContext_VmObject_VmObjectToTeam(ctx, field)
 			}
@@ -6323,6 +6746,47 @@ func (ec *executionContext) fieldContext_VmObject_IPAddresses(ctx context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VmObject_Locked(ctx context.Context, field graphql.CollectedField, obj *ent.VmObject) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VmObject_Locked(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Locked, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VmObject_Locked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VmObject",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8742,6 +9206,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "lockoutVm":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_lockoutVm(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "lockoutCompetition":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_lockoutCompetition(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9313,6 +9795,26 @@ func (ec *executionContext) _SkeletonVmObject(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "lockout":
+		return ec._Subscription_lockout(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
+}
+
 var teamImplementors = []string{"Team"}
 
 func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj *ent.Team) graphql.Marshaler {
@@ -9384,9 +9886,6 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Team_TeamToVmObjects(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 
@@ -9575,6 +10074,10 @@ func (ec *executionContext) _VmObject(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "Locked":
+
+			out.Values[i] = ec._VmObject_Locked(ctx, field, obj)
+
 		case "VmObjectToTeam":
 			field := field
 
@@ -10484,44 +10987,6 @@ func (ec *executionContext) marshalNVmObject2githubᚗcomᚋBradHackerᚋcompsol
 	return ec._VmObject(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v []*ent.VmObject) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalNVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.VmObject) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -10929,6 +11394,47 @@ func (ec *executionContext) marshalOTeam2ᚖgithubᚗcomᚋBradHackerᚋcompsole
 		return graphql.Null
 	}
 	return ec._Team(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v []*ent.VmObject) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalOVmObject2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v *ent.VmObject) graphql.Marshaler {

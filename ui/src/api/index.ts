@@ -1,8 +1,38 @@
-import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { ApolloClient, HttpLink, InMemoryCache, split } from "@apollo/client";
 import { User } from "./generated/graphql";
+import { WebSocketLink } from "@apollo/client/link/ws";
+import { getMainDefinition } from "@apollo/client/utilities";
+
+const wsLink = new WebSocketLink({
+  uri: `${process.env.REACT_APP_WS_URL}/api/query`,
+  options: {
+    reconnect: true,
+    timeout: 30000,
+    minTimeout: 30000,
+    lazy: true,
+  },
+});
+
+const httpLink = new HttpLink({
+  uri: `${process.env.REACT_APP_SERVER_URL}/api/query`,
+  credentials: "include",
+});
+
+const link = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return (
+      definition.kind === "OperationDefinition" &&
+      definition.operation === "subscription"
+    );
+  },
+  wsLink,
+  httpLink
+);
 
 export const client = new ApolloClient({
   uri: `${process.env.REACT_APP_SERVER_URL}/api/query`,
+  link,
   cache: new InMemoryCache(),
   credentials: "include",
 });

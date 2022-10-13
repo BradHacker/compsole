@@ -420,8 +420,12 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                   </TableCell>
                   <TableCell align="right">
                     <ButtonGroup size="small">
-                      <Button variant="outlined" color="primary">
-                        <InfoTwoTone />
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        href={`/admin/team/${row.id}`}
+                      >
+                        <EditTwoTone />
                       </Button>
                     </ButtonGroup>
                   </TableCell>
@@ -522,10 +526,10 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                   </TableRow>
                 )) ?? (
                 <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  No Teams Found
+                  No Vm Objects Found
                 </TableCell>
               )}
-              {listTeamsLoading && (
+              {allVmObjectsLoading && (
                 <TableCell colSpan={5} sx={{ textAlign: "center" }}>
                   <CircularProgress />
                 </TableCell>

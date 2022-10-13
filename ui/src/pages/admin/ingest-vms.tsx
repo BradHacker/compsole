@@ -366,9 +366,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
             </ListItem>
           )}
           {listProviderVmsData?.listProviderVms
-            .sort((a, b) =>
-              a.IPAddresses.join("").localeCompare(b.IPAddresses.join(""))
-            )
+            .sort((a, b) => a.Name.localeCompare(b.Name))
             .map((vmObject) => (
               <ListItem
                 key={vmObject.Identifier}
@@ -392,11 +390,15 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                         })
                       }
                     >
-                      {selectedCompetition?.CompetitionToTeams.map((team) => (
-                        <MenuItem key={team?.ID} value={team?.ID}>
-                          {team?.Name} ({team?.TeamNumber})
-                        </MenuItem>
-                      ))}
+                      {[...(selectedCompetition?.CompetitionToTeams || [])]
+                        .sort(
+                          (a, b) => (a?.TeamNumber || 0) - (b?.TeamNumber || 0)
+                        )
+                        .map((team) => (
+                          <MenuItem key={team?.ID} value={team?.ID}>
+                            {team?.Name} ({team?.TeamNumber})
+                          </MenuItem>
+                        ))}
                     </Select>
                   </FormControl>
                 }

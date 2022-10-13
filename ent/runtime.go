@@ -57,6 +57,10 @@ func init() {
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
 	vmobjectFields := schema.VmObject{}.Fields()
 	_ = vmobjectFields
+	// vmobjectDescLocked is the schema descriptor for locked field.
+	vmobjectDescLocked := vmobjectFields[4].Descriptor()
+	// vmobject.DefaultLocked holds the default value on creation for the locked field.
+	vmobject.DefaultLocked = vmobjectDescLocked.Default.(bool)
 	// vmobjectDescID is the schema descriptor for id field.
 	vmobjectDescID := vmobjectFields[0].Descriptor()
 	// vmobject.DefaultID holds the default value on creation for the id field.

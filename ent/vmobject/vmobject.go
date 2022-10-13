@@ -17,6 +17,8 @@ const (
 	FieldIdentifier = "identifier"
 	// FieldIPAddresses holds the string denoting the ip_addresses field in the database.
 	FieldIPAddresses = "ip_addresses"
+	// FieldLocked holds the string denoting the locked field in the database.
+	FieldLocked = "locked"
 	// EdgeVmObjectToTeam holds the string denoting the vmobjecttoteam edge name in mutations.
 	EdgeVmObjectToTeam = "VmObjectToTeam"
 	// Table holds the table name of the vmobject in the database.
@@ -36,6 +38,7 @@ var Columns = []string{
 	FieldName,
 	FieldIdentifier,
 	FieldIPAddresses,
+	FieldLocked,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "vm_objects"
@@ -60,6 +63,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultLocked holds the default value on creation for the "locked" field.
+	DefaultLocked bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )

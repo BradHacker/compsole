@@ -27,6 +27,9 @@ type VmObject struct {
 	// IPAddresses holds the value of the "ip_addresses" field.
 	// [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
 	IPAddresses []string `json:"ip_addresses,omitempty"`
+	// Locked holds the value of the "locked" field.
+	// [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
+	Locked bool `json:"locked,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VmObjectQuery when eager-loading is set.
 	Edges                       VmObjectEdges `json:"edges"`
@@ -63,6 +66,8 @@ func (*VmObject) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case vmobject.FieldIPAddresses:
 			values[i] = new([]byte)
+		case vmobject.FieldLocked:
+			values[i] = new(sql.NullBool)
 		case vmobject.FieldName, vmobject.FieldIdentifier:
 			values[i] = new(sql.NullString)
 		case vmobject.FieldID:
@@ -110,6 +115,12 @@ func (vo *VmObject) assignValues(columns []string, values []interface{}) error {
 					return fmt.Errorf("unmarshal field ip_addresses: %w", err)
 				}
 			}
+		case vmobject.FieldLocked:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field locked", values[i])
+			} else if value.Valid {
+				vo.Locked = value.Bool
+			}
 		case vmobject.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field vm_object_vm_object_to_team", values[i])
@@ -156,6 +167,8 @@ func (vo *VmObject) String() string {
 	builder.WriteString(vo.Identifier)
 	builder.WriteString(", ip_addresses=")
 	builder.WriteString(fmt.Sprintf("%v", vo.IPAddresses))
+	builder.WriteString(", locked=")
+	builder.WriteString(fmt.Sprintf("%v", vo.Locked))
 	builder.WriteByte(')')
 	return builder.String()
 }

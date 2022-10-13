@@ -45,10 +45,16 @@ export const Signin: React.FC = (): React.ReactElement => {
     LocalLogin(
       data.get("username")?.toString() ?? "",
       data.get("password")?.toString() ?? ""
-    ).then(
-      () => navigate(((location?.state as any).from as Location) || "/"),
-      console.error
-    );
+    ).then(() => {
+      if (
+        location.state &&
+        ((location?.state as any).from as Location).pathname.match(/^\/auth/)
+      ) {
+        navigate("/");
+      } else {
+        navigate(((location?.state as any).from as Location) || "/");
+      }
+    }, console.error);
   };
 
   return (

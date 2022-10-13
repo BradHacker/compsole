@@ -2912,6 +2912,7 @@ type VmObjectMutation struct {
 	name                   *string
 	identifier             *string
 	ip_addresses           *[]string
+	locked                 *bool
 	clearedFields          map[string]struct{}
 	_VmObjectToTeam        *uuid.UUID
 	cleared_VmObjectToTeam bool
@@ -3145,6 +3146,42 @@ func (m *VmObjectMutation) ResetIPAddresses() {
 	delete(m.clearedFields, vmobject.FieldIPAddresses)
 }
 
+// SetLocked sets the "locked" field.
+func (m *VmObjectMutation) SetLocked(b bool) {
+	m.locked = &b
+}
+
+// Locked returns the value of the "locked" field in the mutation.
+func (m *VmObjectMutation) Locked() (r bool, exists bool) {
+	v := m.locked
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocked returns the old "locked" field's value of the VmObject entity.
+// If the VmObject object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *VmObjectMutation) OldLocked(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocked is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocked requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocked: %w", err)
+	}
+	return oldValue.Locked, nil
+}
+
+// ResetLocked resets all changes to the "locked" field.
+func (m *VmObjectMutation) ResetLocked() {
+	m.locked = nil
+}
+
 // SetVmObjectToTeamID sets the "VmObjectToTeam" edge to the Team entity by id.
 func (m *VmObjectMutation) SetVmObjectToTeamID(id uuid.UUID) {
 	m._VmObjectToTeam = &id
@@ -3203,7 +3240,7 @@ func (m *VmObjectMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *VmObjectMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, vmobject.FieldName)
 	}
@@ -3212,6 +3249,9 @@ func (m *VmObjectMutation) Fields() []string {
 	}
 	if m.ip_addresses != nil {
 		fields = append(fields, vmobject.FieldIPAddresses)
+	}
+	if m.locked != nil {
+		fields = append(fields, vmobject.FieldLocked)
 	}
 	return fields
 }
@@ -3227,6 +3267,8 @@ func (m *VmObjectMutation) Field(name string) (ent.Value, bool) {
 		return m.Identifier()
 	case vmobject.FieldIPAddresses:
 		return m.IPAddresses()
+	case vmobject.FieldLocked:
+		return m.Locked()
 	}
 	return nil, false
 }
@@ -3242,6 +3284,8 @@ func (m *VmObjectMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldIdentifier(ctx)
 	case vmobject.FieldIPAddresses:
 		return m.OldIPAddresses(ctx)
+	case vmobject.FieldLocked:
+		return m.OldLocked(ctx)
 	}
 	return nil, fmt.Errorf("unknown VmObject field %s", name)
 }
@@ -3271,6 +3315,13 @@ func (m *VmObjectMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIPAddresses(v)
+		return nil
+	case vmobject.FieldLocked:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocked(v)
 		return nil
 	}
 	return fmt.Errorf("unknown VmObject field %s", name)
@@ -3338,6 +3389,9 @@ func (m *VmObjectMutation) ResetField(name string) error {
 		return nil
 	case vmobject.FieldIPAddresses:
 		m.ResetIPAddresses()
+		return nil
+	case vmobject.FieldLocked:
+		m.ResetLocked()
 		return nil
 	}
 	return fmt.Errorf("unknown VmObject field %s", name)

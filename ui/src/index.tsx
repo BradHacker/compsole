@@ -25,6 +25,7 @@ import { CompetitionForm } from "./pages/admin/competition-form";
 import { ProviderForm } from "./pages/admin/provider-form";
 import { IngestVMs } from "./pages/admin/ingest-vms";
 import { VmObjectForm } from "./pages/admin/vm-object-form";
+import { TeamForm } from "./pages/admin/team-form";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -104,6 +105,8 @@ root.render(
                   <Route path="provider/:id" element={<ProviderForm />} />
                   <Route path="vm-object/new" element={<VmObjectForm />} />
                   <Route path="vm-object/:id" element={<VmObjectForm />} />
+                  <Route path="team/new" element={<TeamForm />} />
+                  <Route path="team/:id" element={<TeamForm />} />
                   <Route path="ingest" element={<IngestVMs />} />
                 </Route>
               </Route>
