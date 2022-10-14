@@ -227,7 +227,9 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           label="Name"
           variant="filled"
           value={provider.Name}
-          onChange={(e) => setProvider({ ...provider, Name: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setProvider({ ...provider, Name: e.target.value })
+          }
         />
         <FormControl variant="filled">
           <InputLabel id="type-select-label">Type</InputLabel>
@@ -265,7 +267,9 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
             validateConfigError !== undefined ||
             validateConfigData?.validateConfig === false
           }
-          onChange={(e) => setProvider({ ...provider, Config: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setProvider({ ...provider, Config: e.target.value })
+          }
         />
       </Box>
       <Box

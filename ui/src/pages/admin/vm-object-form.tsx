@@ -214,13 +214,15 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
           label="Name"
           variant="filled"
           value={vmObject.Name}
-          onChange={(e) => setVmObject({ ...vmObject, Name: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setVmObject({ ...vmObject, Name: e.target.value })
+          }
         />
         <TextField
           label="Identifier"
           variant="filled"
           value={vmObject.Identifier}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setVmObject({ ...vmObject, Identifier: e.target.value })
           }
         />
