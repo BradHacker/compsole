@@ -180,7 +180,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 			return nil, fmt.Errorf("failed to query team: %v", err)
 		}
 	}
-	entUser, err := r.client.User.Create().SetUsername(input.Username).SetPassword("").SetFirstName(input.FirstName).SetLastName(input.LastName).SetRole(user.Role(input.Role)).SetProvider(user.Provider(input.Provider)).SetUserToTeam(entTeam).Save(ctx)
+	entUserCreate := r.client.User.Create().
+		SetUsername(input.Username).
+		SetPassword("").
+		SetFirstName(input.FirstName).
+		SetLastName(input.LastName).
+		SetRole(user.Role(input.Role)).
+		SetProvider(user.Provider(input.Provider))
+	if entTeam != nil {
+		entUserCreate = entUserCreate.SetUserToTeam(entTeam)
+	}
+	entUser, err := entUserCreate.Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
