@@ -257,7 +257,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
           label="Name"
           variant="filled"
           value={competition.Name}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setCompetition({ ...competition, Name: e.target.value })
           }
         />

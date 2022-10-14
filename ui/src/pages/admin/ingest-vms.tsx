@@ -79,7 +79,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
   const [teamAssignments, setTeamAssignments] = useState<{
     [key: string]: string;
   }>({});
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -118,6 +118,11 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
 
   useEffect(() => {
     if (listProviderVmsData?.listProviderVms) {
+      let snackbarId = enqueueSnackbar("Attempting to sort VM's", {
+        variant: "info",
+        persist: true,
+        preventDuplicate: true,
+      });
       let unsortedTeam = selectedCompetition?.CompetitionToTeams.find(
         (t) => t?.TeamNumber === 0
       );
@@ -125,9 +130,27 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
         [key: string]: string;
       } = {};
       listProviderVmsData.listProviderVms.forEach((vmObject) => {
-        newTeamAssignments[vmObject.Identifier] = unsortedTeam?.ID ?? "";
+        if (selectedCompetition?.CompetitionToTeams) {
+          for (let team of selectedCompetition.CompetitionToTeams) {
+            if (team) {
+              if (
+                new RegExp(`[^1-9]${team.TeamNumber}[^0-9]`, "g").test(
+                  vmObject.Name
+                )
+              ) {
+                newTeamAssignments[vmObject.Identifier] = team.ID;
+              }
+            }
+          }
+        }
+        if (!newTeamAssignments[vmObject.Identifier])
+          newTeamAssignments[vmObject.Identifier] = unsortedTeam?.ID ?? "";
       });
       setTeamAssignments(newTeamAssignments);
+      closeSnackbar(snackbarId);
+      enqueueSnackbar("Please validate auto-sorting", {
+        variant: "warning",
+      });
     }
   }, [listProviderVmsData]);
 
@@ -257,7 +280,9 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                 disabled={
                   batchCreateTeamsLoading || batchCreateTeamsData != undefined
                 }
-                onChange={(e) => setNumberOfTeams(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setNumberOfTeams(e.target.value)
+                }
               />
               <Button
                 variant="contained"

@@ -208,7 +208,7 @@ export const TeamForm: React.FC = (): React.ReactElement => {
           type="number"
           variant="filled"
           value={team.TeamNumber}
-          onChange={(e) =>
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setTeam({ ...team, TeamNumber: parseInt(e.target.value) })
           }
         />
@@ -216,7 +216,9 @@ export const TeamForm: React.FC = (): React.ReactElement => {
           label="Name"
           variant="filled"
           value={team.Name}
-          onChange={(e) => setTeam({ ...team, Name: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setTeam({ ...team, Name: e.target.value })
+          }
         />
         <Autocomplete
           options={listCompetitionsData?.competitions ?? []}

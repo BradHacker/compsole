@@ -262,25 +262,33 @@ export const UserForm: React.FC = (): React.ReactElement => {
           label="First Name"
           variant="filled"
           value={user.FirstName}
-          onChange={(e) => setUser({ ...user, FirstName: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setUser({ ...user, FirstName: e.target.value })
+          }
         />
         <TextField
           label="Last Name"
           variant="filled"
           value={user.LastName}
-          onChange={(e) => setUser({ ...user, LastName: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setUser({ ...user, LastName: e.target.value })
+          }
         />
         <TextField
           required
           label="Username"
           variant="filled"
           value={user.Username}
-          onChange={(e) => setUser({ ...user, Username: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setUser({ ...user, Username: e.target.value })
+          }
         />
         <ToggleButtonGroup
           value={user.Role}
           exclusive
-          onChange={(e, newRole: Role) => setUser({ ...user, Role: newRole })}
+          onChange={(e: any, newRole: Role) =>
+            setUser({ ...user, Role: newRole })
+          }
           aria-label="text alignment"
           id="user-type"
           sx={{
@@ -351,14 +359,18 @@ export const UserForm: React.FC = (): React.ReactElement => {
           type="password"
           variant="filled"
           value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setNewPassword(e.target.value)
+          }
         />
         <TextField
           label="Confirm New Password"
           type="password"
           variant="filled"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setConfirmPassword(e.target.value)
+          }
         />
         <Button
           type="button"
