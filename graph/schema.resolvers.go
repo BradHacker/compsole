@@ -324,20 +324,24 @@ func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.
 			return nil, fmt.Errorf("failed to query competition: %v", err)
 		}
 		entTeam := tx.Team.Create().SetTeamNumber(inputTeam.TeamNumber).SetName(*inputTeam.Name).SetTeamToCompetition(entCompetition)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create team: %v", err)
-		}
 		entTeams[i] = entTeam
 	}
 	newEntTeams, err := tx.Team.CreateBulk(entTeams...).Save(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to bulk create teams: %v", err)
+		if rerr := tx.Rollback(); rerr != nil {
+			err = fmt.Errorf("%w: rolling back transaction: failed to bulk create teams: %v", err, rerr)
+		}
+		return nil, err
 	}
 	err = tx.Commit()
 	if err != nil {
 		return nil, fmt.Errorf("failed to commit transation. rolled back database: %v", err)
 	}
-	return newEntTeams, nil
+	unwrappedTeams := make([]*ent.Team, len(newEntTeams))
+	for i, entTeam := range newEntTeams {
+		unwrappedTeams[i] = entTeam.Unwrap()
+	}
+	return unwrappedTeams, nil
 }
 
 // UpdateTeam is the resolver for the updateTeam field.
@@ -492,13 +496,20 @@ func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*mo
 	}
 	newEntVmObjects, err := tx.VmObject.CreateBulk(entVmObjects...).Save(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to bulk create vm objects: %v", err)
+		if rerr := tx.Rollback(); rerr != nil {
+			err = fmt.Errorf("%w: rolling back transaction: failed to bulk create vm objects: %v", err, rerr)
+		}
+		return nil, err
 	}
 	err = tx.Commit()
 	if err != nil {
 		return nil, fmt.Errorf("failed to commit transation. rolled back database: %v", err)
 	}
-	return newEntVmObjects, nil
+	unwrappedVmObjects := make([]*ent.VmObject, len(newEntVmObjects))
+	for i, entVmObject := range newEntVmObjects {
+		unwrappedVmObjects[i] = entVmObject.Unwrap()
+	}
+	return unwrappedVmObjects, nil
 }
 
 // UpdateVMObject is the resolver for the updateVmObject field.
