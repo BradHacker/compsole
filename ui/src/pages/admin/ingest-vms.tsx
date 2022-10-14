@@ -119,6 +119,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
   useEffect(() => {
     if (listProviderVmsData?.listProviderVms) {
       let snackbarId = enqueueSnackbar("Attempting to sort VM's", {
+        variant: "info",
         persist: true,
         preventDuplicate: true,
       });
@@ -147,6 +148,9 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       });
       setTeamAssignments(newTeamAssignments);
       closeSnackbar(snackbarId);
+      enqueueSnackbar("Please validate auto-sorting", {
+        variant: "warning",
+      });
     }
   }, [listProviderVmsData]);
 
