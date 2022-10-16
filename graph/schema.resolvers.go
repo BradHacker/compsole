@@ -246,6 +246,12 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
 	}
+	// Must maintain at least one user in the database
+	if userCount, err := r.client.User.Query().Count(ctx); err != nil {
+		return false, fmt.Errorf("failed to count users: %v", err)
+	} else if userCount <= 1 {
+		return false, fmt.Errorf("at least one user must exist")
+	}
 	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete user: %v", err)
