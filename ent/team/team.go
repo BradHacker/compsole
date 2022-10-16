@@ -29,21 +29,21 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "competition" package.
 	TeamToCompetitionInverseTable = "competitions"
 	// TeamToCompetitionColumn is the table column denoting the TeamToCompetition relation/edge.
-	TeamToCompetitionColumn = "team_team_to_competition"
+	TeamToCompetitionColumn = "competition_competition_to_teams"
 	// TeamToVmObjectsTable is the table that holds the TeamToVmObjects relation/edge.
 	TeamToVmObjectsTable = "vm_objects"
 	// TeamToVmObjectsInverseTable is the table name for the VmObject entity.
 	// It exists in this package in order to avoid circular dependency with the "vmobject" package.
 	TeamToVmObjectsInverseTable = "vm_objects"
 	// TeamToVmObjectsColumn is the table column denoting the TeamToVmObjects relation/edge.
-	TeamToVmObjectsColumn = "vm_object_vm_object_to_team"
+	TeamToVmObjectsColumn = "team_team_to_vm_objects"
 	// TeamToUsersTable is the table that holds the TeamToUsers relation/edge.
 	TeamToUsersTable = "users"
 	// TeamToUsersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	TeamToUsersInverseTable = "users"
 	// TeamToUsersColumn is the table column denoting the TeamToUsers relation/edge.
-	TeamToUsersColumn = "user_user_to_team"
+	TeamToUsersColumn = "team_team_to_users"
 )
 
 // Columns holds all SQL columns for team fields.
@@ -56,7 +56,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "teams"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"team_team_to_competition",
+	"competition_competition_to_teams",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

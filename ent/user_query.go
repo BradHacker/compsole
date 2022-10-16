@@ -82,7 +82,7 @@ func (uq *UserQuery) QueryUserToTeam() *TeamQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, user.UserToTeamTable, user.UserToTeamColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, user.UserToTeamTable, user.UserToTeamColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -338,7 +338,6 @@ func (uq *UserQuery) WithUserToToken(opts ...func(*TokenQuery)) *UserQuery {
 //		GroupBy(user.FieldUsername).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 	group := &UserGroupBy{config: uq.config}
 	group.fields = append([]string{field}, fields...)
@@ -363,7 +362,6 @@ func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 //	client.User.Query().
 //		Select(user.FieldUsername).
 //		Scan(ctx, &v)
-//
 func (uq *UserQuery) Select(fields ...string) *UserSelect {
 	uq.fields = append(uq.fields, fields...)
 	return &UserSelect{UserQuery: uq}
@@ -425,10 +423,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 		ids := make([]uuid.UUID, 0, len(nodes))
 		nodeids := make(map[uuid.UUID][]*User)
 		for i := range nodes {
-			if nodes[i].user_user_to_team == nil {
+			if nodes[i].team_team_to_users == nil {
 				continue
 			}
-			fk := *nodes[i].user_user_to_team
+			fk := *nodes[i].team_team_to_users
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -442,7 +440,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_team" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_users" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.UserToTeam = n

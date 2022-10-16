@@ -32,8 +32,8 @@ type VmObject struct {
 	Locked bool `json:"locked,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the VmObjectQuery when eager-loading is set.
-	Edges                       VmObjectEdges `json:"edges"`
-	vm_object_vm_object_to_team *uuid.UUID
+	Edges                   VmObjectEdges `json:"edges"`
+	team_team_to_vm_objects *uuid.UUID
 }
 
 // VmObjectEdges holds the relations/edges for other nodes in the graph.
@@ -72,7 +72,7 @@ func (*VmObject) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case vmobject.FieldID:
 			values[i] = new(uuid.UUID)
-		case vmobject.ForeignKeys[0]: // vm_object_vm_object_to_team
+		case vmobject.ForeignKeys[0]: // team_team_to_vm_objects
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type VmObject", columns[i])
@@ -123,10 +123,10 @@ func (vo *VmObject) assignValues(columns []string, values []interface{}) error {
 			}
 		case vmobject.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field vm_object_vm_object_to_team", values[i])
+				return fmt.Errorf("unexpected type %T for field team_team_to_vm_objects", values[i])
 			} else if value.Valid {
-				vo.vm_object_vm_object_to_team = new(uuid.UUID)
-				*vo.vm_object_vm_object_to_team = *value.S.(*uuid.UUID)
+				vo.team_team_to_vm_objects = new(uuid.UUID)
+				*vo.team_team_to_vm_objects = *value.S.(*uuid.UUID)
 			}
 		}
 	}

@@ -26,7 +26,7 @@ func (Competition) Fields() []ent.Field {
 // Edges of the Competition.
 func (Competition) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("CompetitionToTeams", Team.Type).Ref("TeamToCompetition").
+		edge.To("CompetitionToTeams", Team.Type).
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),

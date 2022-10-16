@@ -25,8 +25,8 @@ type Team struct {
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.
-	Edges                    TeamEdges `json:"edges"`
-	team_team_to_competition *uuid.UUID
+	Edges                            TeamEdges `json:"edges"`
+	competition_competition_to_teams *uuid.UUID
 }
 
 // TeamEdges holds the relations/edges for other nodes in the graph.
@@ -85,7 +85,7 @@ func (*Team) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case team.FieldID:
 			values[i] = new(uuid.UUID)
-		case team.ForeignKeys[0]: // team_team_to_competition
+		case team.ForeignKeys[0]: // competition_competition_to_teams
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Team", columns[i])
@@ -122,10 +122,10 @@ func (t *Team) assignValues(columns []string, values []interface{}) error {
 			}
 		case team.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field team_team_to_competition", values[i])
+				return fmt.Errorf("unexpected type %T for field competition_competition_to_teams", values[i])
 			} else if value.Valid {
-				t.team_team_to_competition = new(uuid.UUID)
-				*t.team_team_to_competition = *value.S.(*uuid.UUID)
+				t.competition_competition_to_teams = new(uuid.UUID)
+				*t.competition_competition_to_teams = *value.S.(*uuid.UUID)
 			}
 		}
 	}

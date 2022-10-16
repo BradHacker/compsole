@@ -29,7 +29,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	VmObjectToTeamInverseTable = "teams"
 	// VmObjectToTeamColumn is the table column denoting the VmObjectToTeam relation/edge.
-	VmObjectToTeamColumn = "vm_object_vm_object_to_team"
+	VmObjectToTeamColumn = "team_team_to_vm_objects"
 )
 
 // Columns holds all SQL columns for vmobject fields.
@@ -44,7 +44,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "vm_objects"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"vm_object_vm_object_to_team",
+	"team_team_to_vm_objects",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

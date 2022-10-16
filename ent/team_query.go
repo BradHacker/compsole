@@ -84,7 +84,7 @@ func (tq *TeamQuery) QueryTeamToCompetition() *CompetitionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -106,7 +106,7 @@ func (tq *TeamQuery) QueryTeamToVmObjects() *VmObjectQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(vmobject.Table, vmobject.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -128,7 +128,7 @@ func (tq *TeamQuery) QueryTeamToUsers() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToUsersTable, team.TeamToUsersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.TeamToUsersTable, team.TeamToUsersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -374,7 +374,6 @@ func (tq *TeamQuery) WithTeamToUsers(opts ...func(*UserQuery)) *TeamQuery {
 //		GroupBy(team.FieldTeamNumber).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (tq *TeamQuery) GroupBy(field string, fields ...string) *TeamGroupBy {
 	group := &TeamGroupBy{config: tq.config}
 	group.fields = append([]string{field}, fields...)
@@ -399,7 +398,6 @@ func (tq *TeamQuery) GroupBy(field string, fields ...string) *TeamGroupBy {
 //	client.Team.Query().
 //		Select(team.FieldTeamNumber).
 //		Scan(ctx, &v)
-//
 func (tq *TeamQuery) Select(fields ...string) *TeamSelect {
 	tq.fields = append(tq.fields, fields...)
 	return &TeamSelect{TeamQuery: tq}
@@ -462,10 +460,10 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		ids := make([]uuid.UUID, 0, len(nodes))
 		nodeids := make(map[uuid.UUID][]*Team)
 		for i := range nodes {
-			if nodes[i].team_team_to_competition == nil {
+			if nodes[i].competition_competition_to_teams == nil {
 				continue
 			}
-			fk := *nodes[i].team_team_to_competition
+			fk := *nodes[i].competition_competition_to_teams
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -479,7 +477,7 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_competition" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "competition_competition_to_teams" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.TeamToCompetition = n
@@ -504,13 +502,13 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.vm_object_vm_object_to_team
+			fk := n.team_team_to_vm_objects
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "vm_object_vm_object_to_team" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "team_team_to_vm_objects" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "vm_object_vm_object_to_team" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_vm_objects" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.TeamToVmObjects = append(node.Edges.TeamToVmObjects, n)
 		}
@@ -533,13 +531,13 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.user_user_to_team
+			fk := n.team_team_to_users
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "user_user_to_team" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "team_team_to_users" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_team" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_users" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.TeamToUsers = append(node.Edges.TeamToUsers, n)
 		}

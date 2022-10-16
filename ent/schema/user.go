@@ -31,7 +31,7 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("UserToTeam", Team.Type).Unique(),
+		edge.From("UserToTeam", Team.Type).Ref("TeamToUsers").Unique(),
 		edge.To("UserToToken", Token.Type).
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,

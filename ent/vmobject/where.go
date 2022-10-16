@@ -369,7 +369,7 @@ func HasVmObjectToTeam() predicate.VmObject {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(VmObjectToTeamTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, VmObjectToTeamTable, VmObjectToTeamColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, VmObjectToTeamTable, VmObjectToTeamColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -381,7 +381,7 @@ func HasVmObjectToTeamWith(preds ...predicate.Team) predicate.VmObject {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(VmObjectToTeamInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, VmObjectToTeamTable, VmObjectToTeamColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, VmObjectToTeamTable, VmObjectToTeamColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

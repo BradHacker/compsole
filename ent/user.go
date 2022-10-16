@@ -37,8 +37,8 @@ type User struct {
 	Provider user.Provider `json:"provider,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges             UserEdges `json:"edges"`
-	user_user_to_team *uuid.UUID
+	Edges              UserEdges `json:"edges"`
+	team_team_to_users *uuid.UUID
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -84,7 +84,7 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
-		case user.ForeignKeys[0]: // user_user_to_team
+		case user.ForeignKeys[0]: // team_team_to_users
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type User", columns[i])
@@ -145,10 +145,10 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			}
 		case user.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field user_user_to_team", values[i])
+				return fmt.Errorf("unexpected type %T for field team_team_to_users", values[i])
 			} else if value.Valid {
-				u.user_user_to_team = new(uuid.UUID)
-				*u.user_user_to_team = *value.S.(*uuid.UUID)
+				u.team_team_to_users = new(uuid.UUID)
+				*u.team_team_to_users = *value.S.(*uuid.UUID)
 			}
 		}
 	}

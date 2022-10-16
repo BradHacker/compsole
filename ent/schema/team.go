@@ -27,11 +27,13 @@ func (Team) Fields() []ent.Field {
 // Edges of the Team.
 func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("TeamToCompetition", Competition.Type).Unique().Required(),
-		edge.From("TeamToVmObjects", VmObject.Type).Ref("VmObjectToTeam").
+		edge.From("TeamToCompetition", Competition.Type).Ref("CompetitionToTeams").Unique().Required(),
+		edge.To("TeamToVmObjects", VmObject.Type).
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
-		edge.From("TeamToUsers", User.Type).Ref("UserToTeam"),
+		edge.To("TeamToUsers", User.Type).Annotations(entsql.Annotation{
+			OnDelete: entsql.SetNull,
+		}),
 	}
 }

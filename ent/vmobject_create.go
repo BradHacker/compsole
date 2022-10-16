@@ -249,7 +249,7 @@ func (voc *VmObjectCreate) createSpec() (*VmObject, *sqlgraph.CreateSpec) {
 	if nodes := voc.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   vmobject.VmObjectToTeamTable,
 			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
@@ -263,7 +263,7 @@ func (voc *VmObjectCreate) createSpec() (*VmObject, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.vm_object_vm_object_to_team = &nodes[0]
+		_node.team_team_to_vm_objects = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
