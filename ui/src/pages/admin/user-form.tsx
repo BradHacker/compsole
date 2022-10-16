@@ -226,7 +226,11 @@ export const UserForm: React.FC = (): React.ReactElement => {
             alignItems: "center",
           }}
         >
-          <Button variant="text" sx={{ mr: 1 }} href="/admin">
+          <Button
+            variant="text"
+            sx={{ mr: 1 }}
+            onClick={() => navigate("/admin")}
+          >
             <ArrowBackTwoTone />
           </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>

@@ -1,9 +1,4 @@
-import {
-  InfoTwoTone,
-  Add,
-  LoopTwoTone,
-  EditTwoTone,
-} from "@mui/icons-material";
+import { Add, EditTwoTone, DeleteTwoTone } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -12,6 +7,7 @@ import {
   CircularProgress,
   Container,
   Fab,
+  Modal,
   Paper,
   Tab,
   Table,
@@ -21,10 +17,11 @@ import {
   TableHead,
   TableRow,
   Tabs,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import {
   Role,
@@ -38,6 +35,11 @@ import {
   ListUsersQuery,
   ListProvidersQuery,
   useListProvidersQuery,
+  useDeleteUserMutation,
+  useDeleteCompetitionMutation,
+  useDeleteTeamMutation,
+  useDeleteVmObjectMutation,
+  useDeleteProviderMutation,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
 
@@ -155,33 +157,162 @@ const createProviderData = (
   };
 };
 
+interface DeleteObjectModalProps {
+  objectName: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+}
+
+const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
+  objectName,
+  isOpen,
+  onClose,
+  onSubmit,
+}): React.ReactElement => {
+  const [inputName, setInputName] = useState<string>("");
+  const [isValid, setIsValid] = useState<boolean>(false);
+  const checkObjectName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputName(e.target.value);
+    setIsValid(e.target.value === objectName);
+  };
+
+  return (
+    <Modal open={isOpen} onClose={onClose}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "50%",
+          bgcolor: "#2a273f",
+          borderRadius: 2,
+          boxShadow: "0 0 2rem #000",
+          p: 4,
+        }}
+      >
+        <Typography variant="h6" component="h2">
+          Do you want to delete{" "}
+          <Typography variant="h6" component="code">
+            {objectName}
+          </Typography>
+          ?
+        </Typography>
+        <Typography sx={{ my: 2 }}>
+          Doing this is a permanent action and cannot be reversed. All objects
+          dependent with this one will be deleted. If you wish to do this please
+          type <Typography component="code"> {objectName}</Typography> in the
+          box below.
+        </Typography>
+        <TextField
+          label="Confirm deletion"
+          variant="filled"
+          sx={{ width: "100%" }}
+          value={inputName}
+          onChange={checkObjectName}
+        />
+        <Button
+          type="button"
+          variant="contained"
+          startIcon={<DeleteTwoTone />}
+          sx={{ width: "100%", mt: 2 }}
+          disabled={!isValid}
+          onClick={() => {
+            setInputName("");
+            onSubmit();
+          }}
+        >
+          Delete Forever
+        </Button>
+      </Box>
+    </Modal>
+  );
+};
+
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const {
     data: listUsersData,
     loading: listUsersLoading,
     error: listUsersError,
+    refetch: refetchUsers,
   } = useListUsersQuery();
   const {
     data: listCompetitionsData,
     loading: listCompetitionsLoading,
     error: listCompetitionsError,
+    refetch: refetchCompetitions,
   } = useListCompetitionsQuery();
   const {
     data: listTeamsData,
     loading: listTeamsLoading,
     error: listTeamsError,
+    refetch: refetchTeams,
   } = useListTeamsQuery();
   const {
     data: allVmObjectsData,
     loading: allVmObjectsLoading,
     error: allVmObjectsError,
+    refetch: refetchVmObjects,
   } = useAllVmObjectsQuery();
   const {
     data: listProvidersData,
     loading: listProvidersLoading,
     error: listProvidersError,
+    refetch: refetchProviders,
   } = useListProvidersQuery();
+  const [
+    deleteUser,
+    {
+      data: deleteUserData,
+      loading: deleteUserLoading,
+      error: deleteUserError,
+    },
+  ] = useDeleteUserMutation();
+  const [
+    deleteCompetition,
+    {
+      data: deleteCompetitionData,
+      loading: deleteCompetitionLoading,
+      error: deleteCompetitionError,
+    },
+  ] = useDeleteCompetitionMutation();
+  const [
+    deleteTeam,
+    {
+      data: deleteTeamData,
+      loading: deleteTeamLoading,
+      error: deleteTeamError,
+    },
+  ] = useDeleteTeamMutation();
+  const [
+    deleteVmObject,
+    {
+      data: deleteVmObjectData,
+      loading: deleteVmObjectLoading,
+      error: deleteVmObjectError,
+    },
+  ] = useDeleteVmObjectMutation();
+  const [
+    deleteProvider,
+    {
+      data: deleteProviderData,
+      loading: deleteProviderLoading,
+      error: deleteProviderError,
+    },
+  ] = useDeleteProviderMutation();
+  const [deleteModalData, setDeleteModalData] = useState<{
+    objectName: string;
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: () => void;
+  }>({
+    objectName: "",
+    isOpen: false,
+    onClose: () => undefined,
+    onSubmit: () => undefined,
+  });
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -215,6 +346,121 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
     listTeamsError,
     allVmObjectsError,
     listProvidersError,
+    enqueueSnackbar,
+  ]);
+
+  useEffect(() => {
+    if (deleteUserError)
+      enqueueSnackbar(`Couldn't delete user: ${deleteUserError.message}`, {
+        variant: "error",
+      });
+    if (deleteCompetitionError)
+      enqueueSnackbar(
+        `Couldn't delete competition: ${deleteCompetitionError.message}`,
+        {
+          variant: "error",
+        }
+      );
+    if (deleteTeamError)
+      enqueueSnackbar(`Couldn't delete team: ${deleteTeamError.message}`, {
+        variant: "error",
+      });
+    if (deleteVmObjectError)
+      enqueueSnackbar(
+        `Couldn't delete vm object: ${deleteVmObjectError.message}`,
+        {
+          variant: "error",
+        }
+      );
+    if (deleteProviderError)
+      enqueueSnackbar(
+        `Couldn't delete provider: ${deleteProviderError.message}`,
+        {
+          variant: "error",
+        }
+      );
+  }, [
+    deleteUserError,
+    deleteCompetitionError,
+    deleteTeamError,
+    deleteVmObjectError,
+    deleteProviderError,
+    enqueueSnackbar,
+  ]);
+
+  useEffect(() => {
+    if (deleteUserLoading)
+      enqueueSnackbar("Deleteing user...", {
+        variant: "info",
+        autoHideDuration: 2500,
+      });
+    else if (deleteUserData?.deleteUser) {
+      enqueueSnackbar("Successfully deleted user!", {
+        variant: "success",
+      });
+      refetchUsers();
+    }
+    if (deleteCompetitionLoading)
+      enqueueSnackbar("Deleteing competition...", {
+        variant: "info",
+        autoHideDuration: 2500,
+      });
+    else if (deleteCompetitionData?.deleteCompetition) {
+      enqueueSnackbar("Successfully deleted competition!", {
+        variant: "success",
+      });
+      refetchCompetitions();
+    }
+    if (deleteTeamLoading)
+      enqueueSnackbar("Deleteing team...", {
+        variant: "info",
+        autoHideDuration: 2500,
+      });
+    else if (deleteTeamData?.deleteTeam) {
+      enqueueSnackbar("Successfully deleted team!", {
+        variant: "success",
+      });
+      refetchTeams();
+    }
+    if (deleteVmObjectLoading)
+      enqueueSnackbar("Deleteing vm object...", {
+        variant: "info",
+        autoHideDuration: 2500,
+      });
+    else if (deleteVmObjectData?.deleteVmObject) {
+      enqueueSnackbar("Successfully deleted vm object!", {
+        variant: "success",
+      });
+      refetchVmObjects();
+    }
+    if (deleteProviderLoading)
+      enqueueSnackbar("Deleteing provider...", {
+        variant: "info",
+        autoHideDuration: 2500,
+      });
+    else if (deleteProviderData?.deleteProvider) {
+      enqueueSnackbar("Successfully deleted user!", {
+        variant: "success",
+      });
+      refetchProviders();
+    }
+  }, [
+    deleteUserLoading,
+    deleteUserData,
+    refetchUsers,
+    deleteCompetitionLoading,
+    deleteCompetitionData,
+    refetchCompetitions,
+    deleteTeamLoading,
+    deleteTeamData,
+    refetchTeams,
+    deleteVmObjectLoading,
+    deleteVmObjectData,
+    refetchVmObjects,
+    deleteProviderLoading,
+    deleteProviderData,
+    refetchProviders,
+    enqueueSnackbar,
   ]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -242,6 +488,60 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         navigate("/admin");
         break;
     }
+  };
+
+  const resetDeleteModal = () => {
+    setDeleteModalData({
+      objectName: "",
+      isOpen: false,
+      onClose: () => undefined,
+      onSubmit: () => undefined,
+    });
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    resetDeleteModal();
+    deleteUser({
+      variables: {
+        userId,
+      },
+    });
+  };
+
+  const handleDeleteCompetition = (competitionId: string) => {
+    resetDeleteModal();
+    deleteCompetition({
+      variables: {
+        competitionId,
+      },
+    });
+  };
+
+  const handleDeleteTeam = (teamId: string) => {
+    resetDeleteModal();
+    deleteTeam({
+      variables: {
+        teamId,
+      },
+    });
+  };
+
+  const handleDeleteVmObject = (vmObjectId: string) => {
+    resetDeleteModal();
+    deleteVmObject({
+      variables: {
+        vmObjectId,
+      },
+    });
+  };
+
+  const handleDeleteProvider = (providerId: string) => {
+    resetDeleteModal();
+    deleteProvider({
+      variables: {
+        providerId,
+      },
+    });
   };
 
   return (
@@ -305,9 +605,23 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                       <Button
                         variant="outlined"
                         color="secondary"
-                        href={`/admin/user/${row.id}`}
+                        onClick={() => navigate(`/admin/user/${row.id}`)}
                       >
                         <EditTwoTone />
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => {
+                          setDeleteModalData({
+                            objectName: row.username,
+                            isOpen: true,
+                            onClose: resetDeleteModal,
+                            onSubmit: () => handleDeleteUser(row.id),
+                          });
+                        }}
+                      >
+                        <DeleteTwoTone />
                       </Button>
                     </ButtonGroup>
                   </TableCell>
@@ -365,9 +679,25 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                         <Button
                           variant="outlined"
                           color="secondary"
-                          href={`/admin/competition/${row.id}`}
+                          onClick={() =>
+                            navigate(`/admin/competition/${row.id}`)
+                          }
                         >
                           <EditTwoTone />
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => {
+                            setDeleteModalData({
+                              objectName: row.name,
+                              isOpen: true,
+                              onClose: resetDeleteModal,
+                              onSubmit: () => handleDeleteCompetition(row.id),
+                            });
+                          }}
+                        >
+                          <DeleteTwoTone />
                         </Button>
                       </ButtonGroup>
                     </TableCell>
@@ -423,9 +753,23 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                       <Button
                         variant="outlined"
                         color="secondary"
-                        href={`/admin/team/${row.id}`}
+                        onClick={() => navigate(`/admin/team/${row.id}`)}
                       >
                         <EditTwoTone />
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => {
+                          setDeleteModalData({
+                            objectName: row.teamName ?? `Team ${row.number}`,
+                            isOpen: true,
+                            onClose: resetDeleteModal,
+                            onSubmit: () => handleDeleteTeam(row.id),
+                          });
+                        }}
+                      >
+                        <DeleteTwoTone />
                       </Button>
                     </ButtonGroup>
                   </TableCell>
@@ -517,9 +861,23 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                         <Button
                           variant="outlined"
                           color="secondary"
-                          href={`/admin/vm-object/${row.id}`}
+                          onClick={() => navigate(`/admin/vm-object/${row.id}`)}
                         >
                           <EditTwoTone />
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => {
+                            setDeleteModalData({
+                              objectName: row.name,
+                              isOpen: true,
+                              onClose: resetDeleteModal,
+                              onSubmit: () => handleDeleteVmObject(row.id),
+                            });
+                          }}
+                        >
+                          <DeleteTwoTone />
                         </Button>
                       </ButtonGroup>
                     </TableCell>
@@ -569,9 +927,23 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                         <Button
                           variant="outlined"
                           color="secondary"
-                          href={`/admin/provider/${row.id}`}
+                          onClick={() => navigate(`/admin/provider/${row.id}`)}
                         >
                           <EditTwoTone />
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => {
+                            setDeleteModalData({
+                              objectName: row.name,
+                              isOpen: true,
+                              onClose: resetDeleteModal,
+                              onSubmit: () => handleDeleteProvider(row.id),
+                            });
+                          }}
+                        >
+                          <DeleteTwoTone />
                         </Button>
                       </ButtonGroup>
                     </TableCell>
@@ -602,6 +974,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       >
         <Add />
       </Fab>
+      <DeleteObjectModal {...deleteModalData} />
     </Container>
   );
 };
@@ -610,7 +983,7 @@ export const Admin: React.FC = (): React.ReactElement => {
   const user = useContext(UserContext);
   return (
     <React.Fragment>
-      {user && user.Role == Role.Admin ? (
+      {user && user.Role === Role.Admin ? (
         <Outlet />
       ) : (
         <Container

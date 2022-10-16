@@ -99,15 +99,18 @@ function App() {
                 },
               }}
             >
-              <Button href="/" color="inherit">
+              <Button onClick={() => navigate("/")} color="inherit">
                 Dashboard
               </Button>
               {user && user.Role === Role.Admin && (
                 <>
-                  <Button href="/admin" color="inherit">
+                  <Button onClick={() => navigate("/admin")} color="inherit">
                     Admin
                   </Button>
-                  <Button href="/admin/ingest" color="inherit">
+                  <Button
+                    onClick={() => navigate("/admin/ingest")}
+                    color="inherit"
+                  >
                     Ingest VMs
                   </Button>
                 </>
