@@ -246,11 +246,11 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
 	}
-	// Must maintain at least one user in the database
-	if userCount, err := r.client.User.Query().Count(ctx); err != nil {
+	// Must maintain at least one admin user in the database
+	if userCount, err := r.client.User.Query().Where(user.RoleEQ(user.RoleADMIN)).Count(ctx); err != nil {
 		return false, fmt.Errorf("failed to count users: %v", err)
 	} else if userCount <= 1 {
-		return false, fmt.Errorf("at least one user must exist")
+		return false, fmt.Errorf("at least one admin user must exist")
 	}
 	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
 	if err != nil {
@@ -602,6 +602,11 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 	providerUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	if competitionCount, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).QueryProviderToCompetition().Count(ctx); err != nil {
+		return false, fmt.Errorf("failed to query competitions from provider")
+	} else if competitionCount > 0 {
+		return false, fmt.Errorf("cannot delete provider while competitions actively reference it")
 	}
 	_, err = r.client.Provider.Delete().Where(provider.IDEQ(providerUuid)).Exec(ctx)
 	if err != nil {
