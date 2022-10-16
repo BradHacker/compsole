@@ -397,6 +397,13 @@ export type LockoutCompetitionMutationVariables = Exact<{
 
 export type LockoutCompetitionMutation = { __typename?: 'Mutation', lockoutCompetition: boolean };
 
+export type DeleteCompetitionMutationVariables = Exact<{
+  competitionId: Scalars['ID'];
+}>;
+
+
+export type DeleteCompetitionMutation = { __typename?: 'Mutation', deleteCompetition: boolean };
+
 export type ProviderFragmentFragment = { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string };
 
 export type ListProvidersQueryVariables = Exact<{ [key: string]: never; }>;
@@ -440,6 +447,13 @@ export type CreateProviderMutationVariables = Exact<{
 
 export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
 
+export type DeleteProviderMutationVariables = Exact<{
+  providerId: Scalars['ID'];
+}>;
+
+
+export type DeleteProviderMutation = { __typename?: 'Mutation', deleteProvider: boolean };
+
 export type TeamFragmentFragment = { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } };
 
 export type ListTeamsQueryVariables = Exact<{ [key: string]: never; }>;
@@ -474,6 +488,13 @@ export type BatchCreateTeamsMutationVariables = Exact<{
 
 
 export type BatchCreateTeamsMutation = { __typename?: 'Mutation', batchCreateTeams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
+
+export type DeleteTeamMutationVariables = Exact<{
+  teamId: Scalars['ID'];
+}>;
+
+
+export type DeleteTeamMutation = { __typename?: 'Mutation', deleteTeam: boolean };
 
 export type UserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role };
 
@@ -517,6 +538,13 @@ export type ChangePasswordMutationVariables = Exact<{
 
 
 export type ChangePasswordMutation = { __typename?: 'Mutation', changePassword: boolean };
+
+export type DeleteUserMutationVariables = Exact<{
+  userId: Scalars['ID'];
+}>;
+
+
+export type DeleteUserMutation = { __typename?: 'Mutation', deleteUser: boolean };
 
 export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
 
@@ -602,6 +630,13 @@ export type LockoutSubscriptionVariables = Exact<{
 
 
 export type LockoutSubscription = { __typename?: 'Subscription', lockout: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+
+export type DeleteVmObjectMutationVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type DeleteVmObjectMutation = { __typename?: 'Mutation', deleteVmObject: boolean };
 
 export const CompetitionFragmentFragmentDoc = gql`
     fragment CompetitionFragment on Competition {
@@ -887,6 +922,37 @@ export function useLockoutCompetitionMutation(baseOptions?: Apollo.MutationHookO
 export type LockoutCompetitionMutationHookResult = ReturnType<typeof useLockoutCompetitionMutation>;
 export type LockoutCompetitionMutationResult = Apollo.MutationResult<LockoutCompetitionMutation>;
 export type LockoutCompetitionMutationOptions = Apollo.BaseMutationOptions<LockoutCompetitionMutation, LockoutCompetitionMutationVariables>;
+export const DeleteCompetitionDocument = gql`
+    mutation DeleteCompetition($competitionId: ID!) {
+  deleteCompetition(id: $competitionId)
+}
+    `;
+export type DeleteCompetitionMutationFn = Apollo.MutationFunction<DeleteCompetitionMutation, DeleteCompetitionMutationVariables>;
+
+/**
+ * __useDeleteCompetitionMutation__
+ *
+ * To run a mutation, you first call `useDeleteCompetitionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCompetitionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCompetitionMutation, { data, loading, error }] = useDeleteCompetitionMutation({
+ *   variables: {
+ *      competitionId: // value for 'competitionId'
+ *   },
+ * });
+ */
+export function useDeleteCompetitionMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCompetitionMutation, DeleteCompetitionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCompetitionMutation, DeleteCompetitionMutationVariables>(DeleteCompetitionDocument, options);
+      }
+export type DeleteCompetitionMutationHookResult = ReturnType<typeof useDeleteCompetitionMutation>;
+export type DeleteCompetitionMutationResult = Apollo.MutationResult<DeleteCompetitionMutation>;
+export type DeleteCompetitionMutationOptions = Apollo.BaseMutationOptions<DeleteCompetitionMutation, DeleteCompetitionMutationVariables>;
 export const ListProvidersDocument = gql`
     query ListProviders {
   providers {
@@ -1093,6 +1159,37 @@ export function useCreateProviderMutation(baseOptions?: Apollo.MutationHookOptio
 export type CreateProviderMutationHookResult = ReturnType<typeof useCreateProviderMutation>;
 export type CreateProviderMutationResult = Apollo.MutationResult<CreateProviderMutation>;
 export type CreateProviderMutationOptions = Apollo.BaseMutationOptions<CreateProviderMutation, CreateProviderMutationVariables>;
+export const DeleteProviderDocument = gql`
+    mutation DeleteProvider($providerId: ID!) {
+  deleteProvider(id: $providerId)
+}
+    `;
+export type DeleteProviderMutationFn = Apollo.MutationFunction<DeleteProviderMutation, DeleteProviderMutationVariables>;
+
+/**
+ * __useDeleteProviderMutation__
+ *
+ * To run a mutation, you first call `useDeleteProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteProviderMutation, { data, loading, error }] = useDeleteProviderMutation({
+ *   variables: {
+ *      providerId: // value for 'providerId'
+ *   },
+ * });
+ */
+export function useDeleteProviderMutation(baseOptions?: Apollo.MutationHookOptions<DeleteProviderMutation, DeleteProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteProviderMutation, DeleteProviderMutationVariables>(DeleteProviderDocument, options);
+      }
+export type DeleteProviderMutationHookResult = ReturnType<typeof useDeleteProviderMutation>;
+export type DeleteProviderMutationResult = Apollo.MutationResult<DeleteProviderMutation>;
+export type DeleteProviderMutationOptions = Apollo.BaseMutationOptions<DeleteProviderMutation, DeleteProviderMutationVariables>;
 export const ListTeamsDocument = gql`
     query ListTeams {
   teams {
@@ -1261,6 +1358,37 @@ export function useBatchCreateTeamsMutation(baseOptions?: Apollo.MutationHookOpt
 export type BatchCreateTeamsMutationHookResult = ReturnType<typeof useBatchCreateTeamsMutation>;
 export type BatchCreateTeamsMutationResult = Apollo.MutationResult<BatchCreateTeamsMutation>;
 export type BatchCreateTeamsMutationOptions = Apollo.BaseMutationOptions<BatchCreateTeamsMutation, BatchCreateTeamsMutationVariables>;
+export const DeleteTeamDocument = gql`
+    mutation DeleteTeam($teamId: ID!) {
+  deleteTeam(id: $teamId)
+}
+    `;
+export type DeleteTeamMutationFn = Apollo.MutationFunction<DeleteTeamMutation, DeleteTeamMutationVariables>;
+
+/**
+ * __useDeleteTeamMutation__
+ *
+ * To run a mutation, you first call `useDeleteTeamMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteTeamMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteTeamMutation, { data, loading, error }] = useDeleteTeamMutation({
+ *   variables: {
+ *      teamId: // value for 'teamId'
+ *   },
+ * });
+ */
+export function useDeleteTeamMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTeamMutation, DeleteTeamMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteTeamMutation, DeleteTeamMutationVariables>(DeleteTeamDocument, options);
+      }
+export type DeleteTeamMutationHookResult = ReturnType<typeof useDeleteTeamMutation>;
+export type DeleteTeamMutationResult = Apollo.MutationResult<DeleteTeamMutation>;
+export type DeleteTeamMutationOptions = Apollo.BaseMutationOptions<DeleteTeamMutation, DeleteTeamMutationVariables>;
 export const GetCurrentUserDocument = gql`
     query GetCurrentUser {
   me {
@@ -1462,6 +1590,37 @@ export function useChangePasswordMutation(baseOptions?: Apollo.MutationHookOptio
 export type ChangePasswordMutationHookResult = ReturnType<typeof useChangePasswordMutation>;
 export type ChangePasswordMutationResult = Apollo.MutationResult<ChangePasswordMutation>;
 export type ChangePasswordMutationOptions = Apollo.BaseMutationOptions<ChangePasswordMutation, ChangePasswordMutationVariables>;
+export const DeleteUserDocument = gql`
+    mutation DeleteUser($userId: ID!) {
+  deleteUser(id: $userId)
+}
+    `;
+export type DeleteUserMutationFn = Apollo.MutationFunction<DeleteUserMutation, DeleteUserMutationVariables>;
+
+/**
+ * __useDeleteUserMutation__
+ *
+ * To run a mutation, you first call `useDeleteUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteUserMutation, { data, loading, error }] = useDeleteUserMutation({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useDeleteUserMutation(baseOptions?: Apollo.MutationHookOptions<DeleteUserMutation, DeleteUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteUserMutation, DeleteUserMutationVariables>(DeleteUserDocument, options);
+      }
+export type DeleteUserMutationHookResult = ReturnType<typeof useDeleteUserMutation>;
+export type DeleteUserMutationResult = Apollo.MutationResult<DeleteUserMutation>;
+export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<DeleteUserMutation, DeleteUserMutationVariables>;
 export const MyVmObjectsDocument = gql`
     query MyVmObjects {
   myVmObjects {
@@ -1854,3 +2013,34 @@ export function useLockoutSubscription(baseOptions: Apollo.SubscriptionHookOptio
       }
 export type LockoutSubscriptionHookResult = ReturnType<typeof useLockoutSubscription>;
 export type LockoutSubscriptionResult = Apollo.SubscriptionResult<LockoutSubscription>;
+export const DeleteVmObjectDocument = gql`
+    mutation DeleteVmObject($vmObjectId: ID!) {
+  deleteVmObject(id: $vmObjectId)
+}
+    `;
+export type DeleteVmObjectMutationFn = Apollo.MutationFunction<DeleteVmObjectMutation, DeleteVmObjectMutationVariables>;
+
+/**
+ * __useDeleteVmObjectMutation__
+ *
+ * To run a mutation, you first call `useDeleteVmObjectMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteVmObjectMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteVmObjectMutation, { data, loading, error }] = useDeleteVmObjectMutation({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function useDeleteVmObjectMutation(baseOptions?: Apollo.MutationHookOptions<DeleteVmObjectMutation, DeleteVmObjectMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteVmObjectMutation, DeleteVmObjectMutationVariables>(DeleteVmObjectDocument, options);
+      }
+export type DeleteVmObjectMutationHookResult = ReturnType<typeof useDeleteVmObjectMutation>;
+export type DeleteVmObjectMutationResult = Apollo.MutationResult<DeleteVmObjectMutation>;
+export type DeleteVmObjectMutationOptions = Apollo.BaseMutationOptions<DeleteVmObjectMutation, DeleteVmObjectMutationVariables>;

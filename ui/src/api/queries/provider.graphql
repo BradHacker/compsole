@@ -40,3 +40,7 @@ mutation CreateProvider($provider: ProviderInput!) {
     ...ProviderFragment
   }
 }
+
+mutation DeleteProvider($providerId: ID!) {
+  deleteProvider(id: $providerId)
+}

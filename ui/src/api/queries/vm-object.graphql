@@ -76,3 +76,7 @@ subscription Lockout($vmObjectId: ID!) {
     ...VmObjectFragment
   }
 }
+
+mutation DeleteVmObject($vmObjectId: ID!) {
+  deleteVmObject(id: $vmObjectId)
+}

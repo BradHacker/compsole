@@ -52,3 +52,7 @@ mutation CreateCompetition($competition: CompetitionInput!) {
 mutation LockoutCompetition($competitionId: ID!, $locked: Boolean!) {
   lockoutCompetition(id: $competitionId, locked: $locked)
 }
+
+mutation DeleteCompetition($competitionId: ID!) {
+  deleteCompetition(id: $competitionId)
+}
