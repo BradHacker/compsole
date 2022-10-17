@@ -1,5 +1,4 @@
 import {
-  ArrowBack,
   ArrowBackTwoTone,
   LockOpenTwoTone,
   LockTwoTone,
@@ -57,11 +56,8 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       error: createCompetitionError,
     },
   ] = useCreateCompetitionMutation();
-  const {
-    data: listProvidersData,
-    loading: listProvidersLoading,
-    error: listProvidersError,
-  } = useListProvidersQuery();
+  const { data: listProvidersData, error: listProvidersError } =
+    useListProvidersQuery();
   const [
     lockoutCompetition,
     {
@@ -88,7 +84,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
           id,
         },
       });
-  }, [id]);
+  }, [id, getCompetition]);
 
   useEffect(() => {
     if (!updateCompetitionLoading && updateCompetitionData)
@@ -118,6 +114,8 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
     updateCompetitionLoading,
     createCompetitionData,
     createCompetitionLoading,
+    enqueueSnackbar,
+    navigate,
   ]);
 
   useEffect(() => {
@@ -154,6 +152,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
     updateCompetitionError,
     createCompetitionError,
     listProvidersError,
+    enqueueSnackbar,
   ]);
 
   useEffect(() => {
@@ -191,7 +190,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       enqueueSnackbar("Competition lockout updated", {
         variant: "success",
       });
-  }, [lockoutCompetitionData, lockoutCompetitionError]);
+  }, [lockoutCompetitionData, lockoutCompetitionError, enqueueSnackbar]);
 
   const submitCompetition = () => {
     if (competition.ID)

@@ -1,4 +1,4 @@
-import { ArrowBack, ArrowBackTwoTone, Save } from "@mui/icons-material";
+import { ArrowBackTwoTone, Save } from "@mui/icons-material";
 import {
   Container,
   TextField,
@@ -34,11 +34,8 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
       error: getVmObjectError,
     },
   ] = useGetVmObjectLazyQuery();
-  const {
-    data: getCompTeamData,
-    loading: getCompTeamLoading,
-    error: getCompTeamError,
-  } = useGetCompTeamSearchValuesQuery();
+  const { data: getCompTeamData, error: getCompTeamError } =
+    useGetCompTeamSearchValuesQuery();
   const [
     updateVmObject,
     {
@@ -75,7 +72,14 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
           vmObjectId: id,
         },
       });
-  }, [id]);
+  }, [id, getVmObject]);
+
+  useEffect(() => {
+    if (getCompTeamError)
+      enqueueSnackbar(
+        `Couldn't get competitions and teams: ${getCompTeamError.message}`
+      );
+  }, [getCompTeamError, enqueueSnackbar]);
 
   useEffect(() => {
     if (!updateVmObjectLoading && updateVmObjectData)
@@ -105,6 +109,8 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
     updateVmObjectLoading,
     createVmObjectData,
     createVmObjectLoading,
+    enqueueSnackbar,
+    navigate,
   ]);
 
   useEffect(() => {
@@ -126,7 +132,12 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [getVmObjectError, updateVmObjectError, createVmObjectError]);
+  }, [
+    getVmObjectError,
+    updateVmObjectError,
+    createVmObjectError,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (getVmObjectData) {

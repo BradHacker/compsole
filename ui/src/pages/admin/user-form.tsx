@@ -1,8 +1,5 @@
-import { FetchResult } from "@apollo/client";
 import {
-  AdminPanelSettings,
   AdminPanelSettingsTwoTone,
-  ArrowBack,
   ArrowBackTwoTone,
   LockResetTwoTone,
   Save,
@@ -12,11 +9,6 @@ import {
   Container,
   ToggleButtonGroup,
   ToggleButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  ListSubheader,
   TextField,
   Typography,
   Divider,
@@ -32,7 +24,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   GetCompTeamSearchValuesQuery,
-  Provider,
   Role,
   useCreateUserMutation,
   useGetCompTeamSearchValuesQuery,
@@ -51,7 +42,6 @@ export const UserForm: React.FC = (): React.ReactElement => {
   ] = useGetUserLazyQuery();
   const {
     data: getCompTeamSearchValuesData,
-    loading: getCompTeamSearchValuesLoading,
     error: getCompTeamSearchValuesError,
   } = useGetCompTeamSearchValuesQuery();
   const [
@@ -102,7 +92,14 @@ export const UserForm: React.FC = (): React.ReactElement => {
           id,
         },
       });
-  }, [id]);
+  }, [id, getUser]);
+
+  useEffect(() => {
+    if (getCompTeamSearchValuesError)
+      enqueueSnackbar(
+        `Couldn't get competitions and teams: ${getCompTeamSearchValuesError.message}`
+      );
+  }, [getCompTeamSearchValuesError, enqueueSnackbar]);
 
   useEffect(() => {
     if (!updateUserLoading && updateUserData)
@@ -132,6 +129,8 @@ export const UserForm: React.FC = (): React.ReactElement => {
     createUserLoading,
     changePasswordData,
     changePasswordLoading,
+    enqueueSnackbar,
+    navigate,
   ]);
 
   useEffect(() => {
@@ -154,7 +153,13 @@ export const UserForm: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [getUserError, updateUserError, createUserError, changePasswordError]);
+  }, [
+    getUserError,
+    updateUserError,
+    createUserError,
+    changePasswordError,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (getUserData) {
@@ -195,7 +200,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
   };
 
   const submitPasswordChange = () => {
-    if (newPassword != confirmPassword) {
+    if (newPassword !== confirmPassword) {
       enqueueSnackbar("Confirm Password must match New Password", {
         variant: "error",
       });
@@ -311,7 +316,19 @@ export const UserForm: React.FC = (): React.ReactElement => {
           </ToggleButton>
         </ToggleButtonGroup>
         <Autocomplete
-          options={getCompTeamSearchValuesData?.teams ?? []}
+          options={
+            [...(getCompTeamSearchValuesData?.teams || [])].sort((a, b) =>
+              `${a.TeamToCompetition.Name}${String(a.TeamNumber).padStart(
+                2,
+                "0"
+              )}`.localeCompare(
+                `${b.TeamToCompetition.Name}${String(b.TeamNumber).padStart(
+                  2,
+                  "0"
+                )}`
+              )
+            ) ?? []
+          }
           groupBy={(t) => t.TeamToCompetition?.Name ?? "N/A"}
           getOptionLabel={(t) =>
             `${t.TeamToCompetition.Name} - ${t.Name || `Team ${t.TeamNumber}`}`
