@@ -274,7 +274,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.TeamToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   team.TeamToCompetitionTable,
 			Columns: []string{team.TeamToCompetitionColumn},
 			Bidi:    false,
@@ -290,7 +290,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.TeamToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   team.TeamToCompetitionTable,
 			Columns: []string{team.TeamToCompetitionColumn},
 			Bidi:    false,
@@ -309,7 +309,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.TeamToVmObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -325,7 +325,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.RemovedTeamToVmObjectsIDs(); len(nodes) > 0 && !tu.mutation.TeamToVmObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -344,7 +344,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.TeamToVmObjectsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -363,7 +363,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.TeamToUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,
@@ -379,7 +379,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.RemovedTeamToUsersIDs(); len(nodes) > 0 && !tu.mutation.TeamToUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,
@@ -398,7 +398,7 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.TeamToUsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,
@@ -700,7 +700,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if tuo.mutation.TeamToCompetitionCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   team.TeamToCompetitionTable,
 			Columns: []string{team.TeamToCompetitionColumn},
 			Bidi:    false,
@@ -716,7 +716,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if nodes := tuo.mutation.TeamToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   team.TeamToCompetitionTable,
 			Columns: []string{team.TeamToCompetitionColumn},
 			Bidi:    false,
@@ -735,7 +735,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if tuo.mutation.TeamToVmObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -751,7 +751,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if nodes := tuo.mutation.RemovedTeamToVmObjectsIDs(); len(nodes) > 0 && !tuo.mutation.TeamToVmObjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -770,7 +770,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if nodes := tuo.mutation.TeamToVmObjectsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -789,7 +789,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if tuo.mutation.TeamToUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,
@@ -805,7 +805,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if nodes := tuo.mutation.RemovedTeamToUsersIDs(); len(nodes) > 0 && !tuo.mutation.TeamToUsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,
@@ -824,7 +824,7 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	if nodes := tuo.mutation.TeamToUsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,

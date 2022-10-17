@@ -2,11 +2,9 @@ import {
   ArrowDropDown,
   Autorenew,
   LockTwoTone,
-  PowerInput,
   PowerOff,
   PowerSettingsNew,
   RestartAlt,
-  Terminal,
 } from "@mui/icons-material";
 import {
   Button,
@@ -61,20 +59,16 @@ export const Console: React.FC = (): React.ReactElement => {
     },
   ] = useGetVmConsoleLazyQuery();
   let [consoleUrl, setConsoleUrl] = useState<string>("");
-  let {
-    data: lockoutData,
-    loading: lockoutLoading,
-    error: lockoutError,
-  } = useLockoutSubscription({
+  let { data: lockoutData, error: lockoutError } = useLockoutSubscription({
     variables: {
       vmObjectId: id || "",
     },
   });
   const { enqueueSnackbar } = useSnackbar();
-  const [consoleType, setConsoleType] = useState<ConsoleType>(
+  const [consoleType, _setConsoleType] = useState<ConsoleType>(
     ConsoleType.Novnc
   );
-  const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false);
+  const [fullscreenConsole, _setFullscreenConsole] = useState<boolean>(false);
   const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = React.useState(false);
   const rebootTypeMenuAnchorRef = React.useRef<HTMLButtonElement>(null);
   const options = [
@@ -208,7 +202,7 @@ export const Console: React.FC = (): React.ReactElement => {
         },
       });
     }
-  }, [id]);
+  }, [id, getVmObject]);
 
   useEffect(() => {
     if (
@@ -221,7 +215,19 @@ export const Console: React.FC = (): React.ReactElement => {
           consoleType,
         },
       });
-      handleRefreshConsoleClick();
+      getVmConsoleRefetch({
+        vmObjectId: id,
+        consoleType,
+      }).then(
+        () =>
+          enqueueSnackbar("Refreshed Console", {
+            variant: "success",
+          }),
+        (err) =>
+          enqueueSnackbar(`Failed to Refresh Console: ${err}`, {
+            variant: "error",
+          })
+      );
       enqueueSnackbar("VM Unlocked", {
         variant: "success",
         autoHideDuration: 2000,
@@ -231,7 +237,15 @@ export const Console: React.FC = (): React.ReactElement => {
         variant: "warning",
         autoHideDuration: 2000,
       });
-  }, [getVmObjectData, consoleType]);
+  }, [
+    id,
+    getVmObjectData,
+    consoleType,
+    user,
+    getVmConsole,
+    getVmConsoleRefetch,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (getVmObjectError)
@@ -254,13 +268,34 @@ export const Console: React.FC = (): React.ReactElement => {
       enqueueSnackbar(powerOffVmError.message, {
         variant: "error",
       });
+    if (lockoutError)
+      enqueueSnackbar(lockoutError.message, {
+        variant: "error",
+      });
   }, [
     getVmObjectError,
     getVmConsoleError,
     rebootVmError,
     powerOnVmError,
     powerOffVmError,
+    lockoutError,
+    enqueueSnackbar,
   ]);
+
+  useEffect(() => {
+    if (rebootVmData?.reboot)
+      enqueueSnackbar("Rebooted VM.", {
+        variant: "success",
+      });
+    if (powerOffVmData?.powerOff)
+      enqueueSnackbar("Powered Off VM.", {
+        variant: "success",
+      });
+    if (powerOnVmData?.powerOn)
+      enqueueSnackbar("Powered On VM.", {
+        variant: "success",
+      });
+  }, [rebootVmData, powerOnVmData, powerOffVmData, enqueueSnackbar]);
 
   useEffect(() => {
     console.log(lockoutData?.lockout.Locked);
@@ -275,7 +310,7 @@ export const Console: React.FC = (): React.ReactElement => {
         vmObjectId: getVmObjectData.vmObject.ID,
       });
     }
-  }, [lockoutData, getVmObjectData]);
+  }, [lockoutData, getVmObjectData, refetchVmObject, enqueueSnackbar]);
 
   useEffect(() => {
     if (getVmConsoleData) setConsoleUrl(getVmConsoleData.console);
@@ -484,6 +519,7 @@ export const Console: React.FC = (): React.ReactElement => {
       ) : (
         <iframe
           id="console"
+          title="console"
           src={consoleUrl}
           style={
             fullscreenConsole

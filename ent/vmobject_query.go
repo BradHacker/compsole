@@ -79,7 +79,7 @@ func (voq *VmObjectQuery) QueryVmObjectToTeam() *TeamQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(vmobject.Table, vmobject.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, vmobject.VmObjectToTeamTable, vmobject.VmObjectToTeamColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, vmobject.VmObjectToTeamTable, vmobject.VmObjectToTeamColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(voq.driver.Dialect(), step)
 		return fromU, nil
@@ -301,7 +301,6 @@ func (voq *VmObjectQuery) WithVmObjectToTeam(opts ...func(*TeamQuery)) *VmObject
 //		GroupBy(vmobject.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (voq *VmObjectQuery) GroupBy(field string, fields ...string) *VmObjectGroupBy {
 	group := &VmObjectGroupBy{config: voq.config}
 	group.fields = append([]string{field}, fields...)
@@ -326,7 +325,6 @@ func (voq *VmObjectQuery) GroupBy(field string, fields ...string) *VmObjectGroup
 //	client.VmObject.Query().
 //		Select(vmobject.FieldName).
 //		Scan(ctx, &v)
-//
 func (voq *VmObjectQuery) Select(fields ...string) *VmObjectSelect {
 	voq.fields = append(voq.fields, fields...)
 	return &VmObjectSelect{VmObjectQuery: voq}
@@ -387,10 +385,10 @@ func (voq *VmObjectQuery) sqlAll(ctx context.Context) ([]*VmObject, error) {
 		ids := make([]uuid.UUID, 0, len(nodes))
 		nodeids := make(map[uuid.UUID][]*VmObject)
 		for i := range nodes {
-			if nodes[i].vm_object_vm_object_to_team == nil {
+			if nodes[i].team_team_to_vm_objects == nil {
 				continue
 			}
-			fk := *nodes[i].vm_object_vm_object_to_team
+			fk := *nodes[i].team_team_to_vm_objects
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -404,7 +402,7 @@ func (voq *VmObjectQuery) sqlAll(ctx context.Context) ([]*VmObject, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "vm_object_vm_object_to_team" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_vm_objects" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.VmObjectToTeam = n

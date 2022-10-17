@@ -216,7 +216,7 @@ func HasCompetitionToTeams() predicate.Competition {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(CompetitionToTeamsTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, CompetitionToTeamsTable, CompetitionToTeamsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, CompetitionToTeamsTable, CompetitionToTeamsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -228,7 +228,7 @@ func HasCompetitionToTeamsWith(preds ...predicate.Team) predicate.Competition {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(CompetitionToTeamsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, CompetitionToTeamsTable, CompetitionToTeamsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, CompetitionToTeamsTable, CompetitionToTeamsColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

@@ -190,7 +190,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if cu.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,
@@ -206,7 +206,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := cu.mutation.RemovedCompetitionToTeamsIDs(); len(nodes) > 0 && !cu.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,
@@ -225,7 +225,7 @@ func (cu *CompetitionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := cu.mutation.CompetitionToTeamsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,
@@ -479,7 +479,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 	if cuo.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,
@@ -495,7 +495,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 	if nodes := cuo.mutation.RemovedCompetitionToTeamsIDs(); len(nodes) > 0 && !cuo.mutation.CompetitionToTeamsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,
@@ -514,7 +514,7 @@ func (cuo *CompetitionUpdateOne) sqlSave(ctx context.Context) (_node *Competitio
 	if nodes := cuo.mutation.CompetitionToTeamsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,

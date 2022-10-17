@@ -82,7 +82,7 @@ func (cq *CompetitionQuery) QueryCompetitionToTeams() *TeamQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(competition.Table, competition.FieldID, selector),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, competition.CompetitionToTeamsTable, competition.CompetitionToTeamsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, competition.CompetitionToTeamsTable, competition.CompetitionToTeamsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
 		return fromU, nil
@@ -338,7 +338,6 @@ func (cq *CompetitionQuery) WithCompetitionToProvider(opts ...func(*ProviderQuer
 //		GroupBy(competition.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (cq *CompetitionQuery) GroupBy(field string, fields ...string) *CompetitionGroupBy {
 	group := &CompetitionGroupBy{config: cq.config}
 	group.fields = append([]string{field}, fields...)
@@ -363,7 +362,6 @@ func (cq *CompetitionQuery) GroupBy(field string, fields ...string) *Competition
 //	client.Competition.Query().
 //		Select(competition.FieldName).
 //		Scan(ctx, &v)
-//
 func (cq *CompetitionQuery) Select(fields ...string) *CompetitionSelect {
 	cq.fields = append(cq.fields, fields...)
 	return &CompetitionSelect{CompetitionQuery: cq}
@@ -438,13 +436,13 @@ func (cq *CompetitionQuery) sqlAll(ctx context.Context) ([]*Competition, error) 
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.team_team_to_competition
+			fk := n.competition_competition_to_teams
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "team_team_to_competition" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "competition_competition_to_teams" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "team_team_to_competition" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "competition_competition_to_teams" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.CompetitionToTeams = append(node.Edges.CompetitionToTeams, n)
 		}

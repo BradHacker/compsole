@@ -1,29 +1,18 @@
-import {
-  CloudDownload,
-  CloudDownloadTwoTone,
-  Save,
-  SaveAlt,
-} from "@mui/icons-material";
+import { CloudDownload, Save } from "@mui/icons-material";
 import {
   Container,
   TextField,
   Typography,
   Divider,
-  Skeleton,
   Autocomplete,
-  Fab,
   CircularProgress,
   Button,
-  Checkbox,
-  FormControlLabel,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
-  Avatar,
   List,
   ListItem,
-  ListItemAvatar,
   ListItemText,
 } from "@mui/material";
 import { Box } from "@mui/system";
@@ -43,7 +32,6 @@ import {
 export const IngestVMs: React.FC = (): React.ReactElement => {
   const {
     data: listCompetitionsData,
-    loading: listCompetitionsLoading,
     error: listCompetitionsError,
     refetch: refetchListCompetitions,
   } = useListCompetitionsQuery();
@@ -74,13 +62,26 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
   const [selectedCompetition, setSelectedCompetition] = useState<
     ListCompetitionsQuery["competitions"][0] | null
   >(null);
-  const [shouldCreateTeams, setShouldCreateTeams] = useState<boolean>(false);
   const [numberOfTeams, setNumberOfTeams] = useState<string>("1");
   const [teamAssignments, setTeamAssignments] = useState<{
     [key: string]: string;
   }>({});
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (listCompetitionsError)
+      enqueueSnackbar(
+        `Couldn't get competitions: ${listCompetitionsError.message}`,
+        {
+          variant: "error",
+        }
+      );
+    if (listProviderVmsError)
+      enqueueSnackbar(`Couldn't get vms: ${listProviderVmsError.message}`, {
+        variant: "error",
+      });
+  }, [listCompetitionsError, listProviderVmsError, enqueueSnackbar]);
 
   useEffect(() => {
     if (batchCreateTeamsError)
@@ -98,7 +99,13 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       refetchListCompetitions();
       setSelectedCompetition(null);
     }
-  }, [batchCreateTeamsData, batchCreateTeamsError]);
+  }, [
+    batchCreateTeamsData,
+    batchCreateTeamsError,
+    numberOfTeams,
+    refetchListCompetitions,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (batchCreateVmsError)
@@ -114,7 +121,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       });
       navigate("/admin");
     }
-  }, [batchCreateVmsData, batchCreateVmsError]);
+  }, [batchCreateVmsData, batchCreateVmsError, enqueueSnackbar, navigate]);
 
   useEffect(() => {
     if (listProviderVmsData?.listProviderVms) {
@@ -152,7 +159,14 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
         variant: "warning",
       });
     }
-  }, [listProviderVmsData]);
+  }, [
+    listProviderVmsData,
+    numberOfTeams,
+    selectedCompetition,
+    refetchListCompetitions,
+    closeSnackbar,
+    enqueueSnackbar,
+  ]);
 
   const createTeams = () => {
     const teams: TeamInput[] = [
@@ -278,7 +292,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                 variant="filled"
                 value={numberOfTeams}
                 disabled={
-                  batchCreateTeamsLoading || batchCreateTeamsData != undefined
+                  batchCreateTeamsLoading || batchCreateTeamsData !== undefined
                 }
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNumberOfTeams(e.target.value)

@@ -28,6 +28,6 @@ func (VmObject) Fields() []ent.Field {
 // Edges of the VmObject.
 func (VmObject) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("VmObjectToTeam", Team.Type).Unique(),
+		edge.From("VmObjectToTeam", Team.Type).Ref("TeamToVmObjects").Unique(),
 	}
 }

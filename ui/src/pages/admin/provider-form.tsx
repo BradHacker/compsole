@@ -5,7 +5,6 @@ import {
   Typography,
   Divider,
   Skeleton,
-  Autocomplete,
   Fab,
   CircularProgress,
   Button,
@@ -79,7 +78,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           id,
         },
       });
-  }, [id]);
+  }, [id, getProvider]);
 
   useEffect(() => {
     if (!updateProviderLoading && updateProviderData)
@@ -107,6 +106,8 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
     updateProviderLoading,
     createProviderData,
     createProviderLoading,
+    enqueueSnackbar,
+    navigate,
   ]);
 
   useEffect(() => {
@@ -128,7 +129,12 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [getProviderError, updateProviderError]);
+  }, [
+    getProviderError,
+    updateProviderError,
+    createProviderError,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (getProviderData)
@@ -163,20 +169,16 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
     let delayDebounce: NodeJS.Timeout;
     if (provider.Type && provider.Config)
       delayDebounce = setTimeout(() => {
-        validateSyntax();
+        validateConfig({
+          variables: {
+            type: provider.Type,
+            config: provider.Config,
+          },
+          fetchPolicy: "no-cache",
+        });
       }, 1000);
     return () => clearTimeout(delayDebounce);
-  }, [provider]);
-
-  const validateSyntax = () => {
-    validateConfig({
-      variables: {
-        type: provider.Type,
-        config: provider.Config,
-      },
-      fetchPolicy: "no-cache",
-    });
-  };
+  }, [provider, validateConfig]);
 
   return (
     <Container component="main" sx={{ p: 2 }}>
@@ -191,7 +193,11 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
             alignItems: "center",
           }}
         >
-          <Button variant="text" sx={{ mr: 1 }} href="/admin">
+          <Button
+            variant="text"
+            sx={{ mr: 1 }}
+            onClick={() => navigate("/admin")}
+          >
             <ArrowBackTwoTone />
           </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>

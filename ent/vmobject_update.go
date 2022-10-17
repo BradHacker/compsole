@@ -206,7 +206,7 @@ func (vou *VmObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if vou.mutation.VmObjectToTeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   vmobject.VmObjectToTeamTable,
 			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
@@ -222,7 +222,7 @@ func (vou *VmObjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := vou.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   vmobject.VmObjectToTeamTable,
 			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
@@ -458,7 +458,7 @@ func (vouo *VmObjectUpdateOne) sqlSave(ctx context.Context) (_node *VmObject, er
 	if vouo.mutation.VmObjectToTeamCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   vmobject.VmObjectToTeamTable,
 			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,
@@ -474,7 +474,7 @@ func (vouo *VmObjectUpdateOne) sqlSave(ctx context.Context) (_node *VmObject, er
 	if nodes := vouo.mutation.VmObjectToTeamIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   vmobject.VmObjectToTeamTable,
 			Columns: []string{vmobject.VmObjectToTeamColumn},
 			Bidi:    false,

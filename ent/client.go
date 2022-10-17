@@ -131,7 +131,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 //		Competition.
 //		Query().
 //		Count(ctx)
-//
 func (c *Client) Debug() *Client {
 	if c.debug {
 		return c
@@ -252,7 +251,7 @@ func (c *CompetitionClient) QueryCompetitionToTeams(co *Competition) *TeamQuery 
 		step := sqlgraph.NewStep(
 			sqlgraph.From(competition.Table, competition.FieldID, id),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, competition.CompetitionToTeamsTable, competition.CompetitionToTeamsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, competition.CompetitionToTeamsTable, competition.CompetitionToTeamsColumn),
 		)
 		fromV = sqlgraph.Neighbors(co.driver.Dialect(), step)
 		return fromV, nil
@@ -480,7 +479,7 @@ func (c *TeamClient) QueryTeamToCompetition(t *Team) *CompetitionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, team.TeamToCompetitionTable, team.TeamToCompetitionColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -496,7 +495,7 @@ func (c *TeamClient) QueryTeamToVmObjects(t *Team) *VmObjectQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(vmobject.Table, vmobject.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.TeamToVmObjectsTable, team.TeamToVmObjectsColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -512,7 +511,7 @@ func (c *TeamClient) QueryTeamToUsers(t *Team) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, team.TeamToUsersTable, team.TeamToUsersColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.TeamToUsersTable, team.TeamToUsersColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -724,7 +723,7 @@ func (c *UserClient) QueryUserToTeam(u *User) *TeamQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, user.UserToTeamTable, user.UserToTeamColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, user.UserToTeamTable, user.UserToTeamColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -846,7 +845,7 @@ func (c *VmObjectClient) QueryVmObjectToTeam(vo *VmObject) *TeamQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(vmobject.Table, vmobject.FieldID, id),
 			sqlgraph.To(team.Table, team.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, vmobject.VmObjectToTeamTable, vmobject.VmObjectToTeamColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, vmobject.VmObjectToTeamTable, vmobject.VmObjectToTeamColumn),
 		)
 		fromV = sqlgraph.Neighbors(vo.driver.Dialect(), step)
 		return fromV, nil

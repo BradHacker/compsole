@@ -200,7 +200,7 @@ func (cc *CompetitionCreate) createSpec() (*Competition, *sqlgraph.CreateSpec) {
 	if nodes := cc.mutation.CompetitionToTeamsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   competition.CompetitionToTeamsTable,
 			Columns: []string{competition.CompetitionToTeamsColumn},
 			Bidi:    false,

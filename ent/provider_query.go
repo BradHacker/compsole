@@ -301,7 +301,6 @@ func (pq *ProviderQuery) WithProviderToCompetition(opts ...func(*CompetitionQuer
 //		GroupBy(provider.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-//
 func (pq *ProviderQuery) GroupBy(field string, fields ...string) *ProviderGroupBy {
 	group := &ProviderGroupBy{config: pq.config}
 	group.fields = append([]string{field}, fields...)
@@ -326,7 +325,6 @@ func (pq *ProviderQuery) GroupBy(field string, fields ...string) *ProviderGroupB
 //	client.Provider.Query().
 //		Select(provider.FieldName).
 //		Scan(ctx, &v)
-//
 func (pq *ProviderQuery) Select(fields ...string) *ProviderSelect {
 	pq.fields = append(pq.fields, fields...)
 	return &ProviderSelect{ProviderQuery: pq}

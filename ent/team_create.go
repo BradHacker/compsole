@@ -238,7 +238,7 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if nodes := tc.mutation.TeamToCompetitionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   team.TeamToCompetitionTable,
 			Columns: []string{team.TeamToCompetitionColumn},
 			Bidi:    false,
@@ -252,13 +252,13 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_team_to_competition = &nodes[0]
+		_node.competition_competition_to_teams = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := tc.mutation.TeamToVmObjectsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToVmObjectsTable,
 			Columns: []string{team.TeamToVmObjectsColumn},
 			Bidi:    false,
@@ -277,7 +277,7 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if nodes := tc.mutation.TeamToUsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   team.TeamToUsersTable,
 			Columns: []string{team.TeamToUsersColumn},
 			Bidi:    false,

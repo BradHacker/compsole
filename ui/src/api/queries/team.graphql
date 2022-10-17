@@ -37,3 +37,7 @@ mutation BatchCreateTeams($teams: [TeamInput!]!) {
     ...TeamFragment
   }
 }
+
+mutation DeleteTeam($teamId: ID!) {
+  deleteTeam(id: $teamId)
+}

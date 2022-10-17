@@ -25,7 +25,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	CompetitionToTeamsInverseTable = "teams"
 	// CompetitionToTeamsColumn is the table column denoting the CompetitionToTeams relation/edge.
-	CompetitionToTeamsColumn = "team_team_to_competition"
+	CompetitionToTeamsColumn = "competition_competition_to_teams"
 	// CompetitionToProviderTable is the table that holds the CompetitionToProvider relation/edge.
 	CompetitionToProviderTable = "competitions"
 	// CompetitionToProviderInverseTable is the table name for the Provider entity.

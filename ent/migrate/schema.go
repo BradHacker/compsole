@@ -46,7 +46,7 @@ var (
 		{Name: "oid", Type: field.TypeUUID},
 		{Name: "team_number", Type: field.TypeInt},
 		{Name: "name", Type: field.TypeString, Nullable: true},
-		{Name: "team_team_to_competition", Type: field.TypeUUID},
+		{Name: "competition_competition_to_teams", Type: field.TypeUUID},
 	}
 	// TeamsTable holds the schema information for the "teams" table.
 	TeamsTable = &schema.Table{
@@ -55,10 +55,10 @@ var (
 		PrimaryKey: []*schema.Column{TeamsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "teams_competitions_TeamToCompetition",
+				Symbol:     "teams_competitions_CompetitionToTeams",
 				Columns:    []*schema.Column{TeamsColumns[3]},
 				RefColumns: []*schema.Column{CompetitionsColumns[0]},
-				OnDelete:   schema.NoAction,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}
@@ -92,7 +92,7 @@ var (
 		{Name: "last_name", Type: field.TypeString, Default: ""},
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"USER", "ADMIN"}},
 		{Name: "provider", Type: field.TypeEnum, Enums: []string{"LOCAL", "GITLAB"}},
-		{Name: "user_user_to_team", Type: field.TypeUUID, Nullable: true},
+		{Name: "team_team_to_users", Type: field.TypeUUID, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -101,7 +101,7 @@ var (
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "users_teams_UserToTeam",
+				Symbol:     "users_teams_TeamToUsers",
 				Columns:    []*schema.Column{UsersColumns[7]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.SetNull,
@@ -115,7 +115,7 @@ var (
 		{Name: "identifier", Type: field.TypeString},
 		{Name: "ip_addresses", Type: field.TypeJSON, Nullable: true},
 		{Name: "locked", Type: field.TypeBool, Default: false},
-		{Name: "vm_object_vm_object_to_team", Type: field.TypeUUID, Nullable: true},
+		{Name: "team_team_to_vm_objects", Type: field.TypeUUID, Nullable: true},
 	}
 	// VMObjectsTable holds the schema information for the "vm_objects" table.
 	VMObjectsTable = &schema.Table{
@@ -124,10 +124,10 @@ var (
 		PrimaryKey: []*schema.Column{VMObjectsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "vm_objects_teams_VmObjectToTeam",
+				Symbol:     "vm_objects_teams_TeamToVmObjects",
 				Columns:    []*schema.Column{VMObjectsColumns[5]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.Cascade,
 			},
 		},
 	}

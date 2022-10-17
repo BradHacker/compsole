@@ -2,13 +2,11 @@ import { LockTwoTone, Terminal } from "@mui/icons-material";
 import {
   Autocomplete,
   Box,
-  Button,
   Card,
   CardActions,
   CardContent,
   Chip,
   Container,
-  Divider,
   Grid,
   IconButton,
   Skeleton,
@@ -22,14 +20,11 @@ import React, { useContext, useEffect } from "react";
 import {
   AllVmObjectsQuery,
   MyVmObjectsQuery,
-  MyVmObjectsQueryResult,
   Role,
   Team,
   useAllVmObjectsLazyQuery,
   useGetCompTeamSearchValuesLazyQuery,
   useMyVmObjectsLazyQuery,
-  useMyVmObjectsQuery,
-  VmObject,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
 
@@ -123,11 +118,7 @@ export const Dashboard: React.FC = (): React.ReactElement => {
   ] = useAllVmObjectsLazyQuery();
   let [
     getSearchValues,
-    {
-      data: getSearchValuesData,
-      loading: getSearchValuesLoading,
-      error: getSearchValuesError,
-    },
+    { data: getSearchValuesData, error: getSearchValuesError },
   ] = useGetCompTeamSearchValuesLazyQuery();
   const [teamFilter, setTeamFilter] = React.useState<Team | null>(null);
   const [filteredVmObjects, setFilteredVmObjects] = React.useState<
@@ -135,12 +126,12 @@ export const Dashboard: React.FC = (): React.ReactElement => {
   >([]);
 
   useEffect(() => {
-    if (user.Role == Role.User) getMyVmObjects();
-    else if (user.Role == Role.Admin) {
+    if (user.Role === Role.User) getMyVmObjects();
+    else if (user.Role === Role.Admin) {
       getAllVmObjects();
       getSearchValues();
     }
-  }, [user]);
+  }, [user, getMyVmObjects, getAllVmObjects, getSearchValues]);
 
   useEffect(() => {
     if (myVmObjectsError || allVmObjectsError)
@@ -151,7 +142,19 @@ export const Dashboard: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [myVmObjectsError, allVmObjectsError]);
+    if (getSearchValuesError)
+      enqueueSnackbar(
+        `Couldn't get competitions and teams: ${getSearchValuesError.message}`,
+        {
+          variant: "error",
+        }
+      );
+  }, [
+    myVmObjectsError,
+    allVmObjectsError,
+    getSearchValuesError,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (myVmObjectsData?.myVmObjects || allVmObjectsData?.vmObjects) {

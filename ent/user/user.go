@@ -41,7 +41,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "team" package.
 	UserToTeamInverseTable = "teams"
 	// UserToTeamColumn is the table column denoting the UserToTeam relation/edge.
-	UserToTeamColumn = "user_user_to_team"
+	UserToTeamColumn = "team_team_to_users"
 	// UserToTokenTable is the table that holds the UserToToken relation/edge.
 	UserToTokenTable = "tokens"
 	// UserToTokenInverseTable is the table name for the Token entity.
@@ -65,7 +65,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "users"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"user_user_to_team",
+	"team_team_to_users",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

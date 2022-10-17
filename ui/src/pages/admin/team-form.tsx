@@ -1,9 +1,4 @@
-import {
-  ArrowBack,
-  ArrowBackTwoTone,
-  Save,
-  SettingsSystemDaydreamOutlined,
-} from "@mui/icons-material";
+import { ArrowBackTwoTone, Save } from "@mui/icons-material";
 import {
   Container,
   TextField,
@@ -20,12 +15,6 @@ import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  useGetCompetitionLazyQuery,
-  useUpdateCompetitionMutation,
-  CompetitionInput,
-  useListProvidersQuery,
-  ListProvidersQuery,
-  useCreateCompetitionMutation,
   useGetTeamLazyQuery,
   useUpdateTeamMutation,
   useCreateTeamMutation,
@@ -56,11 +45,8 @@ export const TeamForm: React.FC = (): React.ReactElement => {
       error: createTeamError,
     },
   ] = useCreateTeamMutation();
-  const {
-    data: listCompetitionsData,
-    loading: listCompetitionsLoading,
-    error: listCompetitionsError,
-  } = useListCompetitionsQuery();
+  const { data: listCompetitionsData, error: listCompetitionsError } =
+    useListCompetitionsQuery();
   const [team, setTeam] = useState<TeamInput>({
     ID: "",
     Name: "",
@@ -80,7 +66,7 @@ export const TeamForm: React.FC = (): React.ReactElement => {
           id,
         },
       });
-  }, [id]);
+  }, [id, getTeam]);
 
   useEffect(() => {
     if (!updateTeamLoading && updateTeamData)
@@ -96,7 +82,14 @@ export const TeamForm: React.FC = (): React.ReactElement => {
         1000
       );
     }
-  }, [updateTeamData, updateTeamLoading, createTeamData, createTeamLoading]);
+  }, [
+    updateTeamData,
+    updateTeamLoading,
+    createTeamData,
+    createTeamLoading,
+    enqueueSnackbar,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (getTeamError)
@@ -118,7 +111,13 @@ export const TeamForm: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [getTeamError, updateTeamError, createTeamError, listCompetitionsError]);
+  }, [
+    getTeamError,
+    updateTeamError,
+    createTeamError,
+    listCompetitionsError,
+    enqueueSnackbar,
+  ]);
 
   useEffect(() => {
     if (getTeamData) {
@@ -169,7 +168,11 @@ export const TeamForm: React.FC = (): React.ReactElement => {
             alignItems: "center",
           }}
         >
-          <Button variant="text" sx={{ mr: 1 }} href="/admin">
+          <Button
+            variant="text"
+            sx={{ mr: 1 }}
+            onClick={() => navigate("/admin")}
+          >
             <ArrowBackTwoTone />
           </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>

@@ -53,3 +53,7 @@ mutation CreateUser($user: UserInput!) {
 mutation ChangePassword($id: ID!, $newPassword: String!) {
   changePassword(id: $id, password: $newPassword)
 }
+
+mutation DeleteUser($userId: ID!) {
+  deleteUser(id: $userId)
+}
