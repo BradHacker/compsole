@@ -5,6 +5,7 @@ import {
   PowerOff,
   PowerSettingsNew,
   RestartAlt,
+  TerminalTwoTone,
 } from "@mui/icons-material";
 import {
   Button,
@@ -36,6 +37,7 @@ import {
   useRebootVmMutation,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
+import { Box } from "@mui/system";
 
 export const Console: React.FC = (): React.ReactElement => {
   let user = useContext(UserContext);
@@ -68,7 +70,7 @@ export const Console: React.FC = (): React.ReactElement => {
   const [consoleType, _setConsoleType] = useState<ConsoleType>(
     ConsoleType.Novnc
   );
-  const [fullscreenConsole, _setFullscreenConsole] = useState<boolean>(false);
+  const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false);
   const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = React.useState(false);
   const rebootTypeMenuAnchorRef = React.useRef<HTMLButtonElement>(null);
   const options = [
@@ -357,13 +359,14 @@ export const Console: React.FC = (): React.ReactElement => {
           }}
         >
           <ButtonGroup variant="contained">
-            {/* <Button
+            <Button
               size="small"
-              startIcon={<Terminal />}
-              onClick={() => setFullscreenConsole(true)}
+              startIcon={<TerminalTwoTone />}
+              onClick={() => setFullscreenConsole(!fullscreenConsole)}
+              color="secondary"
             >
               Fullscreen
-            </Button> */}
+            </Button>
             <LoadingButton
               color="primary"
               size="small"
@@ -514,28 +517,234 @@ export const Console: React.FC = (): React.ReactElement => {
             <Typography variant="subtitle1">VM is Locked</Typography>
           </Paper>
         ) : (
-          <Skeleton width="100%" height="200" />
+          <Skeleton width="100%" height="800px" />
         )
+      ) : fullscreenConsole ? (
+        <Skeleton width="100%" height="800px" />
       ) : (
         <iframe
           id="console"
           title="console"
           src={consoleUrl}
-          style={
-            fullscreenConsole
-              ? {
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100vw",
-                  height: "100vh",
-                }
-              : {}
-          }
-          width="100%"
-          height="800px"
+          style={{
+            width: "100%",
+            height: "800px",
+          }}
         />
       )}
+      <Box
+        sx={{
+          opacity: fullscreenConsole ? "100%" : 0,
+          position: "absolute",
+          pointerEvents: "none",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.75)",
+          transition: "all 0.5s ease-in-out",
+        }}
+      ></Box>
+      <Box
+        sx={{
+          top: fullscreenConsole ? 0 : "100vh",
+          width: "100vw",
+          height: "100vh",
+          left: 0,
+          position: "absolute",
+          transition: "all 0.3s ease-in-out",
+        }}
+      >
+        <Paper
+          elevation={2}
+          sx={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
+          <Box
+            sx={{
+              height: "3rem",
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              paddingX: 1,
+            }}
+          >
+            <ButtonGroup variant="contained">
+              <Button
+                size="small"
+                startIcon={<TerminalTwoTone />}
+                onClick={() => setFullscreenConsole(!fullscreenConsole)}
+                color="secondary"
+              >
+                Exit
+              </Button>
+              <LoadingButton
+                color="primary"
+                size="small"
+                variant="contained"
+                startIcon={<Autorenew />}
+                loading={
+                  getVmConsoleLoading ||
+                  rebootVmLoading ||
+                  powerOnVmLoading ||
+                  powerOffVmLoading
+                }
+                loadingPosition="start"
+                onClick={handleRefreshConsoleClick}
+                disabled={
+                  !(user.Role === Role.Admin) &&
+                  (lockoutData?.lockout.Locked ||
+                    getVmObjectData?.vmObject.Locked ||
+                    false)
+                }
+              >
+                Refresh Console
+              </LoadingButton>
+              <LoadingButton
+                color="error"
+                size="small"
+                variant="contained"
+                startIcon={<PowerOff />}
+                loading={
+                  rebootVmLoading || powerOnVmLoading || powerOffVmLoading
+                }
+                loadingPosition="start"
+                onClick={handlePowerOffClick}
+                disabled={
+                  !(user.Role === Role.Admin) &&
+                  (lockoutData?.lockout.Locked ||
+                    getVmObjectData?.vmObject.Locked ||
+                    false)
+                }
+              >
+                Shutdown
+              </LoadingButton>
+              <LoadingButton
+                color="success"
+                size="small"
+                variant="contained"
+                startIcon={<PowerSettingsNew />}
+                loading={
+                  rebootVmLoading || powerOnVmLoading || powerOffVmLoading
+                }
+                loadingPosition="start"
+                onClick={handlePowerOnClick}
+                disabled={
+                  !(user.Role === Role.Admin) &&
+                  (lockoutData?.lockout.Locked ||
+                    getVmObjectData?.vmObject.Locked ||
+                    false)
+                }
+              >
+                Power On
+              </LoadingButton>
+              <LoadingButton
+                color="warning"
+                size="small"
+                variant="contained"
+                startIcon={<RestartAlt />}
+                loading={
+                  rebootVmLoading || powerOnVmLoading || powerOffVmLoading
+                }
+                loadingPosition="start"
+                onClick={handleRebootClick}
+                ref={rebootTypeMenuAnchorRef}
+                disabled={
+                  !(user.Role === Role.Admin) &&
+                  (lockoutData?.lockout.Locked ||
+                    getVmObjectData?.vmObject.Locked ||
+                    false)
+                }
+              >
+                {options[selectedRebootType].title}
+              </LoadingButton>
+              <Button
+                color="warning"
+                size="small"
+                aria-controls={
+                  rebootTypeMenuOpen ? "split-button-menu" : undefined
+                }
+                aria-expanded={rebootTypeMenuOpen ? "true" : undefined}
+                aria-label="select merge strategy"
+                aria-haspopup="menu"
+                onClick={handleToggleRebootTypeMenu}
+                disabled={
+                  !(user.Role === Role.Admin) &&
+                  (lockoutData?.lockout.Locked ||
+                    getVmObjectData?.vmObject.Locked ||
+                    false)
+                }
+              >
+                <ArrowDropDown />
+              </Button>
+            </ButtonGroup>
+            <Popper
+              open={rebootTypeMenuOpen}
+              anchorEl={rebootTypeMenuAnchorRef.current}
+              role={undefined}
+              transition
+              disablePortal
+            >
+              {({ TransitionProps, placement }) => (
+                <Grow
+                  {...TransitionProps}
+                  style={{
+                    transformOrigin:
+                      placement === "bottom" ? "center top" : "center bottom",
+                  }}
+                >
+                  <Paper>
+                    <ClickAwayListener onClickAway={handleRebootTypeMenuClose}>
+                      <MenuList id="split-button-menu" autoFocusItem>
+                        {options.map((option, index) => (
+                          <MenuItem
+                            key={option.value}
+                            disabled={index === 2}
+                            selected={index === selectedRebootType}
+                            onClick={(event) =>
+                              handleRebootTypeClick(event, index)
+                            }
+                          >
+                            {option.title}
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </ClickAwayListener>
+                  </Paper>
+                </Grow>
+              )}
+            </Popper>
+          </Box>
+          <Box
+            sx={{
+              height: "calc(100% - 3rem)",
+              width: "100%",
+            }}
+          >
+            {fullscreenConsole ? (
+              <iframe
+                id="console"
+                title="console"
+                src={consoleUrl}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                }}
+              />
+            ) : (
+              <Skeleton width="100%" height="800px" />
+            )}
+          </Box>
+        </Paper>
+      </Box>
     </Container>
   );
 };

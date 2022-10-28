@@ -207,7 +207,7 @@ export const TeamForm: React.FC = (): React.ReactElement => {
         autoComplete="off"
       >
         <TextField
-          label="Name"
+          label="Team Number"
           type="number"
           variant="filled"
           value={team.TeamNumber}

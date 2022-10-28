@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
@@ -157,7 +158,11 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 	if err != nil {
 		return "", fmt.Errorf("failed to create Openstack remote console: %v", err)
 	}
-	return remoteConsole.URL, nil
+	finalURL := remoteConsole.URL
+	if !strings.Contains(finalURL, "scale=true") {
+		finalURL = finalURL + "&scale=true"
+	}
+	return finalURL, nil
 }
 
 func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
