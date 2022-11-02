@@ -159,6 +159,32 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 	return true, provider.PowerOffVM(entVmObject)
 }
 
+// UpdateAccount is the resolver for the updateAccount field.
+func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.AccountInput) (*ent.User, error) {
+	entUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	entUser, err = entUser.Update().SetFirstName(input.FirstName).SetLastName(input.LastName).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update account information: %v", err)
+	}
+	return entUser, nil
+}
+
+// ChangeSelfPassword is the resolver for the changeSelfPassword field.
+func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password string) (bool, error) {
+	entUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	err = entUser.Update().SetPassword(password).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to update self password: %v", err)
+	}
+	return true, nil
+}
+
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
 	usernameExists, err := r.client.User.Query().Where(user.UsernameEQ(input.Username)).Exist(ctx)

@@ -112,6 +112,11 @@ input UserInput {
   UserToTeam: ID
 }
 
+input AccountInput {
+  FirstName: String!
+  LastName: String!
+}
+
 input VmObjectInput {
   ID: ID
   Name: String!
@@ -145,6 +150,8 @@ type Mutation {
   reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
+  updateAccount(input: AccountInput!): User! @hasRole(roles: [ADMIN, USER])
+  changeSelfPassword(password: String!): Boolean! @hasRole(roles: [ADMIN, USER])
   # Admin actions
   #   Users
   createUser(input: UserInput!): User! @hasRole(roles: [ADMIN])

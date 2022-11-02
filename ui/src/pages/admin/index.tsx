@@ -980,7 +980,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
 };
 
 export const Admin: React.FC = (): React.ReactElement => {
-  const user = useContext(UserContext);
+  const { user } = useContext(UserContext);
   return (
     <React.Fragment>
       {user && user.Role === Role.Admin ? (

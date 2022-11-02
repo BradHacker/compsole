@@ -57,3 +57,13 @@ mutation ChangePassword($id: ID!, $newPassword: String!) {
 mutation DeleteUser($userId: ID!) {
   deleteUser(id: $userId)
 }
+
+mutation UpdateAccount($input: AccountInput!) {
+  updateAccount(input: $input) {
+    ...UserFragment
+  }
+}
+
+mutation ChangeSelfPassword($newPassword: String!) {
+  changeSelfPassword(password: $newPassword)
+}

@@ -15,6 +15,11 @@ export type Scalars = {
   Float: number;
 };
 
+export type AccountInput = {
+  FirstName: Scalars['String'];
+  LastName: Scalars['String'];
+};
+
 export enum AuthProvider {
   Gitlab = 'GITLAB',
   Local = 'LOCAL',
@@ -48,6 +53,7 @@ export type Mutation = {
   batchCreateTeams: Array<Team>;
   batchCreateVmObjects: Array<VmObject>;
   changePassword: Scalars['Boolean'];
+  changeSelfPassword: Scalars['Boolean'];
   createCompetition: Competition;
   createProvider: Provider;
   createTeam: Team;
@@ -63,6 +69,7 @@ export type Mutation = {
   powerOff: Scalars['Boolean'];
   powerOn: Scalars['Boolean'];
   reboot: Scalars['Boolean'];
+  updateAccount: User;
   updateCompetition: Competition;
   updateProvider: Provider;
   updateTeam: Team;
@@ -83,6 +90,11 @@ export type MutationBatchCreateVmObjectsArgs = {
 
 export type MutationChangePasswordArgs = {
   id: Scalars['ID'];
+  password: Scalars['String'];
+};
+
+
+export type MutationChangeSelfPasswordArgs = {
   password: Scalars['String'];
 };
 
@@ -162,6 +174,11 @@ export type MutationPowerOnArgs = {
 export type MutationRebootArgs = {
   rebootType: RebootType;
   vmObjectId: Scalars['ID'];
+};
+
+
+export type MutationUpdateAccountArgs = {
+  input: AccountInput;
 };
 
 
@@ -545,6 +562,20 @@ export type DeleteUserMutationVariables = Exact<{
 
 
 export type DeleteUserMutation = { __typename?: 'Mutation', deleteUser: boolean };
+
+export type UpdateAccountMutationVariables = Exact<{
+  input: AccountInput;
+}>;
+
+
+export type UpdateAccountMutation = { __typename?: 'Mutation', updateAccount: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role } };
+
+export type ChangeSelfPasswordMutationVariables = Exact<{
+  newPassword: Scalars['String'];
+}>;
+
+
+export type ChangeSelfPasswordMutation = { __typename?: 'Mutation', changeSelfPassword: boolean };
 
 export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
 
@@ -1621,6 +1652,70 @@ export function useDeleteUserMutation(baseOptions?: Apollo.MutationHookOptions<D
 export type DeleteUserMutationHookResult = ReturnType<typeof useDeleteUserMutation>;
 export type DeleteUserMutationResult = Apollo.MutationResult<DeleteUserMutation>;
 export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<DeleteUserMutation, DeleteUserMutationVariables>;
+export const UpdateAccountDocument = gql`
+    mutation UpdateAccount($input: AccountInput!) {
+  updateAccount(input: $input) {
+    ...UserFragment
+  }
+}
+    ${UserFragmentFragmentDoc}`;
+export type UpdateAccountMutationFn = Apollo.MutationFunction<UpdateAccountMutation, UpdateAccountMutationVariables>;
+
+/**
+ * __useUpdateAccountMutation__
+ *
+ * To run a mutation, you first call `useUpdateAccountMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateAccountMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateAccountMutation, { data, loading, error }] = useUpdateAccountMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateAccountMutation(baseOptions?: Apollo.MutationHookOptions<UpdateAccountMutation, UpdateAccountMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateAccountMutation, UpdateAccountMutationVariables>(UpdateAccountDocument, options);
+      }
+export type UpdateAccountMutationHookResult = ReturnType<typeof useUpdateAccountMutation>;
+export type UpdateAccountMutationResult = Apollo.MutationResult<UpdateAccountMutation>;
+export type UpdateAccountMutationOptions = Apollo.BaseMutationOptions<UpdateAccountMutation, UpdateAccountMutationVariables>;
+export const ChangeSelfPasswordDocument = gql`
+    mutation ChangeSelfPassword($newPassword: String!) {
+  changeSelfPassword(password: $newPassword)
+}
+    `;
+export type ChangeSelfPasswordMutationFn = Apollo.MutationFunction<ChangeSelfPasswordMutation, ChangeSelfPasswordMutationVariables>;
+
+/**
+ * __useChangeSelfPasswordMutation__
+ *
+ * To run a mutation, you first call `useChangeSelfPasswordMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useChangeSelfPasswordMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [changeSelfPasswordMutation, { data, loading, error }] = useChangeSelfPasswordMutation({
+ *   variables: {
+ *      newPassword: // value for 'newPassword'
+ *   },
+ * });
+ */
+export function useChangeSelfPasswordMutation(baseOptions?: Apollo.MutationHookOptions<ChangeSelfPasswordMutation, ChangeSelfPasswordMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ChangeSelfPasswordMutation, ChangeSelfPasswordMutationVariables>(ChangeSelfPasswordDocument, options);
+      }
+export type ChangeSelfPasswordMutationHookResult = ReturnType<typeof useChangeSelfPasswordMutation>;
+export type ChangeSelfPasswordMutationResult = Apollo.MutationResult<ChangeSelfPasswordMutation>;
+export type ChangeSelfPasswordMutationOptions = Apollo.BaseMutationOptions<ChangeSelfPasswordMutation, ChangeSelfPasswordMutationVariables>;
 export const MyVmObjectsDocument = gql`
     query MyVmObjects {
   myVmObjects {

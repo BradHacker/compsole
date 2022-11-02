@@ -26,6 +26,7 @@ import { ProviderForm } from "./pages/admin/provider-form";
 import { IngestVMs } from "./pages/admin/ingest-vms";
 import { VmObjectForm } from "./pages/admin/vm-object-form";
 import { TeamForm } from "./pages/admin/team-form";
+import { Account } from "./pages/account/index";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -95,6 +96,7 @@ root.render(
               <Route path="/" element={<App />}>
                 <Route index element={<Dashboard />} />
                 <Route path="console/:id" element={<Console />} />
+                <Route path="account" element={<Account />} />
                 <Route path="admin" element={<Admin />}>
                   <Route index element={<AdminProtected />} />
                   <Route path="user/new" element={<UserForm />} />

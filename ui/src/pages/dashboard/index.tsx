@@ -98,7 +98,7 @@ const VmCard: React.FC<{
 };
 
 export const Dashboard: React.FC = (): React.ReactElement => {
-  let user = useContext(UserContext);
+  let { user } = useContext(UserContext);
   const { enqueueSnackbar } = useSnackbar();
   let [
     getMyVmObjects,

@@ -40,7 +40,7 @@ import { UserContext } from "../../user-context";
 import { Box } from "@mui/system";
 
 export const Console: React.FC = (): React.ReactElement => {
-  let user = useContext(UserContext);
+  let { user } = useContext(UserContext);
   let { id } = useParams();
   let [
     getVmObject,

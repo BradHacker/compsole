@@ -8,6 +8,11 @@ import (
 	"strconv"
 )
 
+type AccountInput struct {
+	FirstName string `json:"FirstName"`
+	LastName  string `json:"LastName"`
+}
+
 type CompetitionInput struct {
 	ID                    *string `json:"ID"`
 	Name                  string  `json:"Name"`
