@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { MouseEvent, useEffect, useState } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Role, useGetCurrentUserQuery, User } from "./api/generated/graphql";
 import { Loading } from "./pages/loading";
@@ -28,14 +28,20 @@ function App() {
     data: currentUser,
     loading: currentUserLoading,
     error: currentUserError,
+    refetch: refetchCurrentUser,
   } = useGetCurrentUserQuery();
   let navigate = useNavigate();
   let location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   let [user, setUser] = useState<User | null | undefined>();
   let [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] =
+    React.useState<HTMLButtonElement | null>(null);
 
-  let handleOpenUserMenu = () => setUserMenuOpen(true);
+  let handleOpenUserMenu = (e: MouseEvent<HTMLButtonElement>) => {
+    setUserMenuAnchorEl(e.currentTarget);
+    setUserMenuOpen(true);
+  };
   let handleCloseUserMenu = () => setUserMenuOpen(false);
 
   // Ensure the user cannot access protected App without authentication
@@ -49,6 +55,8 @@ function App() {
     else if (!currentUserLoading && !currentUserError && currentUser)
       setUser(currentUser.me);
   }, [currentUser, currentUserLoading, currentUserError, navigate, location]);
+
+  const handleAccountSettings = () => navigate("/account");
 
   const handleSignOut = () => {
     Logout().then(
@@ -67,7 +75,12 @@ function App() {
   };
 
   return !currentUserLoading && user ? (
-    <UserContext.Provider value={user}>
+    <UserContext.Provider
+      value={{
+        user,
+        refetchUser: () => refetchCurrentUser(),
+      }}
+    >
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
           <Toolbar>
@@ -146,6 +159,7 @@ function App() {
                     vertical: "top",
                     horizontal: "right",
                   }}
+                  anchorEl={userMenuAnchorEl}
                   keepMounted
                   transformOrigin={{
                     vertical: "top",
@@ -154,7 +168,12 @@ function App() {
                   open={userMenuOpen}
                   onClose={handleCloseUserMenu}
                 >
-                  <MenuItem onClick={handleCloseUserMenu}>
+                  <MenuItem disabled>
+                    <Typography textAlign="center" sx={{ color: "white" }}>
+                      Hello, {user.FirstName} {user.LastName}
+                    </Typography>
+                  </MenuItem>
+                  <MenuItem onClick={handleAccountSettings}>
                     <SettingsIcon sx={{ mr: 1 }} />
                     <Typography textAlign="left">Account Settings</Typography>
                   </MenuItem>
