@@ -64,6 +64,7 @@ type ComplexityRoot struct {
 		BatchCreateTeams     func(childComplexity int, input []*model.TeamInput) int
 		BatchCreateVMObjects func(childComplexity int, input []*model.VMObjectInput) int
 		ChangePassword       func(childComplexity int, id string, password string) int
+		ChangeSelfPassword   func(childComplexity int, password string) int
 		CreateCompetition    func(childComplexity int, input model.CompetitionInput) int
 		CreateProvider       func(childComplexity int, input model.ProviderInput) int
 		CreateTeam           func(childComplexity int, input model.TeamInput) int
@@ -79,6 +80,7 @@ type ComplexityRoot struct {
 		PowerOff             func(childComplexity int, vmObjectID string) int
 		PowerOn              func(childComplexity int, vmObjectID string) int
 		Reboot               func(childComplexity int, vmObjectID string, rebootType model.RebootType) int
+		UpdateAccount        func(childComplexity int, input model.AccountInput) int
 		UpdateCompetition    func(childComplexity int, input model.CompetitionInput) int
 		UpdateProvider       func(childComplexity int, input model.ProviderInput) int
 		UpdateTeam           func(childComplexity int, input model.TeamInput) int
@@ -159,6 +161,8 @@ type MutationResolver interface {
 	Reboot(ctx context.Context, vmObjectID string, rebootType model.RebootType) (bool, error)
 	PowerOn(ctx context.Context, vmObjectID string) (bool, error)
 	PowerOff(ctx context.Context, vmObjectID string) (bool, error)
+	UpdateAccount(ctx context.Context, input model.AccountInput) (*ent.User, error)
+	ChangeSelfPassword(ctx context.Context, password string) (bool, error)
 	CreateUser(ctx context.Context, input model.UserInput) (*ent.User, error)
 	UpdateUser(ctx context.Context, input model.UserInput) (*ent.User, error)
 	DeleteUser(ctx context.Context, id string) (bool, error)
@@ -297,6 +301,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ChangePassword(childComplexity, args["id"].(string), args["password"].(string)), true
+
+	case "Mutation.changeSelfPassword":
+		if e.complexity.Mutation.ChangeSelfPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changeSelfPassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangeSelfPassword(childComplexity, args["password"].(string)), true
 
 	case "Mutation.createCompetition":
 		if e.complexity.Mutation.CreateCompetition == nil {
@@ -477,6 +493,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Reboot(childComplexity, args["vmObjectId"].(string), args["rebootType"].(model.RebootType)), true
+
+	case "Mutation.updateAccount":
+		if e.complexity.Mutation.UpdateAccount == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAccount_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateAccount(childComplexity, args["input"].(model.AccountInput)), true
 
 	case "Mutation.updateCompetition":
 		if e.complexity.Mutation.UpdateCompetition == nil {
@@ -904,6 +932,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAccountInput,
 		ec.unmarshalInputCompetitionInput,
 		ec.unmarshalInputProviderInput,
 		ec.unmarshalInputTeamInput,
@@ -1100,6 +1129,11 @@ input UserInput {
   UserToTeam: ID
 }
 
+input AccountInput {
+  FirstName: String!
+  LastName: String!
+}
+
 input VmObjectInput {
   ID: ID
   Name: String!
@@ -1133,6 +1167,8 @@ type Mutation {
   reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
+  updateAccount(input: AccountInput!): User! @hasRole(roles: [ADMIN, USER])
+  changeSelfPassword(password: String!): Boolean! @hasRole(roles: [ADMIN, USER])
   # Admin actions
   #   Users
   createUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
@@ -1239,6 +1275,21 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		}
 	}
 	args["password"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_changeSelfPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["password"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg0
 	return args, nil
 }
 
@@ -1491,6 +1542,21 @@ func (ec *executionContext) field_Mutation_reboot_args(ctx context.Context, rawA
 		}
 	}
 	args["rebootType"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateAccount_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.AccountInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNAccountInput2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAccountInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -2219,6 +2285,180 @@ func (ec *executionContext) fieldContext_Mutation_powerOff(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_powerOff_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateAccount(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateAccount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UpdateAccount(rctx, fc.Args["input"].(model.AccountInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*ent.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/ent.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateAccount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_User_ID(ctx, field)
+			case "Username":
+				return ec.fieldContext_User_Username(ctx, field)
+			case "FirstName":
+				return ec.fieldContext_User_FirstName(ctx, field)
+			case "LastName":
+				return ec.fieldContext_User_LastName(ctx, field)
+			case "Role":
+				return ec.fieldContext_User_Role(ctx, field)
+			case "Provider":
+				return ec.fieldContext_User_Provider(ctx, field)
+			case "UserToTeam":
+				return ec.fieldContext_User_UserToTeam(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateAccount_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_changeSelfPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_changeSelfPassword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().ChangeSelfPassword(rctx, fc.Args["password"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_changeSelfPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_changeSelfPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -8618,6 +8858,42 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAccountInput(ctx context.Context, obj interface{}) (model.AccountInput, error) {
+	var it model.AccountInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"FirstName", "LastName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "FirstName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("FirstName"))
+			it.FirstName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "LastName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("LastName"))
+			it.LastName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCompetitionInput(ctx context.Context, obj interface{}) (model.CompetitionInput, error) {
 	var it model.CompetitionInput
 	asMap := map[string]interface{}{}
@@ -9039,6 +9315,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_powerOff(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateAccount":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateAccount(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "changeSelfPassword":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_changeSelfPassword(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -10423,6 +10717,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAccountInput2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAccountInput(ctx context.Context, v interface{}) (model.AccountInput, error) {
+	res, err := ec.unmarshalInputAccountInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) unmarshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx context.Context, v interface{}) (model.AuthProvider, error) {
 	var res model.AuthProvider
