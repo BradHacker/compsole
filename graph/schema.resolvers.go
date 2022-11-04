@@ -11,6 +11,7 @@ import (
 	"github.com/BradHacker/compsole/compsole/providers"
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
@@ -19,6 +20,7 @@ import (
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,6 +34,19 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 	entUser, err := auth.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Reboot\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
 	// Get VM DB object
 	vmObjectUuid, err := uuid.Parse(vmObjectID)
@@ -77,6 +92,19 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"PowerOn\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	vmObjectUuid, err := uuid.Parse(vmObjectID)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse valid uuid from input vmObjectId: %v", err)
@@ -120,6 +148,19 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 	entUser, err := auth.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"PowerOff\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
 	vmObjectUuid, err := uuid.Parse(vmObjectID)
 	if err != nil {
@@ -165,6 +206,19 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.Accoun
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateAccount\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entUser, err = entUser.Update().SetFirstName(input.FirstName).SetLastName(input.LastName).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update account information: %v", err)
@@ -178,6 +232,19 @@ func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password stri
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ChangeSelfPassword\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	err = entUser.Update().SetPassword(password).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to update self password: %v", err)
@@ -187,6 +254,23 @@ func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password stri
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateUser\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	usernameExists, err := r.client.User.Query().Where(user.UsernameEQ(input.Username)).Exist(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query if username is already in use: %v", err)
@@ -225,6 +309,23 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateUser\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	if input.ID == nil {
 		return nil, fmt.Errorf("failed to query user: ID must not be nil")
 	}
@@ -268,6 +369,23 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput
 
 // DeleteUser is the resolver for the deleteUser field.
 func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteUser\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	userUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -287,6 +405,23 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, id string, password string) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ChangePassword\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	userUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -310,6 +445,23 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, id string, passwo
 
 // CreateTeam is the resolver for the createTeam field.
 func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateTeam\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	competitionUuid, err := uuid.Parse(input.TeamToCompetition)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
@@ -334,6 +486,23 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput
 
 // BatchCreateTeams is the resolver for the batchCreateTeams field.
 func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.TeamInput) ([]*ent.Team, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"BatchCreateTeams\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entTeams := make([]*ent.TeamCreate, len(input))
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
@@ -378,6 +547,23 @@ func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.
 
 // UpdateTeam is the resolver for the updateTeam field.
 func (r *mutationResolver) UpdateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateTeam\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	if input.ID == nil {
 		return nil, fmt.Errorf("failed to query team: ID must not be nil")
 	}
@@ -406,6 +592,23 @@ func (r *mutationResolver) UpdateTeam(ctx context.Context, input model.TeamInput
 
 // DeleteTeam is the resolver for the deleteTeam field.
 func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteTeam\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	teamUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -419,6 +622,23 @@ func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, err
 
 // CreateCompetition is the resolver for the createCompetition field.
 func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateCompetition\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	providerUuid, err := uuid.Parse(input.CompetitionToProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse provider UUID: %v", err)
@@ -436,6 +656,23 @@ func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.Co
 
 // UpdateCompetition is the resolver for the updateCompetition field.
 func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateCompetition\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	if input.ID == nil {
 		return nil, fmt.Errorf("failed to query competition: ID must not be nil")
 	}
@@ -464,6 +701,23 @@ func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.Co
 
 // DeleteCompetition is the resolver for the deleteCompetition field.
 func (r *mutationResolver) DeleteCompetition(ctx context.Context, id string) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteCompetition\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	competitionUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -477,6 +731,23 @@ func (r *mutationResolver) DeleteCompetition(ctx context.Context, id string) (bo
 
 // CreateVMObject is the resolver for the createVmObject field.
 func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateVMObject\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	var entTeam *ent.Team = nil
 	if input.VMObjectToTeam != nil {
 		teamUuid, err := uuid.Parse(*input.VMObjectToTeam)
@@ -502,6 +773,23 @@ func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObj
 
 // BatchCreateVMObjects is the resolver for the batchCreateVmObjects field.
 func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*model.VMObjectInput) ([]*ent.VmObject, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"BatchCreateVMObjects\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entVmObjects := make([]*ent.VmObjectCreate, len(input))
 	tx, err := r.client.Tx(ctx)
 	if err != nil {
@@ -546,6 +834,23 @@ func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*mo
 
 // UpdateVMObject is the resolver for the updateVmObject field.
 func (r *mutationResolver) UpdateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateVMObjects\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	if input.ID == nil {
 		return nil, fmt.Errorf("failed to query vm object: ID must not be nil")
 	}
@@ -579,6 +884,23 @@ func (r *mutationResolver) UpdateVMObject(ctx context.Context, input model.VMObj
 
 // DeleteVMObject is the resolver for the deleteVmObject field.
 func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteVMObject\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	vmObjectUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -592,6 +914,23 @@ func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool,
 
 // CreateProvider is the resolver for the createProvider field.
 func (r *mutationResolver) CreateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateProvider\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entProvider, err := r.client.Provider.Create().SetName(input.Name).SetType(input.Type).SetConfig(input.Config).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)
@@ -601,6 +940,23 @@ func (r *mutationResolver) CreateProvider(ctx context.Context, input model.Provi
 
 // UpdateProvider is the resolver for the updateProvider field.
 func (r *mutationResolver) UpdateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateProvider\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	if input.ID == nil {
 		return nil, fmt.Errorf("failed to query provider: ID must not be nil")
 	}
@@ -625,6 +981,23 @@ func (r *mutationResolver) UpdateProvider(ctx context.Context, input model.Provi
 
 // DeleteProvider is the resolver for the deleteProvider field.
 func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteProvider\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	providerUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -643,6 +1016,23 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 
 // LockoutVM is the resolver for the lockoutVm field.
 func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"LockoutVM\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	vmObjectUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -657,6 +1047,23 @@ func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool
 
 // LockoutCompetition is the resolver for the lockoutCompetition field.
 func (r *mutationResolver) LockoutCompetition(ctx context.Context, id string, locked bool) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"LockoutCompetitions\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	competitionUuid, err := uuid.Parse(id)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
@@ -699,6 +1106,19 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 	entUser, err := auth.ForContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Console\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
 
 	vmObjectUuid, err := uuid.Parse(vmObjectID)
@@ -745,6 +1165,19 @@ func (r *queryResolver) Me(ctx context.Context) (*ent.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Me\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	return entUser, nil
 }
 
@@ -753,6 +1186,19 @@ func (r *queryResolver) VMObject(ctx context.Context, vmObjectID string) (*ent.V
 	entUser, err := auth.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"VMObject\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
 	// Get VM DB object
 	vmObjectUuid, err := uuid.Parse(vmObjectID)
@@ -780,7 +1226,19 @@ func (r *queryResolver) MyVMObjects(ctx context.Context) ([]*ent.VmObject, error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"MyVMObjects\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entVmObjects, err := entUser.QueryUserToTeam().QueryTeamToVmObjects().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects from user: %v", err)
@@ -794,7 +1252,19 @@ func (r *queryResolver) MyTeam(ctx context.Context) (*ent.Team, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"MyTeam\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entTeam, err := entUser.QueryUserToTeam().Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query team from user: %v", err)
@@ -808,7 +1278,19 @@ func (r *queryResolver) MyCompetition(ctx context.Context) (*ent.Competition, er
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"MyCompetition\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entCompetition, err := entUser.QueryUserToTeam().QueryTeamToCompetition().Only(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query competition from user: %v", err)
@@ -818,6 +1300,23 @@ func (r *queryResolver) MyCompetition(ctx context.Context) (*ent.Competition, er
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*ent.User, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Users\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entUsers, err := r.client.User.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query users: %v", err)
@@ -827,6 +1326,23 @@ func (r *queryResolver) Users(ctx context.Context) ([]*ent.User, error) {
 
 // GetUser is the resolver for the getUser field.
 func (r *queryResolver) GetUser(ctx context.Context, id string) (*ent.User, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetUser\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	userUuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse UUID: %v", err)
@@ -840,6 +1356,23 @@ func (r *queryResolver) GetUser(ctx context.Context, id string) (*ent.User, erro
 
 // VMObjects is the resolver for the vmObjects field.
 func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"VmObjects\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entVmObjects, err := r.client.VmObject.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects: %v", err)
@@ -849,6 +1382,23 @@ func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) 
 
 // GetVMObject is the resolver for the getVmObject field.
 func (r *queryResolver) GetVMObject(ctx context.Context, id string) (*ent.VmObject, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetVmObject\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	vmObjectUuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse UUID: %v", err)
@@ -862,6 +1412,23 @@ func (r *queryResolver) GetVMObject(ctx context.Context, id string) (*ent.VmObje
 
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context) ([]*ent.Team, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Teams\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entTeams, err := r.client.Team.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query teams: %v", err)
@@ -871,6 +1438,23 @@ func (r *queryResolver) Teams(ctx context.Context) ([]*ent.Team, error) {
 
 // GetTeam is the resolver for the getTeam field.
 func (r *queryResolver) GetTeam(ctx context.Context, id string) (*ent.Team, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetTeam\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	teamUuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse UUID: %v", err)
@@ -884,6 +1468,23 @@ func (r *queryResolver) GetTeam(ctx context.Context, id string) (*ent.Team, erro
 
 // Competitions is the resolver for the competitions field.
 func (r *queryResolver) Competitions(ctx context.Context) ([]*ent.Competition, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Competitions\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entCompetitions, err := r.client.Competition.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query competitions: %v", err)
@@ -893,6 +1494,23 @@ func (r *queryResolver) Competitions(ctx context.Context) ([]*ent.Competition, e
 
 // GetCompetition is the resolver for the getCompetition field.
 func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Competition, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetCompetition\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	competitionUuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse UUID: %v", err)
@@ -906,6 +1524,23 @@ func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Com
 
 // Providers is the resolver for the providers field.
 func (r *queryResolver) Providers(ctx context.Context) ([]*ent.Provider, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"Providers\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	entProviders, err := r.client.Provider.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query providers: %v", err)
@@ -915,6 +1550,23 @@ func (r *queryResolver) Providers(ctx context.Context) ([]*ent.Provider, error) 
 
 // GetProvider is the resolver for the getProvider field.
 func (r *queryResolver) GetProvider(ctx context.Context, id string) (*ent.Provider, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetProvider\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	providerUuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse UUID: %v", err)
@@ -928,7 +1580,24 @@ func (r *queryResolver) GetProvider(ctx context.Context, id string) (*ent.Provid
 
 // ValidateConfig is the resolver for the validateConfig field.
 func (r *queryResolver) ValidateConfig(ctx context.Context, typeArg string, config string) (bool, error) {
-	err := providers.ValidateConfig(typeArg, config)
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ValidateConfig\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	err = providers.ValidateConfig(typeArg, config)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse config: %v", err)
 	}
@@ -937,6 +1606,23 @@ func (r *queryResolver) ValidateConfig(ctx context.Context, typeArg string, conf
 
 // ListProviderVms is the resolver for the listProviderVms field.
 func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*model.SkeletonVMObject, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ListProviderVms\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
 	providerUuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse provider UUID: %v", err)
