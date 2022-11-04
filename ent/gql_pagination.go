@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
@@ -237,6 +238,233 @@ const (
 	pageInfoField   = "pageInfo"
 	totalCountField = "totalCount"
 )
+
+// ActionEdge is the edge representation of Action.
+type ActionEdge struct {
+	Node   *Action `json:"node"`
+	Cursor Cursor  `json:"cursor"`
+}
+
+// ActionConnection is the connection containing edges to Action.
+type ActionConnection struct {
+	Edges      []*ActionEdge `json:"edges"`
+	PageInfo   PageInfo      `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
+}
+
+// ActionPaginateOption enables pagination customization.
+type ActionPaginateOption func(*actionPager) error
+
+// WithActionOrder configures pagination ordering.
+func WithActionOrder(order *ActionOrder) ActionPaginateOption {
+	if order == nil {
+		order = DefaultActionOrder
+	}
+	o := *order
+	return func(pager *actionPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultActionOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithActionFilter configures pagination filter.
+func WithActionFilter(filter func(*ActionQuery) (*ActionQuery, error)) ActionPaginateOption {
+	return func(pager *actionPager) error {
+		if filter == nil {
+			return errors.New("ActionQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type actionPager struct {
+	order  *ActionOrder
+	filter func(*ActionQuery) (*ActionQuery, error)
+}
+
+func newActionPager(opts []ActionPaginateOption) (*actionPager, error) {
+	pager := &actionPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultActionOrder
+	}
+	return pager, nil
+}
+
+func (p *actionPager) applyFilter(query *ActionQuery) (*ActionQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *actionPager) toCursor(a *Action) Cursor {
+	return p.order.Field.toCursor(a)
+}
+
+func (p *actionPager) applyCursors(query *ActionQuery, after, before *Cursor) *ActionQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultActionOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *actionPager) applyOrder(query *ActionQuery, reverse bool) *ActionQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultActionOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultActionOrder.Field.field))
+	}
+	return query
+}
+
+// Paginate executes the query and returns a relay based cursor connection to Action.
+func (a *ActionQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ActionPaginateOption,
+) (*ActionConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newActionPager(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if a, err = pager.applyFilter(a); err != nil {
+		return nil, err
+	}
+
+	conn := &ActionConnection{Edges: []*ActionEdge{}}
+	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
+		if hasCollectedField(ctx, totalCountField) ||
+			hasCollectedField(ctx, pageInfoField) {
+			count, err := a.Count(ctx)
+			if err != nil {
+				return nil, err
+			}
+			conn.TotalCount = count
+			conn.PageInfo.HasNextPage = first != nil && count > 0
+			conn.PageInfo.HasPreviousPage = last != nil && count > 0
+		}
+		return conn, nil
+	}
+
+	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
+		count, err := a.Clone().Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn.TotalCount = count
+	}
+
+	a = pager.applyCursors(a, after, before)
+	a = pager.applyOrder(a, last != nil)
+	var limit int
+	if first != nil {
+		limit = *first + 1
+	} else if last != nil {
+		limit = *last + 1
+	}
+	if limit > 0 {
+		a = a.Limit(limit)
+	}
+
+	if field := getCollectedField(ctx, edgesField, nodeField); field != nil {
+		a = a.collectField(graphql.GetOperationContext(ctx), *field)
+	}
+
+	nodes, err := a.All(ctx)
+	if err != nil || len(nodes) == 0 {
+		return conn, err
+	}
+
+	if len(nodes) == limit {
+		conn.PageInfo.HasNextPage = first != nil
+		conn.PageInfo.HasPreviousPage = last != nil
+		nodes = nodes[:len(nodes)-1]
+	}
+
+	var nodeAt func(int) *Action
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *Action {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *Action {
+			return nodes[i]
+		}
+	}
+
+	conn.Edges = make([]*ActionEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		conn.Edges[i] = &ActionEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+
+	conn.PageInfo.StartCursor = &conn.Edges[0].Cursor
+	conn.PageInfo.EndCursor = &conn.Edges[len(conn.Edges)-1].Cursor
+	if conn.TotalCount == 0 {
+		conn.TotalCount = len(nodes)
+	}
+
+	return conn, nil
+}
+
+// ActionOrderField defines the ordering field of Action.
+type ActionOrderField struct {
+	field    string
+	toCursor func(*Action) Cursor
+}
+
+// ActionOrder defines the ordering of Action.
+type ActionOrder struct {
+	Direction OrderDirection    `json:"direction"`
+	Field     *ActionOrderField `json:"field"`
+}
+
+// DefaultActionOrder is the default ordering of Action.
+var DefaultActionOrder = &ActionOrder{
+	Direction: OrderDirectionAsc,
+	Field: &ActionOrderField{
+		field: action.FieldID,
+		toCursor: func(a *Action) Cursor {
+			return Cursor{ID: a.ID}
+		},
+	},
+}
+
+// ToEdge converts Action into ActionEdge.
+func (a *Action) ToEdge(order *ActionOrder) *ActionEdge {
+	if order == nil {
+		order = DefaultActionOrder
+	}
+	return &ActionEdge{
+		Node:   a,
+		Cursor: order.Field.toCursor(a),
+	}
+}
 
 // CompetitionEdge is the edge representation of Competition.
 type CompetitionEdge struct {

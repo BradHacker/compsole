@@ -3,6 +3,9 @@
 package ent
 
 import (
+	"time"
+
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/schema"
@@ -17,6 +20,20 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	actionFields := schema.Action{}.Fields()
+	_ = actionFields
+	// actionDescIPAddress is the schema descriptor for ip_address field.
+	actionDescIPAddress := actionFields[1].Descriptor()
+	// action.DefaultIPAddress holds the default value on creation for the ip_address field.
+	action.DefaultIPAddress = actionDescIPAddress.Default.(string)
+	// actionDescPerformedAt is the schema descriptor for performed_at field.
+	actionDescPerformedAt := actionFields[4].Descriptor()
+	// action.DefaultPerformedAt holds the default value on creation for the performed_at field.
+	action.DefaultPerformedAt = actionDescPerformedAt.Default.(func() time.Time)
+	// actionDescID is the schema descriptor for id field.
+	actionDescID := actionFields[0].Descriptor()
+	// action.DefaultID holds the default value on creation for the id field.
+	action.DefaultID = actionDescID.Default.(func() uuid.UUID)
 	competitionFields := schema.Competition{}.Fields()
 	_ = competitionFields
 	// competitionDescID is the schema descriptor for id field.

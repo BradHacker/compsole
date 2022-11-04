@@ -4,6 +4,14 @@ package ent
 
 import "context"
 
+func (a *Action) ActionToUser(ctx context.Context) (*User, error) {
+	result, err := a.Edges.ActionToUserOrErr()
+	if IsNotLoaded(err) {
+		result, err = a.QueryActionToUser().Only(ctx)
+	}
+	return result, MaskNotFound(err)
+}
+
 func (c *Competition) CompetitionToTeams(ctx context.Context) ([]*Team, error) {
 	result, err := c.Edges.CompetitionToTeamsOrErr()
 	if IsNotLoaded(err) {
@@ -72,6 +80,14 @@ func (u *User) UserToToken(ctx context.Context) ([]*Token, error) {
 	result, err := u.Edges.UserToTokenOrErr()
 	if IsNotLoaded(err) {
 		result, err = u.QueryUserToToken().All(ctx)
+	}
+	return result, err
+}
+
+func (u *User) UserToActions(ctx context.Context) ([]*Action, error) {
+	result, err := u.Edges.UserToActionsOrErr()
+	if IsNotLoaded(err) {
+		result, err = u.QueryUserToActions().All(ctx)
 	}
 	return result, err
 }

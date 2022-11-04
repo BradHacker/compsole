@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
@@ -116,6 +117,21 @@ func (uu *UserUpdate) AddUserToToken(t ...*Token) *UserUpdate {
 	return uu.AddUserToTokenIDs(ids...)
 }
 
+// AddUserToActionIDs adds the "UserToActions" edge to the Action entity by IDs.
+func (uu *UserUpdate) AddUserToActionIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.AddUserToActionIDs(ids...)
+	return uu
+}
+
+// AddUserToActions adds the "UserToActions" edges to the Action entity.
+func (uu *UserUpdate) AddUserToActions(a ...*Action) *UserUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uu.AddUserToActionIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -146,6 +162,27 @@ func (uu *UserUpdate) RemoveUserToToken(t ...*Token) *UserUpdate {
 		ids[i] = t[i].ID
 	}
 	return uu.RemoveUserToTokenIDs(ids...)
+}
+
+// ClearUserToActions clears all "UserToActions" edges to the Action entity.
+func (uu *UserUpdate) ClearUserToActions() *UserUpdate {
+	uu.mutation.ClearUserToActions()
+	return uu
+}
+
+// RemoveUserToActionIDs removes the "UserToActions" edge to Action entities by IDs.
+func (uu *UserUpdate) RemoveUserToActionIDs(ids ...uuid.UUID) *UserUpdate {
+	uu.mutation.RemoveUserToActionIDs(ids...)
+	return uu
+}
+
+// RemoveUserToActions removes "UserToActions" edges to Action entities.
+func (uu *UserUpdate) RemoveUserToActions(a ...*Action) *UserUpdate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uu.RemoveUserToActionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -372,6 +409,60 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.UserToActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedUserToActionsIDs(); len(nodes) > 0 && !uu.mutation.UserToActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.UserToActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -477,6 +568,21 @@ func (uuo *UserUpdateOne) AddUserToToken(t ...*Token) *UserUpdateOne {
 	return uuo.AddUserToTokenIDs(ids...)
 }
 
+// AddUserToActionIDs adds the "UserToActions" edge to the Action entity by IDs.
+func (uuo *UserUpdateOne) AddUserToActionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.AddUserToActionIDs(ids...)
+	return uuo
+}
+
+// AddUserToActions adds the "UserToActions" edges to the Action entity.
+func (uuo *UserUpdateOne) AddUserToActions(a ...*Action) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uuo.AddUserToActionIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -507,6 +613,27 @@ func (uuo *UserUpdateOne) RemoveUserToToken(t ...*Token) *UserUpdateOne {
 		ids[i] = t[i].ID
 	}
 	return uuo.RemoveUserToTokenIDs(ids...)
+}
+
+// ClearUserToActions clears all "UserToActions" edges to the Action entity.
+func (uuo *UserUpdateOne) ClearUserToActions() *UserUpdateOne {
+	uuo.mutation.ClearUserToActions()
+	return uuo
+}
+
+// RemoveUserToActionIDs removes the "UserToActions" edge to Action entities by IDs.
+func (uuo *UserUpdateOne) RemoveUserToActionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	uuo.mutation.RemoveUserToActionIDs(ids...)
+	return uuo
+}
+
+// RemoveUserToActions removes "UserToActions" edges to Action entities.
+func (uuo *UserUpdateOne) RemoveUserToActions(a ...*Action) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uuo.RemoveUserToActionIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -749,6 +876,60 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: token.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.UserToActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedUserToActionsIDs(); len(nodes) > 0 && !uuo.mutation.UserToActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.UserToActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
 				},
 			},
 		}

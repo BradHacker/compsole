@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/contrib/entgql"
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/team"
@@ -44,6 +45,59 @@ type Edge struct {
 	Type string      `json:"type,omitempty"` // edge type.
 	Name string      `json:"name,omitempty"` // edge name.
 	IDs  []uuid.UUID `json:"ids,omitempty"`  // node ids (where this edge point to).
+}
+
+func (a *Action) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     a.ID,
+		Type:   "Action",
+		Fields: make([]*Field, 4),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(a.IPAddress); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "ip_address",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.Type); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "action.Type",
+		Name:  "type",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.Message); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "string",
+		Name:  "message",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(a.PerformedAt); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "time.Time",
+		Name:  "performed_at",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "User",
+		Name: "ActionToUser",
+	}
+	err = a.QueryActionToUser().
+		Select(user.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
 }
 
 func (c *Competition) Node(ctx context.Context) (node *Node, err error) {
@@ -229,7 +283,7 @@ func (u *User) Node(ctx context.Context) (node *Node, err error) {
 		ID:     u.ID,
 		Type:   "User",
 		Fields: make([]*Field, 6),
-		Edges:  make([]*Edge, 2),
+		Edges:  make([]*Edge, 3),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(u.Username); err != nil {
@@ -297,6 +351,16 @@ func (u *User) Node(ctx context.Context) (node *Node, err error) {
 	err = u.QueryUserToToken().
 		Select(token.FieldID).
 		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[2] = &Edge{
+		Type: "Action",
+		Name: "UserToActions",
+	}
+	err = u.QueryUserToActions().
+		Select(action.FieldID).
+		Scan(ctx, &node.Edges[2].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -422,6 +486,15 @@ func (c *Client) Noder(ctx context.Context, id uuid.UUID, opts ...NodeOption) (_
 
 func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, error) {
 	switch table {
+	case action.Table:
+		n, err := c.Action.Query().
+			Where(action.ID(id)).
+			CollectFields(ctx, "Action").
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case competition.Table:
 		n, err := c.Competition.Query().
 			Where(competition.ID(id)).
@@ -549,6 +622,19 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		idmap[id] = append(idmap[id], &noders[i])
 	}
 	switch table {
+	case action.Table:
+		nodes, err := c.Action.Query().
+			Where(action.IDIn(ids...)).
+			CollectFields(ctx, "Action").
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
 	case competition.Table:
 		nodes, err := c.Competition.Query().
 			Where(competition.IDIn(ids...)).

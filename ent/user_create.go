@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -120,6 +121,21 @@ func (uc *UserCreate) AddUserToToken(t ...*Token) *UserCreate {
 		ids[i] = t[i].ID
 	}
 	return uc.AddUserToTokenIDs(ids...)
+}
+
+// AddUserToActionIDs adds the "UserToActions" edge to the Action entity by IDs.
+func (uc *UserCreate) AddUserToActionIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddUserToActionIDs(ids...)
+	return uc
+}
+
+// AddUserToActions adds the "UserToActions" edges to the Action entity.
+func (uc *UserCreate) AddUserToActions(a ...*Action) *UserCreate {
+	ids := make([]uuid.UUID, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return uc.AddUserToActionIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -352,6 +368,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: token.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.UserToActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.UserToActionsTable,
+			Columns: []string{user.UserToActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: action.FieldID,
 				},
 			},
 		}

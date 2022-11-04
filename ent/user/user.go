@@ -31,6 +31,8 @@ const (
 	EdgeUserToTeam = "UserToTeam"
 	// EdgeUserToToken holds the string denoting the usertotoken edge name in mutations.
 	EdgeUserToToken = "UserToToken"
+	// EdgeUserToActions holds the string denoting the usertoactions edge name in mutations.
+	EdgeUserToActions = "UserToActions"
 	// TokenFieldID holds the string denoting the ID field of the Token.
 	TokenFieldID = "id"
 	// Table holds the table name of the user in the database.
@@ -49,6 +51,13 @@ const (
 	UserToTokenInverseTable = "tokens"
 	// UserToTokenColumn is the table column denoting the UserToToken relation/edge.
 	UserToTokenColumn = "user_user_to_token"
+	// UserToActionsTable is the table that holds the UserToActions relation/edge.
+	UserToActionsTable = "actions"
+	// UserToActionsInverseTable is the table name for the Action entity.
+	// It exists in this package in order to avoid circular dependency with the "action" package.
+	UserToActionsInverseTable = "actions"
+	// UserToActionsColumn is the table column denoting the UserToActions relation/edge.
+	UserToActionsColumn = "action_action_to_user"
 )
 
 // Columns holds all SQL columns for user fields.

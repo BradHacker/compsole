@@ -36,5 +36,6 @@ func (User) Edges() []ent.Edge {
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Cascade,
 			}),
+		edge.From("UserToActions", Action.Type).Ref("ActionToUser"),
 	}
 }
