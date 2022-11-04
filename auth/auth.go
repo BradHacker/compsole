@@ -3,14 +3,18 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/BradHacker/compsole/ent"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/token"
+	"github.com/BradHacker/compsole/ent/user"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // A private key for context that only this package can access. This is important
@@ -180,6 +184,32 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 			}
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
+		}
+
+		// Get the user and log a sign out event
+		entUser, err := client.User.Query().Where(user.HasUserToTokenWith(token.TokenEQ(authCookie))).Only(ctx)
+		if err != nil {
+			if secure_cookie {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+			} else {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+			}
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			return
+		}
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		}
+		err = client.Action.Create().
+			SetIPAddress(clientIp).
+			SetType(action.TypeSIGN_OUT).
+			SetMessage(fmt.Sprintf("user \"%s\" has signed out", entUser.Username)).
+			SetActionToUser(entUser).
+			Exec(ctx)
+		if err != nil {
+			logrus.Warn("failed to create SIGN_OUT action: %v", err)
 		}
 
 		_, err = client.Token.Delete().Where(token.TokenEQ(authCookie)).Exec(ctx)
