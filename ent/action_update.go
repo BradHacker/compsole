@@ -219,7 +219,7 @@ func (au *ActionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if au.mutation.ActionToUserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   action.ActionToUserTable,
 			Columns: []string{action.ActionToUserColumn},
 			Bidi:    false,
@@ -235,7 +235,7 @@ func (au *ActionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := au.mutation.ActionToUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   action.ActionToUserTable,
 			Columns: []string{action.ActionToUserColumn},
 			Bidi:    false,
@@ -483,7 +483,7 @@ func (auo *ActionUpdateOne) sqlSave(ctx context.Context) (_node *Action, err err
 	if auo.mutation.ActionToUserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   action.ActionToUserTable,
 			Columns: []string{action.ActionToUserColumn},
 			Bidi:    false,
@@ -499,7 +499,7 @@ func (auo *ActionUpdateOne) sqlSave(ctx context.Context) (_node *Action, err err
 	if nodes := auo.mutation.ActionToUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   action.ActionToUserTable,
 			Columns: []string{action.ActionToUserColumn},
 			Bidi:    false,

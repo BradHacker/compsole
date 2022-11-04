@@ -57,7 +57,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "action" package.
 	UserToActionsInverseTable = "actions"
 	// UserToActionsColumn is the table column denoting the UserToActions relation/edge.
-	UserToActionsColumn = "action_action_to_user"
+	UserToActionsColumn = "user_user_to_actions"
 )
 
 // Columns holds all SQL columns for user fields.

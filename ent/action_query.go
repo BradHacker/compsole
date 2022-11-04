@@ -79,7 +79,7 @@ func (aq *ActionQuery) QueryActionToUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(action.Table, action.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, action.ActionToUserTable, action.ActionToUserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, action.ActionToUserTable, action.ActionToUserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -385,10 +385,10 @@ func (aq *ActionQuery) sqlAll(ctx context.Context) ([]*Action, error) {
 		ids := make([]uuid.UUID, 0, len(nodes))
 		nodeids := make(map[uuid.UUID][]*Action)
 		for i := range nodes {
-			if nodes[i].action_action_to_user == nil {
+			if nodes[i].user_user_to_actions == nil {
 				continue
 			}
-			fk := *nodes[i].action_action_to_user
+			fk := *nodes[i].user_user_to_actions
 			if _, ok := nodeids[fk]; !ok {
 				ids = append(ids, fk)
 			}
@@ -402,7 +402,7 @@ func (aq *ActionQuery) sqlAll(ctx context.Context) ([]*Action, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "action_action_to_user" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_actions" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.ActionToUser = n

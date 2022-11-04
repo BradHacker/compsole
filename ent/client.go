@@ -258,7 +258,7 @@ func (c *ActionClient) QueryActionToUser(a *Action) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(action.Table, action.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, action.ActionToUserTable, action.ActionToUserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, action.ActionToUserTable, action.ActionToUserColumn),
 		)
 		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
 		return fromV, nil
@@ -868,7 +868,7 @@ func (c *UserClient) QueryUserToActions(u *User) *ActionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(action.Table, action.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.UserToActionsTable, user.UserToActionsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserToActionsTable, user.UserToActionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

@@ -722,7 +722,7 @@ func HasUserToActions() predicate.User {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(UserToActionsTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, UserToActionsTable, UserToActionsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserToActionsTable, UserToActionsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -734,7 +734,7 @@ func HasUserToActionsWith(preds ...predicate.Action) predicate.User {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(UserToActionsInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, UserToActionsTable, UserToActionsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserToActionsTable, UserToActionsColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

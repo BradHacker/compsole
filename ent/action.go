@@ -28,8 +28,8 @@ type Action struct {
 	PerformedAt time.Time `json:"performed_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ActionQuery when eager-loading is set.
-	Edges                 ActionEdges `json:"edges"`
-	action_action_to_user *uuid.UUID
+	Edges                ActionEdges `json:"edges"`
+	user_user_to_actions *uuid.UUID
 }
 
 // ActionEdges holds the relations/edges for other nodes in the graph.
@@ -66,7 +66,7 @@ func (*Action) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullTime)
 		case action.FieldID:
 			values[i] = new(uuid.UUID)
-		case action.ForeignKeys[0]: // action_action_to_user
+		case action.ForeignKeys[0]: // user_user_to_actions
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Action", columns[i])
@@ -115,10 +115,10 @@ func (a *Action) assignValues(columns []string, values []interface{}) error {
 			}
 		case action.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field action_action_to_user", values[i])
+				return fmt.Errorf("unexpected type %T for field user_user_to_actions", values[i])
 			} else if value.Valid {
-				a.action_action_to_user = new(uuid.UUID)
-				*a.action_action_to_user = *value.S.(*uuid.UUID)
+				a.user_user_to_actions = new(uuid.UUID)
+				*a.user_user_to_actions = *value.S.(*uuid.UUID)
 			}
 		}
 	}

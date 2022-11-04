@@ -34,7 +34,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	ActionToUserInverseTable = "users"
 	// ActionToUserColumn is the table column denoting the ActionToUser relation/edge.
-	ActionToUserColumn = "action_action_to_user"
+	ActionToUserColumn = "user_user_to_actions"
 )
 
 // Columns holds all SQL columns for action fields.
@@ -49,7 +49,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "actions"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"action_action_to_user",
+	"user_user_to_actions",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -81,14 +81,21 @@ type Type string
 
 // Type values.
 const (
-	TypeSIGN_IN        Type = "SIGN_IN"
-	TypeFAILED_SIGN_IN Type = "FAILED_SIGN_IN"
-	TypeSIGN_OUT       Type = "SIGN_OUT"
-	TypeAPI_CALL       Type = "API_CALL"
-	TypeCONSOLE_ACCESS Type = "CONSOLE_ACCESS"
-	TypeCREATE_OBJECT  Type = "CREATE_OBJECT"
-	TypeUPDATE_OBJECT  Type = "UPDATE_OBJECT"
-	TypeDELETE_OBJECT  Type = "DELETE_OBJECT"
+	TypeSIGN_IN              Type = "SIGN_IN"
+	TypeFAILED_SIGN_IN       Type = "FAILED_SIGN_IN"
+	TypeSIGN_OUT             Type = "SIGN_OUT"
+	TypeAPI_CALL             Type = "API_CALL"
+	TypeCONSOLE_ACCESS       Type = "CONSOLE_ACCESS"
+	TypeREBOOT               Type = "REBOOT"
+	TypeSHUTDOWN             Type = "SHUTDOWN"
+	TypePOWER_ON             Type = "POWER_ON"
+	TypePOWER_OFF            Type = "POWER_OFF"
+	TypeCHANGE_SELF_PASSWORD Type = "CHANGE_SELF_PASSWORD"
+	TypeCHANGE_PASSWORD      Type = "CHANGE_PASSWORD"
+	TypeCREATE_OBJECT        Type = "CREATE_OBJECT"
+	TypeUPDATE_OBJECT        Type = "UPDATE_OBJECT"
+	TypeDELETE_OBJECT        Type = "DELETE_OBJECT"
+	TypeUPDATE_LOCKOUT       Type = "UPDATE_LOCKOUT"
 )
 
 func (_type Type) String() string {
@@ -98,7 +105,7 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeSIGN_IN, TypeFAILED_SIGN_IN, TypeSIGN_OUT, TypeAPI_CALL, TypeCONSOLE_ACCESS, TypeCREATE_OBJECT, TypeUPDATE_OBJECT, TypeDELETE_OBJECT:
+	case TypeSIGN_IN, TypeFAILED_SIGN_IN, TypeSIGN_OUT, TypeAPI_CALL, TypeCONSOLE_ACCESS, TypeREBOOT, TypeSHUTDOWN, TypePOWER_ON, TypePOWER_OFF, TypeCHANGE_SELF_PASSWORD, TypeCHANGE_PASSWORD, TypeCREATE_OBJECT, TypeUPDATE_OBJECT, TypeDELETE_OBJECT, TypeUPDATE_LOCKOUT:
 		return nil
 	default:
 		return fmt.Errorf("action: invalid enum value for type field: %q", _type)

@@ -270,7 +270,7 @@ func (ac *ActionCreate) createSpec() (*Action, *sqlgraph.CreateSpec) {
 	if nodes := ac.mutation.ActionToUserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
+			Inverse: true,
 			Table:   action.ActionToUserTable,
 			Columns: []string{action.ActionToUserColumn},
 			Bidi:    false,
@@ -284,7 +284,7 @@ func (ac *ActionCreate) createSpec() (*Action, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.action_action_to_user = &nodes[0]
+		_node.user_user_to_actions = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

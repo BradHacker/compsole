@@ -128,7 +128,7 @@ func (uq *UserQuery) QueryUserToActions() *ActionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(action.Table, action.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.UserToActionsTable, user.UserToActionsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserToActionsTable, user.UserToActionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -531,13 +531,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.action_action_to_user
+			fk := n.user_user_to_actions
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "action_action_to_user" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "user_user_to_actions" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "action_action_to_user" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_actions" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.UserToActions = append(node.Edges.UserToActions, n)
 		}

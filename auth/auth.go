@@ -20,6 +20,7 @@ import (
 // A private key for context that only this package can access. This is important
 // to prevent collisions between different context uses
 var userCtxKey = &contextKey{"user"}
+var ipCtxKey = &contextKey{"ip"}
 var jwtKey = []byte("JHGDKAHSK*&Y@U(*&@U#I(UYG@HJWIS(*&YTGJQKI")
 
 type contextKey struct {
@@ -117,6 +118,14 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		}
 		// put it in context
 		c := context.WithValue(ctx.Request.Context(), userCtxKey, entUser)
+
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		}
+		// put it in context
+		c = context.WithValue(c, ipCtxKey, clientIp)
 		ctx.Request = ctx.Request.WithContext(c)
 
 		ctx.Next()
@@ -250,7 +259,13 @@ func ForContext(ctx context.Context) (*ent.User, error) {
 		return raw, nil
 	}
 	return nil, errors.New("unable to get user from context")
+}
 
+func ForContextIp(ctx context.Context) (string, error) {
+	if ip, ok := ctx.Value(ipCtxKey).(string); ok {
+		return ip, nil
+	}
+	return "", fmt.Errorf("unable to get ip from context")
 }
 
 // ClearTokens Clears Old tokens from DB

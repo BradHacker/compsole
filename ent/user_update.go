@@ -412,7 +412,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.UserToActionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.UserToActionsTable,
 			Columns: []string{user.UserToActionsColumn},
 			Bidi:    false,
@@ -428,7 +428,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := uu.mutation.RemovedUserToActionsIDs(); len(nodes) > 0 && !uu.mutation.UserToActionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.UserToActionsTable,
 			Columns: []string{user.UserToActionsColumn},
 			Bidi:    false,
@@ -447,7 +447,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := uu.mutation.UserToActionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.UserToActionsTable,
 			Columns: []string{user.UserToActionsColumn},
 			Bidi:    false,
@@ -887,7 +887,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.UserToActionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.UserToActionsTable,
 			Columns: []string{user.UserToActionsColumn},
 			Bidi:    false,
@@ -903,7 +903,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if nodes := uuo.mutation.RemovedUserToActionsIDs(); len(nodes) > 0 && !uuo.mutation.UserToActionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.UserToActionsTable,
 			Columns: []string{user.UserToActionsColumn},
 			Bidi:    false,
@@ -922,7 +922,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if nodes := uuo.mutation.UserToActionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.UserToActionsTable,
 			Columns: []string{user.UserToActionsColumn},
 			Bidi:    false,
