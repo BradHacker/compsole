@@ -57,6 +57,73 @@ type VMObjectInput struct {
 	VMObjectToTeam *string  `json:"VmObjectToTeam"`
 }
 
+type ActionType string
+
+const (
+	ActionTypeSignIn             ActionType = "SIGN_IN"
+	ActionTypeFailedSignIn       ActionType = "FAILED_SIGN_IN"
+	ActionTypeSignOut            ActionType = "SIGN_OUT"
+	ActionTypeAPICall            ActionType = "API_CALL"
+	ActionTypeConsoleAccess      ActionType = "CONSOLE_ACCESS"
+	ActionTypeReboot             ActionType = "REBOOT"
+	ActionTypeShutdown           ActionType = "SHUTDOWN"
+	ActionTypePowerOn            ActionType = "POWER_ON"
+	ActionTypePowerOff           ActionType = "POWER_OFF"
+	ActionTypeChangeSelfPassword ActionType = "CHANGE_SELF_PASSWORD"
+	ActionTypeChangePassword     ActionType = "CHANGE_PASSWORD"
+	ActionTypeCreateObject       ActionType = "CREATE_OBJECT"
+	ActionTypeUpdateObject       ActionType = "UPDATE_OBJECT"
+	ActionTypeDeleteObject       ActionType = "DELETE_OBJECT"
+	ActionTypeUpdateLockout      ActionType = "UPDATE_LOCKOUT"
+)
+
+var AllActionType = []ActionType{
+	ActionTypeSignIn,
+	ActionTypeFailedSignIn,
+	ActionTypeSignOut,
+	ActionTypeAPICall,
+	ActionTypeConsoleAccess,
+	ActionTypeReboot,
+	ActionTypeShutdown,
+	ActionTypePowerOn,
+	ActionTypePowerOff,
+	ActionTypeChangeSelfPassword,
+	ActionTypeChangePassword,
+	ActionTypeCreateObject,
+	ActionTypeUpdateObject,
+	ActionTypeDeleteObject,
+	ActionTypeUpdateLockout,
+}
+
+func (e ActionType) IsValid() bool {
+	switch e {
+	case ActionTypeSignIn, ActionTypeFailedSignIn, ActionTypeSignOut, ActionTypeAPICall, ActionTypeConsoleAccess, ActionTypeReboot, ActionTypeShutdown, ActionTypePowerOn, ActionTypePowerOff, ActionTypeChangeSelfPassword, ActionTypeChangePassword, ActionTypeCreateObject, ActionTypeUpdateObject, ActionTypeDeleteObject, ActionTypeUpdateLockout:
+		return true
+	}
+	return false
+}
+
+func (e ActionType) String() string {
+	return string(e)
+}
+
+func (e *ActionType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ActionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ActionType", str)
+	}
+	return nil
+}
+
+func (e ActionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type AuthProvider string
 
 const (

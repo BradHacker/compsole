@@ -25,6 +25,16 @@ import (
 )
 
 // ID is the resolver for the ID field.
+func (r *actionResolver) ID(ctx context.Context, obj *ent.Action) (string, error) {
+	return obj.ID.String(), nil
+}
+
+// Type is the resolver for the Type field.
+func (r *actionResolver) Type(ctx context.Context, obj *ent.Action) (model.ActionType, error) {
+	return model.ActionType(obj.Type), nil
+}
+
+// ID is the resolver for the ID field.
 func (r *competitionResolver) ID(ctx context.Context, obj *ent.Competition) (string, error) {
 	return obj.ID.String(), nil
 }
@@ -1884,6 +1894,32 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 	return skeletonVmObjects, nil
 }
 
+// Actions is the resolver for the actions field.
+func (r *queryResolver) Actions(ctx context.Context, offset int, limit int) ([]*ent.Action, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ListProviderVms\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	entActions, err := r.client.Action.Query().Order(ent.Desc(action.FieldPerformedAt)).Offset(offset).Limit(limit).All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list actions: %v", err)
+	}
+	return entActions, nil
+}
+
 // Lockout is the resolver for the lockout field.
 func (r *subscriptionResolver) Lockout(ctx context.Context, id string) (<-chan *ent.VmObject, error) {
 	vmObjectLockout := make(chan *ent.VmObject, 1)
@@ -1947,6 +1983,9 @@ func (r *vmObjectResolver) ID(ctx context.Context, obj *ent.VmObject) (string, e
 	return obj.ID.String(), nil
 }
 
+// Action returns generated.ActionResolver implementation.
+func (r *Resolver) Action() generated.ActionResolver { return &actionResolver{r} }
+
 // Competition returns generated.CompetitionResolver implementation.
 func (r *Resolver) Competition() generated.CompetitionResolver { return &competitionResolver{r} }
 
@@ -1971,6 +2010,7 @@ func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 // VmObject returns generated.VmObjectResolver implementation.
 func (r *Resolver) VmObject() generated.VmObjectResolver { return &vmObjectResolver{r} }
 
+type actionResolver struct{ *Resolver }
 type competitionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type providerResolver struct{ *Resolver }

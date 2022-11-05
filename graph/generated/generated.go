@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -38,6 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Action() ActionResolver
 	Competition() CompetitionResolver
 	Mutation() MutationResolver
 	Provider() ProviderResolver
@@ -53,6 +55,14 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Action struct {
+		ID          func(childComplexity int) int
+		IPAddress   func(childComplexity int) int
+		Message     func(childComplexity int) int
+		PerformedAt func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
 	Competition struct {
 		CompetitionToProvider func(childComplexity int) int
 		CompetitionToTeams    func(childComplexity int) int
@@ -96,6 +106,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Actions         func(childComplexity int, offset int, limit int) int
 		Competitions    func(childComplexity int) int
 		Console         func(childComplexity int, vmObjectID string, consoleType model.ConsoleType) int
 		GetCompetition  func(childComplexity int, id string) int
@@ -154,6 +165,11 @@ type ComplexityRoot struct {
 	}
 }
 
+type ActionResolver interface {
+	ID(ctx context.Context, obj *ent.Action) (string, error)
+
+	Type(ctx context.Context, obj *ent.Action) (model.ActionType, error)
+}
 type CompetitionResolver interface {
 	ID(ctx context.Context, obj *ent.Competition) (string, error)
 }
@@ -206,6 +222,7 @@ type QueryResolver interface {
 	GetProvider(ctx context.Context, id string) (*ent.Provider, error)
 	ValidateConfig(ctx context.Context, typeArg string, config string) (bool, error)
 	ListProviderVms(ctx context.Context, id string) ([]*model.SkeletonVMObject, error)
+	Actions(ctx context.Context, offset int, limit int) ([]*ent.Action, error)
 }
 type SubscriptionResolver interface {
 	Lockout(ctx context.Context, id string) (<-chan *ent.VmObject, error)
@@ -237,6 +254,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Action.ID":
+		if e.complexity.Action.ID == nil {
+			break
+		}
+
+		return e.complexity.Action.ID(childComplexity), true
+
+	case "Action.IpAddress":
+		if e.complexity.Action.IPAddress == nil {
+			break
+		}
+
+		return e.complexity.Action.IPAddress(childComplexity), true
+
+	case "Action.Message":
+		if e.complexity.Action.Message == nil {
+			break
+		}
+
+		return e.complexity.Action.Message(childComplexity), true
+
+	case "Action.PerformedAt":
+		if e.complexity.Action.PerformedAt == nil {
+			break
+		}
+
+		return e.complexity.Action.PerformedAt(childComplexity), true
+
+	case "Action.Type":
+		if e.complexity.Action.Type == nil {
+			break
+		}
+
+		return e.complexity.Action.Type(childComplexity), true
 
 	case "Competition.CompetitionToProvider":
 		if e.complexity.Competition.CompetitionToProvider == nil {
@@ -593,6 +645,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Provider.Type(childComplexity), true
+
+	case "Query.actions":
+		if e.complexity.Query.Actions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_actions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Actions(childComplexity, args["offset"].(int), args["limit"].(int)), true
 
 	case "Query.competitions":
 		if e.complexity.Query.Competitions == nil {
@@ -1015,7 +1079,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `type VmObject {
+	{Name: "../schema.graphqls", Input: `scalar Time
+
+type VmObject {
   ID: ID!
   Name: String!
   Identifier: String!
@@ -1074,6 +1140,32 @@ type User {
   UserToTeam: Team
 }
 
+type Action {
+  ID: ID!
+  IpAddress: String!
+  Type: ActionType!
+  Message: String!
+  PerformedAt: Time!
+}
+
+enum ActionType {
+  SIGN_IN
+  FAILED_SIGN_IN
+  SIGN_OUT
+  API_CALL
+  CONSOLE_ACCESS
+  REBOOT
+  SHUTDOWN
+  POWER_ON
+  POWER_OFF
+  CHANGE_SELF_PASSWORD
+  CHANGE_PASSWORD
+  CREATE_OBJECT
+  UPDATE_OBJECT
+  DELETE_OBJECT
+  UPDATE_LOCKOUT
+}
+
 enum ConsoleType {
   # Openstack
   NOVNC
@@ -1112,6 +1204,8 @@ type Query {
   getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
   validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
   listProviderVms(id: ID!): [SkeletonVmObject!]! @hasRole(roles: [ADMIN])
+  # Logging
+  actions(offset: Int!, limit: Int!): [Action!]! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
@@ -1650,6 +1744,30 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_actions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["offset"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["offset"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_console_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1855,6 +1973,226 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Action_ID(ctx context.Context, field graphql.CollectedField, obj *ent.Action) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Action_ID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Action().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Action_ID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Action",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Action_IpAddress(ctx context.Context, field graphql.CollectedField, obj *ent.Action) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Action_IpAddress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IPAddress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Action_IpAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Action",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Action_Type(ctx context.Context, field graphql.CollectedField, obj *ent.Action) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Action_Type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Action().Type(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.ActionType)
+	fc.Result = res
+	return ec.marshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Action_Type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Action",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ActionType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Action_Message(ctx context.Context, field graphql.CollectedField, obj *ent.Action) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Action_Message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Action_Message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Action",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Action_PerformedAt(ctx context.Context, field graphql.CollectedField, obj *ent.Action) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Action_PerformedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PerformedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Action_PerformedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Action",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Competition_ID(ctx context.Context, field graphql.CollectedField, obj *ent.Competition) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Competition_ID(ctx, field)
@@ -5892,6 +6230,97 @@ func (ec *executionContext) fieldContext_Query_listProviderVms(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_actions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_actions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Actions(rctx, fc.Args["offset"].(int), fc.Args["limit"].(int))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*ent.Action); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/BradHacker/compsole/ent.Action`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.Action)
+	fc.Result = res
+	return ec.marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐActionᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_actions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Action_ID(ctx, field)
+			case "IpAddress":
+				return ec.fieldContext_Action_IpAddress(ctx, field)
+			case "Type":
+				return ec.fieldContext_Action_Type(ctx, field)
+			case "Message":
+				return ec.fieldContext_Action_Message(ctx, field)
+			case "PerformedAt":
+				return ec.fieldContext_Action_PerformedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Action", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_actions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -9186,6 +9615,88 @@ func (ec *executionContext) unmarshalInputVmObjectInput(ctx context.Context, obj
 
 // region    **************************** object.gotpl ****************************
 
+var actionImplementors = []string{"Action"}
+
+func (ec *executionContext) _Action(ctx context.Context, sel ast.SelectionSet, obj *ent.Action) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, actionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Action")
+		case "ID":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Action_ID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "IpAddress":
+
+			out.Values[i] = ec._Action_IpAddress(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "Type":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Action_Type(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "Message":
+
+			out.Values[i] = ec._Action_Message(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "PerformedAt":
+
+			out.Values[i] = ec._Action_PerformedAt(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var competitionImplementors = []string{"Competition"}
 
 func (ec *executionContext) _Competition(ctx context.Context, sel ast.SelectionSet, obj *ent.Competition) graphql.Marshaler {
@@ -10024,6 +10535,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "actions":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_actions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "__type":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -10723,6 +11257,70 @@ func (ec *executionContext) unmarshalNAccountInput2githubᚗcomᚋBradHackerᚋc
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐActionᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Action) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAction2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAction2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx context.Context, sel ast.SelectionSet, v *ent.Action) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Action(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx context.Context, v interface{}) (model.ActionType, error) {
+	var res model.ActionType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx context.Context, sel ast.SelectionSet, v model.ActionType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx context.Context, v interface{}) (model.AuthProvider, error) {
 	var res model.AuthProvider
 	err := res.UnmarshalGQL(v)
@@ -11217,6 +11815,21 @@ func (ec *executionContext) unmarshalNTeamInput2ᚕᚖgithubᚗcomᚋBradHacker�
 func (ec *executionContext) unmarshalNTeamInput2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐTeamInput(ctx context.Context, v interface{}) (*model.TeamInput, error) {
 	res, err := ec.unmarshalInputTeamInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v ent.User) graphql.Marshaler {
