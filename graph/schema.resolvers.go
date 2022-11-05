@@ -82,6 +82,15 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeREBOOT).
+		SetMessage(fmt.Sprintf("rebooted vm %s", entVmObject.Name)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log REBOOT: %v", err)
+	}
 	// Reboot the VM
 	return true, provider.RestartVM(entVmObject, utils.RebootType(rebootType))
 }
@@ -138,6 +147,15 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypePOWER_ON).
+		SetMessage(fmt.Sprintf("powered on vm %s", entVmObject.Name)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log POWER_ON: %v", err)
 	}
 	// Power on the VM
 	return true, provider.PowerOnVM(entVmObject)
@@ -196,6 +214,15 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypePOWER_OFF).
+		SetMessage(fmt.Sprintf("powered off vm %s", entVmObject.Name)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log POWER_OFF: %v", err)
+	}
 	// Power on the VM
 	return true, provider.PowerOffVM(entVmObject)
 }
@@ -223,6 +250,15 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.Accoun
 	if err != nil {
 		return nil, fmt.Errorf("failed to update account information: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated account %s", entUser.Username)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
 	return entUser, nil
 }
 
@@ -248,6 +284,15 @@ func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password stri
 	err = entUser.Update().SetPassword(password).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to update self password: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCHANGE_SELF_PASSWORD).
+		SetMessage(fmt.Sprintf("changed self password for %s", entUser.Username)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CHANGE_SELF_PASSWORD: %v", err)
 	}
 	return true, nil
 }
@@ -303,6 +348,15 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 	entUser, err := entUserCreate.Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created user %s", entUser.Username)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
 	}
 	return entUser, nil
 }
@@ -364,6 +418,15 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated user %s", entUser.Username)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
 	return entUser, nil
 }
 
@@ -399,6 +462,15 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete user: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted user %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETE_OBJECT: %v", err)
 	}
 	return true, nil
 }
@@ -440,6 +512,15 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, id string, passwo
 	if err != nil {
 		return false, fmt.Errorf("failed to update password: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCHANGE_PASSWORD).
+		SetMessage(fmt.Sprintf("changed password for user %s", entUser.Username)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CHANGE_PASSWORD: %v", err)
+	}
 	return true, nil
 }
 
@@ -480,6 +561,15 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput
 	entTeam, err := r.client.Team.Create().SetTeamNumber(input.TeamNumber).SetName(*input.Name).SetTeamToCompetition(entCompetition).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created team %s", entTeam.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
 	}
 	return entTeam, nil
 }
@@ -542,6 +632,15 @@ func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.
 	for i, entTeam := range newEntTeams {
 		unwrappedTeams[i] = entTeam.Unwrap()
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("batch created %d teams", len(unwrappedTeams))).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
+	}
 	return unwrappedTeams, nil
 }
 
@@ -587,6 +686,15 @@ func (r *mutationResolver) UpdateTeam(ctx context.Context, input model.TeamInput
 	if err != nil {
 		return nil, fmt.Errorf("failed to update team: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated team %s", entTeam.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
 	return entTeam, nil
 }
 
@@ -616,6 +724,15 @@ func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, err
 	_, err = r.client.Team.Delete().Where(team.IDEQ(teamUuid)).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete team: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted team %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETED_OBJECT: %v", err)
 	}
 	return true, nil
 }
@@ -650,6 +767,15 @@ func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.Co
 	entCompetition, err := r.client.Competition.Create().SetName(input.Name).SetCompetitionToProvider(entProvider).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create competition: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created competition %s", entCompetition.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
 	}
 	return entCompetition, nil
 }
@@ -696,6 +822,15 @@ func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.Co
 	if err != nil {
 		return nil, fmt.Errorf("failed to update team: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated competition %s", entCompetition.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
 	return entCompetition, nil
 }
 
@@ -725,6 +860,15 @@ func (r *mutationResolver) DeleteCompetition(ctx context.Context, id string) (bo
 	_, err = r.client.Competition.Delete().Where(competition.IDEQ(competitionUuid)).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to delete competition: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted competition %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETE_OBJECT: %v", err)
 	}
 	return true, nil
 }
@@ -767,6 +911,15 @@ func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObj
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create vm object: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created vm object %s", entVmObject.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
 	}
 	return entVmObject, nil
 }
@@ -829,6 +982,15 @@ func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*mo
 	for i, entVmObject := range newEntVmObjects {
 		unwrappedVmObjects[i] = entVmObject.Unwrap()
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created %d vm objects", len(unwrappedVmObjects))).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
+	}
 	return unwrappedVmObjects, nil
 }
 
@@ -879,6 +1041,15 @@ func (r *mutationResolver) UpdateVMObject(ctx context.Context, input model.VMObj
 	if err != nil {
 		return nil, fmt.Errorf("failed to update vm object: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated vm object %s", entVmObject.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
 	return entVmObject, nil
 }
 
@@ -909,6 +1080,15 @@ func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool,
 	if err != nil {
 		return false, fmt.Errorf("failed to delete vm object: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted vm object %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETE_OBJECT: %v", err)
+	}
 	return true, nil
 }
 
@@ -934,6 +1114,15 @@ func (r *mutationResolver) CreateProvider(ctx context.Context, input model.Provi
 	entProvider, err := r.client.Provider.Create().SetName(input.Name).SetType(input.Type).SetConfig(input.Config).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created provider %s", entProvider.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
 	}
 	return entProvider, nil
 }
@@ -976,6 +1165,15 @@ func (r *mutationResolver) UpdateProvider(ctx context.Context, input model.Provi
 	if err != nil {
 		return nil, fmt.Errorf("failed to update provider: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated provider %s", entProvider.Name)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
 	return entProvider, nil
 }
 
@@ -1011,6 +1209,15 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 	if err != nil {
 		return false, fmt.Errorf("failed to delete provider: %v", err)
 	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted provider %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETE_OBJECT: %v", err)
+	}
 	return true, nil
 }
 
@@ -1040,6 +1247,15 @@ func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool
 	err = r.client.VmObject.Update().Where(vmobject.IDEQ(vmObjectUuid)).SetLocked(locked).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to set vm object lock state: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_LOCKOUT).
+		SetMessage(fmt.Sprintf("set lockout to %t for vm %s", locked, id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_LOCKOUT: %v", err)
 	}
 	r.rdb.Publish(ctx, "lockout", vmObjectUuid.String())
 	return true, nil
@@ -1092,6 +1308,15 @@ func (r *mutationResolver) LockoutCompetition(ctx context.Context, id string, lo
 	}
 	for _, vmUuid := range updatedVmUuids {
 		r.rdb.Publish(ctx, "lockout", vmUuid.String())
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_LOCKOUT).
+		SetMessage(fmt.Sprintf("set lockout to %t for competition %s", locked, id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_LOCKOUT: %v", err)
 	}
 	return true, nil
 }
@@ -1155,6 +1380,15 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 	if err != nil {
 		return "", fmt.Errorf("failed to create provider from config: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCONSOLE_ACCESS).
+		SetMessage(fmt.Sprintf("access console for vm %s", entVmObject.Name)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_LOCKOUT: %v", err)
 	}
 	return provider.GetConsoleUrl(entVmObject, utils.ConsoleType(consoleType))
 }
