@@ -1,0 +1,13 @@
+fragment ActionFragment on Action {
+  ID
+  IpAddress
+  Type
+  Message
+  PerformedAt
+}
+
+query ListActions($offset: Int!, $limit: Int!) {
+  actions(offset: $offset, limit: $limit) {
+    ...ActionFragment
+  }
+}
