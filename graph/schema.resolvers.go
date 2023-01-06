@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/BradHacker/compsole/auth"
 	"github.com/BradHacker/compsole/compsole/providers"
@@ -1895,7 +1896,7 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 }
 
 // Actions is the resolver for the actions field.
-func (r *queryResolver) Actions(ctx context.Context, offset int, limit int) ([]*ent.Action, error) {
+func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error) {
 	authUser, err := auth.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
@@ -1907,17 +1908,38 @@ func (r *queryResolver) Actions(ctx context.Context, offset int, limit int) ([]*
 	err = r.client.Action.Create().
 		SetIPAddress(clientIp).
 		SetType(action.TypeAPI_CALL).
-		SetMessage("called \"ListProviderVms\" endpoint").
+		SetMessage("called \"Actions\" endpoint").
 		SetActionToUser(authUser).
 		Exec(ctx)
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	entActions, err := r.client.Action.Query().Order(ent.Desc(action.FieldPerformedAt)).Offset(offset).Limit(limit).All(ctx)
+	entTypes := make([]action.Type, 0)
+	for _, t := range types {
+		entTypes = append(entTypes, action.Type(t))
+	}
+	entActions, err := r.client.Action.Query().
+		Where(action.TypeIn(entTypes...)).
+		Order(ent.Desc(action.FieldPerformedAt)).
+		Offset(offset).
+		Limit(limit).
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list actions: %v", err)
 	}
-	return entActions, nil
+	totalActions, err := r.client.Action.Query().Where(action.TypeIn(entTypes...)).Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query actions for count: %v", err)
+	}
+	return &model.ActionsResult{
+		Results:      entActions,
+		Offset:       offset,
+		Limit:        limit,
+		Page:         offset / limit,
+		TotalPages:   int(math.Ceil(float64(totalActions) / float64(limit))),
+		TotalResults: totalActions,
+		Types:        types,
+	}, nil
 }
 
 // Lockout is the resolver for the lockout field.

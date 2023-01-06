@@ -65,6 +65,17 @@ type Action {
   Type: ActionType!
   Message: String!
   PerformedAt: Time!
+  ActionToUser: User
+}
+
+type ActionsResult {
+  results: [Action]!
+  offset: Int!
+  limit: Int!
+  page: Int!
+  totalPages: Int!
+  totalResults: Int!
+  types: [ActionType!]!
 }
 
 enum ActionType {
@@ -83,6 +94,7 @@ enum ActionType {
   UPDATE_OBJECT
   DELETE_OBJECT
   UPDATE_LOCKOUT
+  UNDEFINED
 }
 
 enum ConsoleType {
@@ -124,7 +136,7 @@ type Query {
   validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
   listProviderVms(id: ID!): [SkeletonVmObject!]! @hasRole(roles: [ADMIN])
   # Logging
-  actions(offset: Int!, limit: Int!): [Action!]! @hasRole(roles: [ADMIN])
+  actions(offset: Int!, limit: Int!, types: [ActionType!]!): ActionsResult! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {

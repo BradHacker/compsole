@@ -56,11 +56,22 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Action struct {
-		ID          func(childComplexity int) int
-		IPAddress   func(childComplexity int) int
-		Message     func(childComplexity int) int
-		PerformedAt func(childComplexity int) int
-		Type        func(childComplexity int) int
+		ActionToUser func(childComplexity int) int
+		ID           func(childComplexity int) int
+		IPAddress    func(childComplexity int) int
+		Message      func(childComplexity int) int
+		PerformedAt  func(childComplexity int) int
+		Type         func(childComplexity int) int
+	}
+
+	ActionsResult struct {
+		Limit        func(childComplexity int) int
+		Offset       func(childComplexity int) int
+		Page         func(childComplexity int) int
+		Results      func(childComplexity int) int
+		TotalPages   func(childComplexity int) int
+		TotalResults func(childComplexity int) int
+		Types        func(childComplexity int) int
 	}
 
 	Competition struct {
@@ -106,7 +117,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Actions         func(childComplexity int, offset int, limit int) int
+		Actions         func(childComplexity int, offset int, limit int, types []model.ActionType) int
 		Competitions    func(childComplexity int) int
 		Console         func(childComplexity int, vmObjectID string, consoleType model.ConsoleType) int
 		GetCompetition  func(childComplexity int, id string) int
@@ -222,7 +233,7 @@ type QueryResolver interface {
 	GetProvider(ctx context.Context, id string) (*ent.Provider, error)
 	ValidateConfig(ctx context.Context, typeArg string, config string) (bool, error)
 	ListProviderVms(ctx context.Context, id string) ([]*model.SkeletonVMObject, error)
-	Actions(ctx context.Context, offset int, limit int) ([]*ent.Action, error)
+	Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error)
 }
 type SubscriptionResolver interface {
 	Lockout(ctx context.Context, id string) (<-chan *ent.VmObject, error)
@@ -254,6 +265,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Action.ActionToUser":
+		if e.complexity.Action.ActionToUser == nil {
+			break
+		}
+
+		return e.complexity.Action.ActionToUser(childComplexity), true
 
 	case "Action.ID":
 		if e.complexity.Action.ID == nil {
@@ -289,6 +307,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Action.Type(childComplexity), true
+
+	case "ActionsResult.limit":
+		if e.complexity.ActionsResult.Limit == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.Limit(childComplexity), true
+
+	case "ActionsResult.offset":
+		if e.complexity.ActionsResult.Offset == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.Offset(childComplexity), true
+
+	case "ActionsResult.page":
+		if e.complexity.ActionsResult.Page == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.Page(childComplexity), true
+
+	case "ActionsResult.results":
+		if e.complexity.ActionsResult.Results == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.Results(childComplexity), true
+
+	case "ActionsResult.totalPages":
+		if e.complexity.ActionsResult.TotalPages == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.TotalPages(childComplexity), true
+
+	case "ActionsResult.totalResults":
+		if e.complexity.ActionsResult.TotalResults == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.TotalResults(childComplexity), true
+
+	case "ActionsResult.types":
+		if e.complexity.ActionsResult.Types == nil {
+			break
+		}
+
+		return e.complexity.ActionsResult.Types(childComplexity), true
 
 	case "Competition.CompetitionToProvider":
 		if e.complexity.Competition.CompetitionToProvider == nil {
@@ -656,7 +723,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Actions(childComplexity, args["offset"].(int), args["limit"].(int)), true
+		return e.complexity.Query.Actions(childComplexity, args["offset"].(int), args["limit"].(int), args["types"].([]model.ActionType)), true
 
 	case "Query.competitions":
 		if e.complexity.Query.Competitions == nil {
@@ -1146,6 +1213,17 @@ type Action {
   Type: ActionType!
   Message: String!
   PerformedAt: Time!
+  ActionToUser: User
+}
+
+type ActionsResult {
+  results: [Action]!
+  offset: Int!
+  limit: Int!
+  page: Int!
+  totalPages: Int!
+  totalResults: Int!
+  types: [ActionType!]!
 }
 
 enum ActionType {
@@ -1164,6 +1242,7 @@ enum ActionType {
   UPDATE_OBJECT
   DELETE_OBJECT
   UPDATE_LOCKOUT
+  UNDEFINED
 }
 
 enum ConsoleType {
@@ -1205,7 +1284,7 @@ type Query {
   validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
   listProviderVms(id: ID!): [SkeletonVmObject!]! @hasRole(roles: [ADMIN])
   # Logging
-  actions(offset: Int!, limit: Int!): [Action!]! @hasRole(roles: [ADMIN])
+  actions(offset: Int!, limit: Int!, types: [ActionType!]!): ActionsResult! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
@@ -1765,6 +1844,15 @@ func (ec *executionContext) field_Query_actions_args(ctx context.Context, rawArg
 		}
 	}
 	args["limit"] = arg1
+	var arg2 []model.ActionType
+	if tmp, ok := rawArgs["types"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("types"))
+		arg2, err = ec.unmarshalNActionType2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionTypeᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["types"] = arg2
 	return args, nil
 }
 
@@ -2189,6 +2277,385 @@ func (ec *executionContext) fieldContext_Action_PerformedAt(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Action_ActionToUser(ctx context.Context, field graphql.CollectedField, obj *ent.Action) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Action_ActionToUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ActionToUser(ctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Action_ActionToUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Action",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_User_ID(ctx, field)
+			case "Username":
+				return ec.fieldContext_User_Username(ctx, field)
+			case "FirstName":
+				return ec.fieldContext_User_FirstName(ctx, field)
+			case "LastName":
+				return ec.fieldContext_User_LastName(ctx, field)
+			case "Role":
+				return ec.fieldContext_User_Role(ctx, field)
+			case "Provider":
+				return ec.fieldContext_User_Provider(ctx, field)
+			case "UserToTeam":
+				return ec.fieldContext_User_UserToTeam(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_results(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_results(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Results, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.Action)
+	fc.Result = res
+	return ec.marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_results(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Action_ID(ctx, field)
+			case "IpAddress":
+				return ec.fieldContext_Action_IpAddress(ctx, field)
+			case "Type":
+				return ec.fieldContext_Action_Type(ctx, field)
+			case "Message":
+				return ec.fieldContext_Action_Message(ctx, field)
+			case "PerformedAt":
+				return ec.fieldContext_Action_PerformedAt(ctx, field)
+			case "ActionToUser":
+				return ec.fieldContext_Action_ActionToUser(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Action", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_offset(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_offset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Offset, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_offset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_limit(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_limit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Limit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_limit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_page(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_page(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Page, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_page(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_totalPages(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_totalPages(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalPages, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_totalPages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_totalResults(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_totalResults(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalResults, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_totalResults(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ActionsResult_types(ctx context.Context, field graphql.CollectedField, obj *model.ActionsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ActionsResult_types(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Types, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.ActionType)
+	fc.Result = res
+	return ec.marshalNActionType2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionTypeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ActionsResult_types(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ActionsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ActionType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6245,7 +6712,7 @@ func (ec *executionContext) _Query_actions(ctx context.Context, field graphql.Co
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().Actions(rctx, fc.Args["offset"].(int), fc.Args["limit"].(int))
+			return ec.resolvers.Query().Actions(rctx, fc.Args["offset"].(int), fc.Args["limit"].(int), fc.Args["types"].([]model.ActionType))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
@@ -6265,10 +6732,10 @@ func (ec *executionContext) _Query_actions(ctx context.Context, field graphql.Co
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.([]*ent.Action); ok {
+		if data, ok := tmp.(*model.ActionsResult); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/BradHacker/compsole/ent.Action`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/BradHacker/compsole/graph/model.ActionsResult`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6280,9 +6747,9 @@ func (ec *executionContext) _Query_actions(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Action)
+	res := resTmp.(*model.ActionsResult)
 	fc.Result = res
-	return ec.marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐActionᚄ(ctx, field.Selections, res)
+	return ec.marshalNActionsResult2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionsResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_actions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6293,18 +6760,22 @@ func (ec *executionContext) fieldContext_Query_actions(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "ID":
-				return ec.fieldContext_Action_ID(ctx, field)
-			case "IpAddress":
-				return ec.fieldContext_Action_IpAddress(ctx, field)
-			case "Type":
-				return ec.fieldContext_Action_Type(ctx, field)
-			case "Message":
-				return ec.fieldContext_Action_Message(ctx, field)
-			case "PerformedAt":
-				return ec.fieldContext_Action_PerformedAt(ctx, field)
+			case "results":
+				return ec.fieldContext_ActionsResult_results(ctx, field)
+			case "offset":
+				return ec.fieldContext_ActionsResult_offset(ctx, field)
+			case "limit":
+				return ec.fieldContext_ActionsResult_limit(ctx, field)
+			case "page":
+				return ec.fieldContext_ActionsResult_page(ctx, field)
+			case "totalPages":
+				return ec.fieldContext_ActionsResult_totalPages(ctx, field)
+			case "totalResults":
+				return ec.fieldContext_ActionsResult_totalResults(ctx, field)
+			case "types":
+				return ec.fieldContext_ActionsResult_types(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Action", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ActionsResult", field.Name)
 		},
 	}
 	defer func() {
@@ -9686,6 +10157,93 @@ func (ec *executionContext) _Action(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "ActionToUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Action_ActionToUser(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var actionsResultImplementors = []string{"ActionsResult"}
+
+func (ec *executionContext) _ActionsResult(ctx context.Context, sel ast.SelectionSet, obj *model.ActionsResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, actionsResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ActionsResult")
+		case "results":
+
+			out.Values[i] = ec._ActionsResult_results(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "offset":
+
+			out.Values[i] = ec._ActionsResult_offset(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "limit":
+
+			out.Values[i] = ec._ActionsResult_limit(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "page":
+
+			out.Values[i] = ec._ActionsResult_page(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalPages":
+
+			out.Values[i] = ec._ActionsResult_totalPages(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalResults":
+
+			out.Values[i] = ec._ActionsResult_totalResults(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "types":
+
+			out.Values[i] = ec._ActionsResult_types(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11257,7 +11815,7 @@ func (ec *executionContext) unmarshalNAccountInput2githubᚗcomᚋBradHackerᚋc
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐActionᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Action) graphql.Marshaler {
+func (ec *executionContext) marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx context.Context, sel ast.SelectionSet, v []*ent.Action) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -11281,7 +11839,72 @@ func (ec *executionContext) marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcom
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAction2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx, sel, v[i])
+			ret[i] = ec.marshalOAction2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx context.Context, v interface{}) (model.ActionType, error) {
+	var res model.ActionType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx context.Context, sel ast.SelectionSet, v model.ActionType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNActionType2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionTypeᚄ(ctx context.Context, v interface{}) ([]model.ActionType, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]model.ActionType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNActionType2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.ActionType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -11301,24 +11924,18 @@ func (ec *executionContext) marshalNAction2ᚕᚖgithubᚗcomᚋBradHackerᚋcom
 	return ret
 }
 
-func (ec *executionContext) marshalNAction2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx context.Context, sel ast.SelectionSet, v *ent.Action) graphql.Marshaler {
+func (ec *executionContext) marshalNActionsResult2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionsResult(ctx context.Context, sel ast.SelectionSet, v model.ActionsResult) graphql.Marshaler {
+	return ec._ActionsResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNActionsResult2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionsResult(ctx context.Context, sel ast.SelectionSet, v *model.ActionsResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Action(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx context.Context, v interface{}) (model.ActionType, error) {
-	var res model.ActionType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNActionType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐActionType(ctx context.Context, sel ast.SelectionSet, v model.ActionType) graphql.Marshaler {
-	return v
+	return ec._ActionsResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNAuthProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐAuthProvider(ctx context.Context, v interface{}) (model.AuthProvider, error) {
@@ -12233,6 +12850,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAction2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐAction(ctx context.Context, sel ast.SelectionSet, v *ent.Action) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Action(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -12306,6 +12930,13 @@ func (ec *executionContext) marshalOTeam2ᚖgithubᚗcomᚋBradHackerᚋcompsole
 		return graphql.Null
 	}
 	return ec._Team(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐUser(ctx context.Context, sel ast.SelectionSet, v *ent.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOVmObject2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐVmObject(ctx context.Context, sel ast.SelectionSet, v []*ent.VmObject) graphql.Marshaler {

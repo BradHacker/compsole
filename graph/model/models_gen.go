@@ -6,11 +6,23 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"github.com/BradHacker/compsole/ent"
 )
 
 type AccountInput struct {
 	FirstName string `json:"FirstName"`
 	LastName  string `json:"LastName"`
+}
+
+type ActionsResult struct {
+	Results      []*ent.Action `json:"results"`
+	Offset       int           `json:"offset"`
+	Limit        int           `json:"limit"`
+	Page         int           `json:"page"`
+	TotalPages   int           `json:"totalPages"`
+	TotalResults int           `json:"totalResults"`
+	Types        []ActionType  `json:"types"`
 }
 
 type CompetitionInput struct {
@@ -75,6 +87,7 @@ const (
 	ActionTypeUpdateObject       ActionType = "UPDATE_OBJECT"
 	ActionTypeDeleteObject       ActionType = "DELETE_OBJECT"
 	ActionTypeUpdateLockout      ActionType = "UPDATE_LOCKOUT"
+	ActionTypeUndefined          ActionType = "UNDEFINED"
 )
 
 var AllActionType = []ActionType{
@@ -93,11 +106,12 @@ var AllActionType = []ActionType{
 	ActionTypeUpdateObject,
 	ActionTypeDeleteObject,
 	ActionTypeUpdateLockout,
+	ActionTypeUndefined,
 }
 
 func (e ActionType) IsValid() bool {
 	switch e {
-	case ActionTypeSignIn, ActionTypeFailedSignIn, ActionTypeSignOut, ActionTypeAPICall, ActionTypeConsoleAccess, ActionTypeReboot, ActionTypeShutdown, ActionTypePowerOn, ActionTypePowerOff, ActionTypeChangeSelfPassword, ActionTypeChangePassword, ActionTypeCreateObject, ActionTypeUpdateObject, ActionTypeDeleteObject, ActionTypeUpdateLockout:
+	case ActionTypeSignIn, ActionTypeFailedSignIn, ActionTypeSignOut, ActionTypeAPICall, ActionTypeConsoleAccess, ActionTypeReboot, ActionTypeShutdown, ActionTypePowerOn, ActionTypePowerOff, ActionTypeChangeSelfPassword, ActionTypeChangePassword, ActionTypeCreateObject, ActionTypeUpdateObject, ActionTypeDeleteObject, ActionTypeUpdateLockout, ActionTypeUndefined:
 		return true
 	}
 	return false
