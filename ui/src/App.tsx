@@ -126,6 +126,12 @@ function App() {
                   >
                     Ingest VMs
                   </Button>
+                  <Button
+                    onClick={() => navigate("/admin/logs")}
+                    color="inherit"
+                  >
+                    Logs
+                  </Button>
                 </>
               )}
               <Divider orientation="vertical" variant="middle" flexItem />
