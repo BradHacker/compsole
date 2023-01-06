@@ -163,7 +163,14 @@ export const Logs: React.FC = (): React.ReactElement => {
         types: logTypes,
       });
     }
-  }, [page, resultsPerPage, logTypes, refetchActions]);
+  }, [
+    page,
+    resultsPerPage,
+    logTypes,
+    listActionsLoading,
+    listActionsPrevData,
+    refetchActions,
+  ]);
 
   const handleLogTypeChange = (event: SelectChangeEvent<typeof logTypes>) => {
     setLogTypes(
