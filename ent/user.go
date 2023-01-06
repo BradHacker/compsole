@@ -47,9 +47,11 @@ type UserEdges struct {
 	UserToTeam *Team `json:"UserToTeam,omitempty"`
 	// UserToToken holds the value of the UserToToken edge.
 	UserToToken []*Token `json:"UserToToken,omitempty"`
+	// UserToActions holds the value of the UserToActions edge.
+	UserToActions []*Action `json:"UserToActions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // UserToTeamOrErr returns the UserToTeam value or an error if the edge
@@ -73,6 +75,15 @@ func (e UserEdges) UserToTokenOrErr() ([]*Token, error) {
 		return e.UserToToken, nil
 	}
 	return nil, &NotLoadedError{edge: "UserToToken"}
+}
+
+// UserToActionsOrErr returns the UserToActions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) UserToActionsOrErr() ([]*Action, error) {
+	if e.loadedTypes[2] {
+		return e.UserToActions, nil
+	}
+	return nil, &NotLoadedError{edge: "UserToActions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -163,6 +174,11 @@ func (u *User) QueryUserToTeam() *TeamQuery {
 // QueryUserToToken queries the "UserToToken" edge of the User entity.
 func (u *User) QueryUserToToken() *TokenQuery {
 	return (&UserClient{config: u.config}).QueryUserToToken(u)
+}
+
+// QueryUserToActions queries the "UserToActions" edge of the User entity.
+func (u *User) QueryUserToActions() *ActionQuery {
+	return (&UserClient{config: u.config}).QueryUserToActions(u)
 }
 
 // Update returns a builder for updating this User.

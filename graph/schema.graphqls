@@ -1,3 +1,5 @@
+scalar Time
+
 type VmObject {
   ID: ID!
   Name: String!
@@ -57,6 +59,44 @@ type User {
   UserToTeam: Team
 }
 
+type Action {
+  ID: ID!
+  IpAddress: String!
+  Type: ActionType!
+  Message: String!
+  PerformedAt: Time!
+  ActionToUser: User
+}
+
+type ActionsResult {
+  results: [Action]!
+  offset: Int!
+  limit: Int!
+  page: Int!
+  totalPages: Int!
+  totalResults: Int!
+  types: [ActionType!]!
+}
+
+enum ActionType {
+  SIGN_IN
+  FAILED_SIGN_IN
+  SIGN_OUT
+  API_CALL
+  CONSOLE_ACCESS
+  REBOOT
+  SHUTDOWN
+  POWER_ON
+  POWER_OFF
+  CHANGE_SELF_PASSWORD
+  CHANGE_PASSWORD
+  CREATE_OBJECT
+  UPDATE_OBJECT
+  DELETE_OBJECT
+  UPDATE_LOCKOUT
+  UNDEFINED
+}
+
 enum ConsoleType {
   # Openstack
   NOVNC
@@ -95,6 +135,8 @@ type Query {
   getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
   validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
   listProviderVms(id: ID!): [SkeletonVmObject!]! @hasRole(roles: [ADMIN])
+  # Logging
+  actions(offset: Int!, limit: Int!, types: [ActionType!]!): ActionsResult! @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {

@@ -3,19 +3,24 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/BradHacker/compsole/ent"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/token"
+	"github.com/BradHacker/compsole/ent/user"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // A private key for context that only this package can access. This is important
 // to prevent collisions between different context uses
 var userCtxKey = &contextKey{"user"}
+var ipCtxKey = &contextKey{"ip"}
 var jwtKey = []byte("JHGDKAHSK*&Y@U(*&@U#I(UYG@HJWIS(*&YTGJQKI")
 
 type contextKey struct {
@@ -113,6 +118,16 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		}
 		// put it in context
 		c := context.WithValue(ctx.Request.Context(), userCtxKey, entUser)
+
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
+		}
+		// put it in context
+		c = context.WithValue(c, ipCtxKey, clientIp)
 		ctx.Request = ctx.Request.WithContext(c)
 
 		ctx.Next()
@@ -182,6 +197,34 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
+		// Get the user and log a sign out event
+		entUser, err := client.User.Query().Where(user.HasUserToTokenWith(token.TokenEQ(authCookie))).Only(ctx)
+		if err != nil {
+			if secure_cookie {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+			} else {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+			}
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			return
+		}
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
+		}
+		err = client.Action.Create().
+			SetIPAddress(clientIp).
+			SetType(action.TypeSIGN_OUT).
+			SetMessage(fmt.Sprintf("user \"%s\" has signed out", entUser.Username)).
+			SetActionToUser(entUser).
+			Exec(ctx)
+		if err != nil {
+			logrus.Warn("failed to create SIGN_OUT action: %v", err)
+		}
+
 		_, err = client.Token.Delete().Where(token.TokenEQ(authCookie)).Exec(ctx)
 		if err != nil {
 			if secure_cookie {
@@ -220,7 +263,13 @@ func ForContext(ctx context.Context) (*ent.User, error) {
 		return raw, nil
 	}
 	return nil, errors.New("unable to get user from context")
+}
 
+func ForContextIp(ctx context.Context) (string, error) {
+	if ip, ok := ctx.Value(ipCtxKey).(string); ok {
+		return ip, nil
+	}
+	return "", fmt.Errorf("unable to get ip from context")
 }
 
 // ClearTokens Clears Old tokens from DB

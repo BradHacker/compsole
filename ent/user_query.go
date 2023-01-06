@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
@@ -29,9 +30,10 @@ type UserQuery struct {
 	fields     []string
 	predicates []predicate.User
 	// eager-loading edges.
-	withUserToTeam  *TeamQuery
-	withUserToToken *TokenQuery
-	withFKs         bool
+	withUserToTeam    *TeamQuery
+	withUserToToken   *TokenQuery
+	withUserToActions *ActionQuery
+	withFKs           bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -105,6 +107,28 @@ func (uq *UserQuery) QueryUserToToken() *TokenQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(token.Table, token.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.UserToTokenTable, user.UserToTokenColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryUserToActions chains the current query on the "UserToActions" edge.
+func (uq *UserQuery) QueryUserToActions() *ActionQuery {
+	query := &ActionQuery{config: uq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(action.Table, action.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.UserToActionsTable, user.UserToActionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -288,13 +312,14 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:          uq.config,
-		limit:           uq.limit,
-		offset:          uq.offset,
-		order:           append([]OrderFunc{}, uq.order...),
-		predicates:      append([]predicate.User{}, uq.predicates...),
-		withUserToTeam:  uq.withUserToTeam.Clone(),
-		withUserToToken: uq.withUserToToken.Clone(),
+		config:            uq.config,
+		limit:             uq.limit,
+		offset:            uq.offset,
+		order:             append([]OrderFunc{}, uq.order...),
+		predicates:        append([]predicate.User{}, uq.predicates...),
+		withUserToTeam:    uq.withUserToTeam.Clone(),
+		withUserToToken:   uq.withUserToToken.Clone(),
+		withUserToActions: uq.withUserToActions.Clone(),
 		// clone intermediate query.
 		sql:    uq.sql.Clone(),
 		path:   uq.path,
@@ -321,6 +346,17 @@ func (uq *UserQuery) WithUserToToken(opts ...func(*TokenQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withUserToToken = query
+	return uq
+}
+
+// WithUserToActions tells the query-builder to eager-load the nodes that are connected to
+// the "UserToActions" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithUserToActions(opts ...func(*ActionQuery)) *UserQuery {
+	query := &ActionQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withUserToActions = query
 	return uq
 }
 
@@ -388,9 +424,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 		nodes       = []*User{}
 		withFKs     = uq.withFKs
 		_spec       = uq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			uq.withUserToTeam != nil,
 			uq.withUserToToken != nil,
+			uq.withUserToActions != nil,
 		}
 	)
 	if uq.withUserToTeam != nil {
@@ -474,6 +511,35 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_token" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.UserToToken = append(node.Edges.UserToToken, n)
+		}
+	}
+
+	if query := uq.withUserToActions; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[uuid.UUID]*User)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.UserToActions = []*Action{}
+		}
+		query.withFKs = true
+		query.Where(predicate.Action(func(s *sql.Selector) {
+			s.Where(sql.InValues(user.UserToActionsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.user_user_to_actions
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "user_user_to_actions" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "user_user_to_actions" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.UserToActions = append(node.Edges.UserToActions, n)
 		}
 	}
 

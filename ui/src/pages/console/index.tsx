@@ -467,6 +467,9 @@ export const Console: React.FC = (): React.ReactElement => {
             role={undefined}
             transition
             disablePortal
+            nonce={1}
+            onResize
+            onResizeCapture
           >
             {({ TransitionProps, placement }) => (
               <Grow
@@ -691,6 +694,9 @@ export const Console: React.FC = (): React.ReactElement => {
               role={undefined}
               transition
               disablePortal
+              nonce={1}
+              onResize
+              onResizeCapture
             >
               {({ TransitionProps, placement }) => (
                 <Grow

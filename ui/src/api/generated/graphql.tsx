@@ -13,11 +13,52 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  Time: any;
 };
 
 export type AccountInput = {
   FirstName: Scalars['String'];
   LastName: Scalars['String'];
+};
+
+export type Action = {
+  __typename?: 'Action';
+  ActionToUser?: Maybe<User>;
+  ID: Scalars['ID'];
+  IpAddress: Scalars['String'];
+  Message: Scalars['String'];
+  PerformedAt: Scalars['Time'];
+  Type: ActionType;
+};
+
+export enum ActionType {
+  ApiCall = 'API_CALL',
+  ChangePassword = 'CHANGE_PASSWORD',
+  ChangeSelfPassword = 'CHANGE_SELF_PASSWORD',
+  ConsoleAccess = 'CONSOLE_ACCESS',
+  CreateObject = 'CREATE_OBJECT',
+  DeleteObject = 'DELETE_OBJECT',
+  FailedSignIn = 'FAILED_SIGN_IN',
+  PowerOff = 'POWER_OFF',
+  PowerOn = 'POWER_ON',
+  Reboot = 'REBOOT',
+  Shutdown = 'SHUTDOWN',
+  SignIn = 'SIGN_IN',
+  SignOut = 'SIGN_OUT',
+  Undefined = 'UNDEFINED',
+  UpdateLockout = 'UPDATE_LOCKOUT',
+  UpdateObject = 'UPDATE_OBJECT'
+}
+
+export type ActionsResult = {
+  __typename?: 'ActionsResult';
+  limit: Scalars['Int'];
+  offset: Scalars['Int'];
+  page: Scalars['Int'];
+  results: Array<Maybe<Action>>;
+  totalPages: Scalars['Int'];
+  totalResults: Scalars['Int'];
+  types: Array<ActionType>;
 };
 
 export enum AuthProvider {
@@ -223,6 +264,7 @@ export type ProviderInput = {
 
 export type Query = {
   __typename?: 'Query';
+  actions: ActionsResult;
   competitions: Array<Competition>;
   console: Scalars['String'];
   getCompetition: Competition;
@@ -241,6 +283,13 @@ export type Query = {
   validateConfig: Scalars['Boolean'];
   vmObject: VmObject;
   vmObjects: Array<VmObject>;
+};
+
+
+export type QueryActionsArgs = {
+  limit: Scalars['Int'];
+  offset: Scalars['Int'];
+  types: Array<ActionType>;
 };
 
 
@@ -372,6 +421,17 @@ export type VmObjectInput = {
   Name: Scalars['String'];
   VmObjectToTeam?: InputMaybe<Scalars['ID']>;
 };
+
+export type ActionFragmentFragment = { __typename?: 'Action', ID: string, IpAddress: string, Type: ActionType, Message: string, PerformedAt: any, ActionToUser?: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role } | null };
+
+export type ListActionsQueryVariables = Exact<{
+  offset: Scalars['Int'];
+  limit: Scalars['Int'];
+  types: Array<ActionType> | ActionType;
+}>;
+
+
+export type ListActionsQuery = { __typename?: 'Query', actions: { __typename?: 'ActionsResult', offset: number, limit: number, page: number, totalPages: number, totalResults: number, types: Array<ActionType>, results: Array<{ __typename?: 'Action', ID: string, IpAddress: string, Type: ActionType, Message: string, PerformedAt: any, ActionToUser?: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role } | null } | null> } };
 
 export type CompetitionFragmentFragment = { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } };
 
@@ -669,6 +729,28 @@ export type DeleteVmObjectMutationVariables = Exact<{
 
 export type DeleteVmObjectMutation = { __typename?: 'Mutation', deleteVmObject: boolean };
 
+export const UserFragmentFragmentDoc = gql`
+    fragment UserFragment on User {
+  ID
+  Username
+  FirstName
+  LastName
+  Provider
+  Role
+}
+    `;
+export const ActionFragmentFragmentDoc = gql`
+    fragment ActionFragment on Action {
+  ID
+  IpAddress
+  Type
+  Message
+  PerformedAt
+  ActionToUser {
+    ...UserFragment
+  }
+}
+    ${UserFragmentFragmentDoc}`;
 export const CompetitionFragmentFragmentDoc = gql`
     fragment CompetitionFragment on Competition {
   ID
@@ -697,16 +779,6 @@ export const TeamFragmentFragmentDoc = gql`
     ID
     Name
   }
-}
-    `;
-export const UserFragmentFragmentDoc = gql`
-    fragment UserFragment on User {
-  ID
-  Username
-  FirstName
-  LastName
-  Provider
-  Role
 }
     `;
 export const AdminUserFragmentFragmentDoc = gql`
@@ -741,6 +813,51 @@ export const VmObjectFragmentFragmentDoc = gql`
   }
 }
     `;
+export const ListActionsDocument = gql`
+    query ListActions($offset: Int!, $limit: Int!, $types: [ActionType!]!) {
+  actions(offset: $offset, limit: $limit, types: $types) {
+    results {
+      ...ActionFragment
+    }
+    offset
+    limit
+    page
+    totalPages
+    totalResults
+    types
+  }
+}
+    ${ActionFragmentFragmentDoc}`;
+
+/**
+ * __useListActionsQuery__
+ *
+ * To run a query within a React component, call `useListActionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListActionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListActionsQuery({
+ *   variables: {
+ *      offset: // value for 'offset'
+ *      limit: // value for 'limit'
+ *      types: // value for 'types'
+ *   },
+ * });
+ */
+export function useListActionsQuery(baseOptions: Apollo.QueryHookOptions<ListActionsQuery, ListActionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ListActionsQuery, ListActionsQueryVariables>(ListActionsDocument, options);
+      }
+export function useListActionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListActionsQuery, ListActionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ListActionsQuery, ListActionsQueryVariables>(ListActionsDocument, options);
+        }
+export type ListActionsQueryHookResult = ReturnType<typeof useListActionsQuery>;
+export type ListActionsLazyQueryHookResult = ReturnType<typeof useListActionsLazyQuery>;
+export type ListActionsQueryResult = Apollo.QueryResult<ListActionsQuery, ListActionsQueryVariables>;
 export const GetCompTeamSearchValuesDocument = gql`
     query GetCompTeamSearchValues {
   teams {

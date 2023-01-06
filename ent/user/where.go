@@ -716,6 +716,34 @@ func HasUserToTokenWith(preds ...predicate.Token) predicate.User {
 	})
 }
 
+// HasUserToActions applies the HasEdge predicate on the "UserToActions" edge.
+func HasUserToActions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(UserToActionsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserToActionsTable, UserToActionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasUserToActionsWith applies the HasEdge predicate on the "UserToActions" edge with a given conditions (other predicates).
+func HasUserToActionsWith(preds ...predicate.Action) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(UserToActionsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, UserToActionsTable, UserToActionsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(func(s *sql.Selector) {

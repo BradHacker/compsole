@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Action is the client for interacting with the Action builders.
+	Action *ActionClient
 	// Competition is the client for interacting with the Competition builders.
 	Competition *CompetitionClient
 	// Provider is the client for interacting with the Provider builders.
@@ -159,6 +161,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Action = NewActionClient(tx.config)
 	tx.Competition = NewCompetitionClient(tx.config)
 	tx.Provider = NewProviderClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
@@ -174,7 +177,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Competition.QueryXXX(), the query will be executed
+// applies a query, for example: Action.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

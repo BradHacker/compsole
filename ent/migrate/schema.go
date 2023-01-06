@@ -8,6 +8,29 @@ import (
 )
 
 var (
+	// ActionsColumns holds the columns for the "actions" table.
+	ActionsColumns = []*schema.Column{
+		{Name: "oid", Type: field.TypeUUID},
+		{Name: "ip_address", Type: field.TypeString, Default: ""},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"SIGN_IN", "FAILED_SIGN_IN", "SIGN_OUT", "API_CALL", "CONSOLE_ACCESS", "REBOOT", "SHUTDOWN", "POWER_ON", "POWER_OFF", "CHANGE_SELF_PASSWORD", "CHANGE_PASSWORD", "CREATE_OBJECT", "UPDATE_OBJECT", "DELETE_OBJECT", "UPDATE_LOCKOUT"}},
+		{Name: "message", Type: field.TypeString},
+		{Name: "performed_at", Type: field.TypeTime},
+		{Name: "user_user_to_actions", Type: field.TypeUUID},
+	}
+	// ActionsTable holds the schema information for the "actions" table.
+	ActionsTable = &schema.Table{
+		Name:       "actions",
+		Columns:    ActionsColumns,
+		PrimaryKey: []*schema.Column{ActionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "actions_users_UserToActions",
+				Columns:    []*schema.Column{ActionsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// CompetitionsColumns holds the columns for the "competitions" table.
 	CompetitionsColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
@@ -133,6 +156,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ActionsTable,
 		CompetitionsTable,
 		ProvidersTable,
 		TeamsTable,
@@ -143,6 +167,7 @@ var (
 )
 
 func init() {
+	ActionsTable.ForeignKeys[0].RefTable = UsersTable
 	CompetitionsTable.ForeignKeys[0].RefTable = ProvidersTable
 	TeamsTable.ForeignKeys[0].RefTable = CompetitionsTable
 	TokensTable.ForeignKeys[0].RefTable = UsersTable

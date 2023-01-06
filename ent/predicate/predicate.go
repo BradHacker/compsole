@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Action is the predicate function for action builders.
+type Action func(*sql.Selector)
+
 // Competition is the predicate function for competition builders.
 type Competition func(*sql.Selector)
 
