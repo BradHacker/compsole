@@ -4,10 +4,21 @@ fragment ActionFragment on Action {
   Type
   Message
   PerformedAt
+  ActionToUser {
+    ...UserFragment
+  }
 }
 
-query ListActions($offset: Int!, $limit: Int!) {
-  actions(offset: $offset, limit: $limit) {
-    ...ActionFragment
+query ListActions($offset: Int!, $limit: Int!, $types: [ActionType!]!) {
+  actions(offset: $offset, limit: $limit, types: $types) {
+    results {
+      ...ActionFragment
+    }
+    offset
+    limit
+    page
+    totalPages
+    totalResults
+    types
   }
 }
