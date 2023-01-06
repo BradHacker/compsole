@@ -82,14 +82,6 @@ func (ac *ActionCreate) SetActionToUserID(id uuid.UUID) *ActionCreate {
 	return ac
 }
 
-// SetNillableActionToUserID sets the "ActionToUser" edge to the User entity by ID if the given value is not nil.
-func (ac *ActionCreate) SetNillableActionToUserID(id *uuid.UUID) *ActionCreate {
-	if id != nil {
-		ac = ac.SetActionToUserID(*id)
-	}
-	return ac
-}
-
 // SetActionToUser sets the "ActionToUser" edge to the User entity.
 func (ac *ActionCreate) SetActionToUser(u *User) *ActionCreate {
 	return ac.SetActionToUserID(u.ID)
@@ -198,6 +190,9 @@ func (ac *ActionCreate) check() error {
 	}
 	if _, ok := ac.mutation.PerformedAt(); !ok {
 		return &ValidationError{Name: "performed_at", err: errors.New(`ent: missing required field "Action.performed_at"`)}
+	}
+	if _, ok := ac.mutation.ActionToUserID(); !ok {
+		return &ValidationError{Name: "ActionToUser", err: errors.New(`ent: missing required edge "Action.ActionToUser"`)}
 	}
 	return nil
 }

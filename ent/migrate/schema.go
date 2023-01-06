@@ -15,7 +15,7 @@ var (
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"SIGN_IN", "FAILED_SIGN_IN", "SIGN_OUT", "API_CALL", "CONSOLE_ACCESS", "REBOOT", "SHUTDOWN", "POWER_ON", "POWER_OFF", "CHANGE_SELF_PASSWORD", "CHANGE_PASSWORD", "CREATE_OBJECT", "UPDATE_OBJECT", "DELETE_OBJECT", "UPDATE_LOCKOUT"}},
 		{Name: "message", Type: field.TypeString},
 		{Name: "performed_at", Type: field.TypeTime},
-		{Name: "user_user_to_actions", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_user_to_actions", Type: field.TypeUUID},
 	}
 	// ActionsTable holds the schema information for the "actions" table.
 	ActionsTable = &schema.Table{

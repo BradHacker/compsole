@@ -62,6 +62,8 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		clientIp := ""
 		if exists {
 			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
 		}
 
 		entUser, err := client.User.Query().Where(
@@ -75,6 +77,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 				SetIPAddress(clientIp).
 				SetType(action.TypeFAILED_SIGN_IN).
 				SetMessage(fmt.Sprintf("user \"%s\" does not exists", username)).
+				SetActionToUser(entUser).
 				Exec(ctx)
 			if err != nil {
 				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
@@ -153,6 +156,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			SetIPAddress(clientIp).
 			SetType(action.TypeSIGN_IN).
 			SetMessage(fmt.Sprintf("user \"%s\" has signed in successfully", username)).
+			SetActionToUser(entUser).
 			Exec(ctx)
 		if err != nil {
 			logrus.Warn("failed to create SIGN_IN action: %v", err)

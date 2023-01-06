@@ -76,14 +76,6 @@ func (au *ActionUpdate) SetActionToUserID(id uuid.UUID) *ActionUpdate {
 	return au
 }
 
-// SetNillableActionToUserID sets the "ActionToUser" edge to the User entity by ID if the given value is not nil.
-func (au *ActionUpdate) SetNillableActionToUserID(id *uuid.UUID) *ActionUpdate {
-	if id != nil {
-		au = au.SetActionToUserID(*id)
-	}
-	return au
-}
-
 // SetActionToUser sets the "ActionToUser" edge to the User entity.
 func (au *ActionUpdate) SetActionToUser(u *User) *ActionUpdate {
 	return au.SetActionToUserID(u.ID)
@@ -166,6 +158,9 @@ func (au *ActionUpdate) check() error {
 		if err := action.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Action.type": %w`, err)}
 		}
+	}
+	if _, ok := au.mutation.ActionToUserID(); au.mutation.ActionToUserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Action.ActionToUser"`)
 	}
 	return nil
 }
@@ -316,14 +311,6 @@ func (auo *ActionUpdateOne) SetActionToUserID(id uuid.UUID) *ActionUpdateOne {
 	return auo
 }
 
-// SetNillableActionToUserID sets the "ActionToUser" edge to the User entity by ID if the given value is not nil.
-func (auo *ActionUpdateOne) SetNillableActionToUserID(id *uuid.UUID) *ActionUpdateOne {
-	if id != nil {
-		auo = auo.SetActionToUserID(*id)
-	}
-	return auo
-}
-
 // SetActionToUser sets the "ActionToUser" edge to the User entity.
 func (auo *ActionUpdateOne) SetActionToUser(u *User) *ActionUpdateOne {
 	return auo.SetActionToUserID(u.ID)
@@ -413,6 +400,9 @@ func (auo *ActionUpdateOne) check() error {
 		if err := action.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Action.type": %w`, err)}
 		}
+	}
+	if _, ok := auo.mutation.ActionToUserID(); auo.mutation.ActionToUserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Action.ActionToUser"`)
 	}
 	return nil
 }

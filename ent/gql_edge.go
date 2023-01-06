@@ -9,7 +9,7 @@ func (a *Action) ActionToUser(ctx context.Context) (*User, error) {
 	if IsNotLoaded(err) {
 		result, err = a.QueryActionToUser().Only(ctx)
 	}
-	return result, MaskNotFound(err)
+	return result, err
 }
 
 func (c *Competition) CompetitionToTeams(ctx context.Context) ([]*Team, error) {

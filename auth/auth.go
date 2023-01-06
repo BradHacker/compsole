@@ -123,6 +123,8 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		clientIp := ""
 		if exists {
 			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
 		}
 		// put it in context
 		c = context.WithValue(c, ipCtxKey, clientIp)
@@ -210,6 +212,8 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 		clientIp := ""
 		if exists {
 			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
 		}
 		err = client.Action.Create().
 			SetIPAddress(clientIp).
