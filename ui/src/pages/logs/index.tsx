@@ -120,7 +120,7 @@ const ActionTypeMap: { [key in ActionType]: string } = {
 };
 
 export const Logs: React.FC = (): React.ReactElement => {
-  const [resultsPerPage, setResultsPerPage] = useState<number>(25);
+  const [resultsPerPage, setResultsPerPage] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
   const [logTypes, setLogTypes] = useState<ActionType[]>(
     Object.keys(ActionTypeMap).map((k) => k as ActionType)
