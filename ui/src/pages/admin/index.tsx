@@ -975,7 +975,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       </TabPanel>
       <Fab
         sx={{
-          position: "absolute",
+          position: "fixed",
           bottom: 24,
           right: 24,
         }}

@@ -295,7 +295,7 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
       </Box>
       <Box
         sx={{
-          position: "absolute",
+          position: "fixed",
           bottom: 24,
           right: 24,
           m: 1,

@@ -208,7 +208,7 @@ export const Account: React.FC = (): React.ReactElement => {
 
       <Box
         sx={{
-          position: "absolute",
+          position: "fixed",
           bottom: 24,
           right: 24,
           m: 1,

@@ -552,10 +552,11 @@ export const Console: React.FC = (): React.ReactElement => {
         sx={{
           top: fullscreenConsole ? 0 : "100vh",
           width: "100vw",
-          height: "100vh",
+          height: fullscreenConsole ? "100vh" : 0,
           left: 0,
           position: "absolute",
           transition: "all 0.3s ease-in-out",
+          overflow: "hidden",
         }}
       >
         <Paper
