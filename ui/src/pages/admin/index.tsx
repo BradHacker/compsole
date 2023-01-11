@@ -560,6 +560,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       sx={{
         p: 2,
       }}
+      maxWidth={false}
     >
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
