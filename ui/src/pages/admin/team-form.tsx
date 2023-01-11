@@ -46,7 +46,9 @@ export const TeamForm: React.FC = (): React.ReactElement => {
     },
   ] = useCreateTeamMutation();
   const { data: listCompetitionsData, error: listCompetitionsError } =
-    useListCompetitionsQuery();
+    useListCompetitionsQuery({
+      fetchPolicy: "no-cache",
+    });
   const [team, setTeam] = useState<TeamInput>({
     ID: "",
     Name: "",

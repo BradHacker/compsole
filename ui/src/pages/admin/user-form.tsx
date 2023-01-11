@@ -43,7 +43,9 @@ export const UserForm: React.FC = (): React.ReactElement => {
   const {
     data: getCompTeamSearchValuesData,
     error: getCompTeamSearchValuesError,
-  } = useGetCompTeamSearchValuesQuery();
+  } = useGetCompTeamSearchValuesQuery({
+    fetchPolicy: "no-cache",
+  });
   const [
     updateUser,
     {
