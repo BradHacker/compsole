@@ -46,14 +46,19 @@ export const Signin: React.FC = (): React.ReactElement => {
       data.get("username")?.toString() ?? "",
       data.get("password")?.toString() ?? ""
     ).then(() => {
-      if (
-        location.state &&
-        ((location?.state as any).from as Location).pathname.match(/^\/auth/)
-      ) {
-        navigate("/");
-      } else {
-        navigate(((location?.state as any).from as Location) || "/");
-      }
+      if (location?.state) {
+        if ((location.state as any).from instanceof Location) {
+          if (
+            location.state &&
+            ((location?.state as any).from as Location).pathname.match(
+              /^\/auth/
+            )
+          ) {
+            navigate("/");
+          } else navigate((location.state as any).from as Location);
+        } else if (typeof (location.state as any).from === "string")
+          navigate((location.state as any).from);
+      } else navigate("/");
     }, console.error);
   };
 

@@ -56,7 +56,10 @@ function App() {
       setUser(currentUser.me);
   }, [currentUser, currentUserLoading, currentUserError, navigate, location]);
 
-  const handleAccountSettings = () => navigate("/account");
+  const handleAccountSettings = () => {
+    navigate("/account");
+    setUserMenuOpen(false);
+  };
 
   const handleSignOut = () => {
     Logout().then(
@@ -64,7 +67,11 @@ function App() {
         enqueueSnackbar("Logged out successfully", {
           variant: "success",
         });
-        navigate("/auth/signin");
+        navigate("/auth/signin", {
+          state: {
+            from: "/",
+          },
+        });
       },
       (err) => {
         enqueueSnackbar(`Failed to logout: ${err}`, {
