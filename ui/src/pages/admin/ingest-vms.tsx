@@ -34,7 +34,9 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
     data: listCompetitionsData,
     error: listCompetitionsError,
     refetch: refetchListCompetitions,
-  } = useListCompetitionsQuery();
+  } = useListCompetitionsQuery({
+    fetchPolicy: "no-cache",
+  });
   const [
     batchCreateTeams,
     {

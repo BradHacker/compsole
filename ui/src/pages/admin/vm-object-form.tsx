@@ -35,7 +35,9 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
     },
   ] = useGetVmObjectLazyQuery();
   const { data: getCompTeamData, error: getCompTeamError } =
-    useGetCompTeamSearchValuesQuery();
+    useGetCompTeamSearchValuesQuery({
+      fetchPolicy: "no-cache",
+    });
   const [
     updateVmObject,
     {

@@ -237,31 +237,41 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
     loading: listUsersLoading,
     error: listUsersError,
     refetch: refetchUsers,
-  } = useListUsersQuery();
+  } = useListUsersQuery({
+    fetchPolicy: "no-cache",
+  });
   const {
     data: listCompetitionsData,
     loading: listCompetitionsLoading,
     error: listCompetitionsError,
     refetch: refetchCompetitions,
-  } = useListCompetitionsQuery();
+  } = useListCompetitionsQuery({
+    fetchPolicy: "no-cache",
+  });
   const {
     data: listTeamsData,
     loading: listTeamsLoading,
     error: listTeamsError,
     refetch: refetchTeams,
-  } = useListTeamsQuery();
+  } = useListTeamsQuery({
+    fetchPolicy: "no-cache",
+  });
   const {
     data: allVmObjectsData,
     loading: allVmObjectsLoading,
     error: allVmObjectsError,
     refetch: refetchVmObjects,
-  } = useAllVmObjectsQuery();
+  } = useAllVmObjectsQuery({
+    fetchPolicy: "no-cache",
+  });
   const {
     data: listProvidersData,
     loading: listProvidersLoading,
     error: listProvidersError,
     refetch: refetchProviders,
-  } = useListProvidersQuery();
+  } = useListProvidersQuery({
+    fetchPolicy: "no-cache",
+  });
   const [
     deleteUser,
     {

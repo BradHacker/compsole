@@ -57,7 +57,9 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
     },
   ] = useCreateCompetitionMutation();
   const { data: listProvidersData, error: listProvidersError } =
-    useListProvidersQuery();
+    useListProvidersQuery({
+      fetchPolicy: "no-cache",
+    });
   const [
     lockoutCompetition,
     {
