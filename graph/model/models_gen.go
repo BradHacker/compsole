@@ -66,6 +66,7 @@ type VMObjectInput struct {
 	Name           string   `json:"Name"`
 	Identifier     string   `json:"Identifier"`
 	IPAddresses    []string `json:"IPAddresses"`
+	Locked         *bool    `json:"Locked"`
 	VMObjectToTeam *string  `json:"VmObjectToTeam"`
 }
 

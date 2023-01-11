@@ -1312,6 +1312,7 @@ input VmObjectInput {
   Name: String!
   Identifier: String!
   IPAddresses: [String!]!
+  Locked: Boolean
   VmObjectToTeam: ID
 }
 
@@ -10025,7 +10026,7 @@ func (ec *executionContext) unmarshalInputVmObjectInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"ID", "Name", "Identifier", "IPAddresses", "VmObjectToTeam"}
+	fieldsInOrder := [...]string{"ID", "Name", "Identifier", "IPAddresses", "Locked", "VmObjectToTeam"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -10061,6 +10062,14 @@ func (ec *executionContext) unmarshalInputVmObjectInput(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("IPAddresses"))
 			it.IPAddresses, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Locked":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Locked"))
+			it.Locked, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}

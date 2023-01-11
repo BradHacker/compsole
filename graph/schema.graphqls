@@ -164,6 +164,7 @@ input VmObjectInput {
   Name: String!
   Identifier: String!
   IPAddresses: [String!]!
+  Locked: Boolean
   VmObjectToTeam: ID
 }
 
