@@ -59,6 +59,13 @@ type User {
   UserToTeam: Team
 }
 
+type CompetitionUser {
+  ID: ID!
+  Username: String!
+  Password: String!
+  UserToTeam: Team!
+}
+
 type Action {
   ID: ID!
   IpAddress: String!
@@ -201,6 +208,7 @@ type Mutation {
   updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   changePassword(id: ID!, password: String!): Boolean! @hasRole(roles: [ADMIN])
+  generateCompetitionUsers(competitionId: ID!, usersPerTeam: Int!): [CompetitionUser!]! @hasRole(roles: [ADMIN])
   #   Teams
   createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   batchCreateTeams(input: [TeamInput!]!): [Team!]! @hasRole(roles: [ADMIN])

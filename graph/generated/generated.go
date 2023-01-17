@@ -81,32 +81,40 @@ type ComplexityRoot struct {
 		Name                  func(childComplexity int) int
 	}
 
+	CompetitionUser struct {
+		ID         func(childComplexity int) int
+		Password   func(childComplexity int) int
+		UserToTeam func(childComplexity int) int
+		Username   func(childComplexity int) int
+	}
+
 	Mutation struct {
-		BatchCreateTeams     func(childComplexity int, input []*model.TeamInput) int
-		BatchCreateVMObjects func(childComplexity int, input []*model.VMObjectInput) int
-		ChangePassword       func(childComplexity int, id string, password string) int
-		ChangeSelfPassword   func(childComplexity int, password string) int
-		CreateCompetition    func(childComplexity int, input model.CompetitionInput) int
-		CreateProvider       func(childComplexity int, input model.ProviderInput) int
-		CreateTeam           func(childComplexity int, input model.TeamInput) int
-		CreateUser           func(childComplexity int, input model.UserInput) int
-		CreateVMObject       func(childComplexity int, input model.VMObjectInput) int
-		DeleteCompetition    func(childComplexity int, id string) int
-		DeleteProvider       func(childComplexity int, id string) int
-		DeleteTeam           func(childComplexity int, id string) int
-		DeleteUser           func(childComplexity int, id string) int
-		DeleteVMObject       func(childComplexity int, id string) int
-		LockoutCompetition   func(childComplexity int, id string, locked bool) int
-		LockoutVM            func(childComplexity int, id string, locked bool) int
-		PowerOff             func(childComplexity int, vmObjectID string) int
-		PowerOn              func(childComplexity int, vmObjectID string) int
-		Reboot               func(childComplexity int, vmObjectID string, rebootType model.RebootType) int
-		UpdateAccount        func(childComplexity int, input model.AccountInput) int
-		UpdateCompetition    func(childComplexity int, input model.CompetitionInput) int
-		UpdateProvider       func(childComplexity int, input model.ProviderInput) int
-		UpdateTeam           func(childComplexity int, input model.TeamInput) int
-		UpdateUser           func(childComplexity int, input model.UserInput) int
-		UpdateVMObject       func(childComplexity int, input model.VMObjectInput) int
+		BatchCreateTeams         func(childComplexity int, input []*model.TeamInput) int
+		BatchCreateVMObjects     func(childComplexity int, input []*model.VMObjectInput) int
+		ChangePassword           func(childComplexity int, id string, password string) int
+		ChangeSelfPassword       func(childComplexity int, password string) int
+		CreateCompetition        func(childComplexity int, input model.CompetitionInput) int
+		CreateProvider           func(childComplexity int, input model.ProviderInput) int
+		CreateTeam               func(childComplexity int, input model.TeamInput) int
+		CreateUser               func(childComplexity int, input model.UserInput) int
+		CreateVMObject           func(childComplexity int, input model.VMObjectInput) int
+		DeleteCompetition        func(childComplexity int, id string) int
+		DeleteProvider           func(childComplexity int, id string) int
+		DeleteTeam               func(childComplexity int, id string) int
+		DeleteUser               func(childComplexity int, id string) int
+		DeleteVMObject           func(childComplexity int, id string) int
+		GenerateCompetitionUsers func(childComplexity int, competitionID string, usersPerTeam int) int
+		LockoutCompetition       func(childComplexity int, id string, locked bool) int
+		LockoutVM                func(childComplexity int, id string, locked bool) int
+		PowerOff                 func(childComplexity int, vmObjectID string) int
+		PowerOn                  func(childComplexity int, vmObjectID string) int
+		Reboot                   func(childComplexity int, vmObjectID string, rebootType model.RebootType) int
+		UpdateAccount            func(childComplexity int, input model.AccountInput) int
+		UpdateCompetition        func(childComplexity int, input model.CompetitionInput) int
+		UpdateProvider           func(childComplexity int, input model.ProviderInput) int
+		UpdateTeam               func(childComplexity int, input model.TeamInput) int
+		UpdateUser               func(childComplexity int, input model.UserInput) int
+		UpdateVMObject           func(childComplexity int, input model.VMObjectInput) int
 	}
 
 	Provider struct {
@@ -194,6 +202,7 @@ type MutationResolver interface {
 	UpdateUser(ctx context.Context, input model.UserInput) (*ent.User, error)
 	DeleteUser(ctx context.Context, id string) (bool, error)
 	ChangePassword(ctx context.Context, id string, password string) (bool, error)
+	GenerateCompetitionUsers(ctx context.Context, competitionID string, usersPerTeam int) ([]*model.CompetitionUser, error)
 	CreateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error)
 	BatchCreateTeams(ctx context.Context, input []*model.TeamInput) ([]*ent.Team, error)
 	UpdateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error)
@@ -385,6 +394,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Competition.Name(childComplexity), true
 
+	case "CompetitionUser.ID":
+		if e.complexity.CompetitionUser.ID == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.ID(childComplexity), true
+
+	case "CompetitionUser.Password":
+		if e.complexity.CompetitionUser.Password == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.Password(childComplexity), true
+
+	case "CompetitionUser.UserToTeam":
+		if e.complexity.CompetitionUser.UserToTeam == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.UserToTeam(childComplexity), true
+
+	case "CompetitionUser.Username":
+		if e.complexity.CompetitionUser.Username == nil {
+			break
+		}
+
+		return e.complexity.CompetitionUser.Username(childComplexity), true
+
 	case "Mutation.batchCreateTeams":
 		if e.complexity.Mutation.BatchCreateTeams == nil {
 			break
@@ -552,6 +589,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteVMObject(childComplexity, args["id"].(string)), true
+
+	case "Mutation.generateCompetitionUsers":
+		if e.complexity.Mutation.GenerateCompetitionUsers == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_generateCompetitionUsers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GenerateCompetitionUsers(childComplexity, args["competitionId"].(string), args["usersPerTeam"].(int)), true
 
 	case "Mutation.lockoutCompetition":
 		if e.complexity.Mutation.LockoutCompetition == nil {
@@ -1207,6 +1256,13 @@ type User {
   UserToTeam: Team
 }
 
+type CompetitionUser {
+  ID: ID!
+  Username: String!
+  Password: String!
+  UserToTeam: Team!
+}
+
 type Action {
   ID: ID!
   IpAddress: String!
@@ -1349,6 +1405,7 @@ type Mutation {
   updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   changePassword(id: ID!, password: String!): Boolean! @hasRole(roles: [ADMIN])
+  generateCompetitionUsers(competitionId: ID!, usersPerTeam: Int!): [CompetitionUser!]! @hasRole(roles: [ADMIN])
   #   Teams
   createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   batchCreateTeams(input: [TeamInput!]!): [Team!]! @hasRole(roles: [ADMIN])
@@ -1614,6 +1671,30 @@ func (ec *executionContext) field_Mutation_deleteVmObject_args(ctx context.Conte
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_generateCompetitionUsers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["competitionId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("competitionId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["competitionId"] = arg0
+	var arg1 int
+	if tmp, ok := rawArgs["usersPerTeam"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usersPerTeam"))
+		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["usersPerTeam"] = arg1
 	return args, nil
 }
 
@@ -2860,6 +2941,194 @@ func (ec *executionContext) fieldContext_Competition_CompetitionToProvider(ctx c
 	return fc, nil
 }
 
+func (ec *executionContext) _CompetitionUser_ID(ctx context.Context, field graphql.CollectedField, obj *model.CompetitionUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CompetitionUser_ID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CompetitionUser_ID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CompetitionUser_Username(ctx context.Context, field graphql.CollectedField, obj *model.CompetitionUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CompetitionUser_Username(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CompetitionUser_Username(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CompetitionUser_Password(ctx context.Context, field graphql.CollectedField, obj *model.CompetitionUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CompetitionUser_Password(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Password, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CompetitionUser_Password(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CompetitionUser_UserToTeam(ctx context.Context, field graphql.CollectedField, obj *model.CompetitionUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CompetitionUser_UserToTeam(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserToTeam, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Team)
+	fc.Result = res
+	return ec.marshalNTeam2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋentᚐTeam(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CompetitionUser_UserToTeam(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CompetitionUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_Team_ID(ctx, field)
+			case "TeamNumber":
+				return ec.fieldContext_Team_TeamNumber(ctx, field)
+			case "Name":
+				return ec.fieldContext_Team_Name(ctx, field)
+			case "TeamToCompetition":
+				return ec.fieldContext_Team_TeamToCompetition(ctx, field)
+			case "TeamToVmObjects":
+				return ec.fieldContext_Team_TeamToVmObjects(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_reboot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_reboot(ctx, field)
 	if err != nil {
@@ -3613,6 +3882,95 @@ func (ec *executionContext) fieldContext_Mutation_changePassword(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_changePassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_generateCompetitionUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_generateCompetitionUsers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().GenerateCompetitionUsers(rctx, fc.Args["competitionId"].(string), fc.Args["usersPerTeam"].(int))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.CompetitionUser); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*github.com/BradHacker/compsole/graph/model.CompetitionUser`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CompetitionUser)
+	fc.Result = res
+	return ec.marshalNCompetitionUser2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐCompetitionUserᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_generateCompetitionUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_CompetitionUser_ID(ctx, field)
+			case "Username":
+				return ec.fieldContext_CompetitionUser_Username(ctx, field)
+			case "Password":
+				return ec.fieldContext_CompetitionUser_Password(ctx, field)
+			case "UserToTeam":
+				return ec.fieldContext_CompetitionUser_UserToTeam(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CompetitionUser", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_generateCompetitionUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -10352,6 +10710,55 @@ func (ec *executionContext) _Competition(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var competitionUserImplementors = []string{"CompetitionUser"}
+
+func (ec *executionContext) _CompetitionUser(ctx context.Context, sel ast.SelectionSet, obj *model.CompetitionUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, competitionUserImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CompetitionUser")
+		case "ID":
+
+			out.Values[i] = ec._CompetitionUser_ID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Username":
+
+			out.Values[i] = ec._CompetitionUser_Username(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "Password":
+
+			out.Values[i] = ec._CompetitionUser_Password(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "UserToTeam":
+
+			out.Values[i] = ec._CompetitionUser_UserToTeam(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -10447,6 +10854,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_changePassword(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "generateCompetitionUsers":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_generateCompetitionUsers(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -12033,6 +12449,60 @@ func (ec *executionContext) marshalNCompetition2ᚖgithubᚗcomᚋBradHackerᚋc
 func (ec *executionContext) unmarshalNCompetitionInput2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐCompetitionInput(ctx context.Context, v interface{}) (model.CompetitionInput, error) {
 	res, err := ec.unmarshalInputCompetitionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCompetitionUser2ᚕᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐCompetitionUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CompetitionUser) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCompetitionUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐCompetitionUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCompetitionUser2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐCompetitionUser(ctx context.Context, sel ast.SelectionSet, v *model.CompetitionUser) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CompetitionUser(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNConsoleType2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐConsoleType(ctx context.Context, v interface{}) (model.ConsoleType, error) {
