@@ -81,6 +81,14 @@ export type CompetitionInput = {
   Name: Scalars['String'];
 };
 
+export type CompetitionUser = {
+  __typename?: 'CompetitionUser';
+  ID: Scalars['ID'];
+  Password: Scalars['String'];
+  UserToTeam: Team;
+  Username: Scalars['String'];
+};
+
 export enum ConsoleType {
   Mks = 'MKS',
   Novnc = 'NOVNC',
@@ -105,6 +113,7 @@ export type Mutation = {
   deleteTeam: Scalars['Boolean'];
   deleteUser: Scalars['Boolean'];
   deleteVmObject: Scalars['Boolean'];
+  generateCompetitionUsers: Array<CompetitionUser>;
   lockoutCompetition: Scalars['Boolean'];
   lockoutVm: Scalars['Boolean'];
   powerOff: Scalars['Boolean'];
@@ -187,6 +196,12 @@ export type MutationDeleteUserArgs = {
 
 export type MutationDeleteVmObjectArgs = {
   id: Scalars['ID'];
+};
+
+
+export type MutationGenerateCompetitionUsersArgs = {
+  competitionId: Scalars['ID'];
+  usersPerTeam: Scalars['Int'];
 };
 
 
@@ -418,6 +433,7 @@ export type VmObjectInput = {
   ID?: InputMaybe<Scalars['ID']>;
   IPAddresses: Array<Scalars['String']>;
   Identifier: Scalars['String'];
+  Locked?: InputMaybe<Scalars['Boolean']>;
   Name: Scalars['String'];
   VmObjectToTeam?: InputMaybe<Scalars['ID']>;
 };
@@ -577,6 +593,8 @@ export type UserFragmentFragment = { __typename?: 'User', ID: string, Username: 
 
 export type AdminUserFragmentFragment = { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
 
+export type CompetitionUserFragmentFragment = { __typename?: 'CompetitionUser', ID: string, Username: string, Password: string, UserToTeam: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } };
+
 export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -636,6 +654,14 @@ export type ChangeSelfPasswordMutationVariables = Exact<{
 
 
 export type ChangeSelfPasswordMutation = { __typename?: 'Mutation', changeSelfPassword: boolean };
+
+export type GenerateCompetitionUsersMutationVariables = Exact<{
+  competitionId: Scalars['ID'];
+  usersPerTeam: Scalars['Int'];
+}>;
+
+
+export type GenerateCompetitionUsersMutation = { __typename?: 'Mutation', generateCompetitionUsers: Array<{ __typename?: 'CompetitionUser', ID: string, Username: string, Password: string, UserToTeam: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } }> };
 
 export type VmObjectFragmentFragment = { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null };
 
@@ -770,17 +796,6 @@ export const ProviderFragmentFragmentDoc = gql`
   Config
 }
     `;
-export const TeamFragmentFragmentDoc = gql`
-    fragment TeamFragment on Team {
-  ID
-  TeamNumber
-  Name
-  TeamToCompetition {
-    ID
-    Name
-  }
-}
-    `;
 export const AdminUserFragmentFragmentDoc = gql`
     fragment AdminUserFragment on User {
   ...UserFragment
@@ -795,6 +810,27 @@ export const AdminUserFragmentFragmentDoc = gql`
   }
 }
     ${UserFragmentFragmentDoc}`;
+export const TeamFragmentFragmentDoc = gql`
+    fragment TeamFragment on Team {
+  ID
+  TeamNumber
+  Name
+  TeamToCompetition {
+    ID
+    Name
+  }
+}
+    `;
+export const CompetitionUserFragmentFragmentDoc = gql`
+    fragment CompetitionUserFragment on CompetitionUser {
+  ID
+  Username
+  Password
+  UserToTeam {
+    ...TeamFragment
+  }
+}
+    ${TeamFragmentFragmentDoc}`;
 export const VmObjectFragmentFragmentDoc = gql`
     fragment VmObjectFragment on VmObject {
   ID
@@ -1833,6 +1869,43 @@ export function useChangeSelfPasswordMutation(baseOptions?: Apollo.MutationHookO
 export type ChangeSelfPasswordMutationHookResult = ReturnType<typeof useChangeSelfPasswordMutation>;
 export type ChangeSelfPasswordMutationResult = Apollo.MutationResult<ChangeSelfPasswordMutation>;
 export type ChangeSelfPasswordMutationOptions = Apollo.BaseMutationOptions<ChangeSelfPasswordMutation, ChangeSelfPasswordMutationVariables>;
+export const GenerateCompetitionUsersDocument = gql`
+    mutation GenerateCompetitionUsers($competitionId: ID!, $usersPerTeam: Int!) {
+  generateCompetitionUsers(
+    competitionId: $competitionId
+    usersPerTeam: $usersPerTeam
+  ) {
+    ...CompetitionUserFragment
+  }
+}
+    ${CompetitionUserFragmentFragmentDoc}`;
+export type GenerateCompetitionUsersMutationFn = Apollo.MutationFunction<GenerateCompetitionUsersMutation, GenerateCompetitionUsersMutationVariables>;
+
+/**
+ * __useGenerateCompetitionUsersMutation__
+ *
+ * To run a mutation, you first call `useGenerateCompetitionUsersMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGenerateCompetitionUsersMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [generateCompetitionUsersMutation, { data, loading, error }] = useGenerateCompetitionUsersMutation({
+ *   variables: {
+ *      competitionId: // value for 'competitionId'
+ *      usersPerTeam: // value for 'usersPerTeam'
+ *   },
+ * });
+ */
+export function useGenerateCompetitionUsersMutation(baseOptions?: Apollo.MutationHookOptions<GenerateCompetitionUsersMutation, GenerateCompetitionUsersMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GenerateCompetitionUsersMutation, GenerateCompetitionUsersMutationVariables>(GenerateCompetitionUsersDocument, options);
+      }
+export type GenerateCompetitionUsersMutationHookResult = ReturnType<typeof useGenerateCompetitionUsersMutation>;
+export type GenerateCompetitionUsersMutationResult = Apollo.MutationResult<GenerateCompetitionUsersMutation>;
+export type GenerateCompetitionUsersMutationOptions = Apollo.BaseMutationOptions<GenerateCompetitionUsersMutation, GenerateCompetitionUsersMutationVariables>;
 export const MyVmObjectsDocument = gql`
     query MyVmObjects {
   myVmObjects {
