@@ -89,7 +89,7 @@ function App() {
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
-        <AppBar position="static">
+        <AppBar position="static" sx={{ position: "fixed", zIndex: 1301 }}>
           <Toolbar>
             <Link
               to="/"
@@ -126,12 +126,6 @@ function App() {
                 <>
                   <Button onClick={() => navigate("/admin")} color="inherit">
                     Admin
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/admin/ingest")}
-                    color="inherit"
-                  >
-                    Ingest VMs
                   </Button>
                   <Button
                     onClick={() => navigate("/admin/logs")}
@@ -200,7 +194,9 @@ function App() {
           </Toolbar>
         </AppBar>
       </Box>
-      <Outlet />
+      <Box sx={{ pt: "64px" }}>
+        <Outlet />
+      </Box>
     </UserContext.Provider>
   ) : (
     <Loading />
