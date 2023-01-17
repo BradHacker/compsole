@@ -1,6 +1,5 @@
 import {
   Add,
-  EditTwoTone,
   DeleteTwoTone,
   Person,
   Stadium,
@@ -13,9 +12,6 @@ import {
 import {
   Box,
   Button,
-  ButtonGroup,
-  Chip,
-  CircularProgress,
   Container,
   Divider,
   Drawer,
@@ -26,32 +22,21 @@ import {
   ListItemIcon,
   ListItemText,
   Modal,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Toolbar,
   Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import {
-  Role,
-  ListProvidersQuery,
-  useListProvidersQuery,
-  useDeleteProviderMutation,
-} from "../../api/generated/graphql";
+import { Role } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
 import { IngestVMs } from "../../components/ingest-vms";
 import { UserList } from "../../components/user-list";
 import { CompetitionList } from "../../components/competition-list";
 import { TeamList } from "../../components/team-list";
 import { VmObjectList } from "../../components/vm-object-list/index";
+import { ProviderList } from "../../components/provider-list";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -78,20 +63,6 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
-
-const createProviderData = (
-  provider: ListProvidersQuery["providers"][0]
-): {
-  id: ListProvidersQuery["providers"][0]["ID"];
-  name: ListProvidersQuery["providers"][0]["Name"];
-  type: ListProvidersQuery["providers"][0]["Type"];
-} => {
-  return {
-    id: provider.ID,
-    name: provider.Name,
-    type: provider.Type,
-  };
-};
 
 interface DeleteObjectModalProps {
   objectName: string;
@@ -168,22 +139,6 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
 
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
-  const {
-    data: listProvidersData,
-    loading: listProvidersLoading,
-    error: listProvidersError,
-    refetch: refetchProviders,
-  } = useListProvidersQuery({
-    fetchPolicy: "no-cache",
-  });
-  const [
-    deleteProvider,
-    {
-      data: deleteProviderData,
-      loading: deleteProviderLoading,
-      error: deleteProviderError,
-    },
-  ] = useDeleteProviderMutation();
   const [deleteModalData, setDeleteModalData] = useState<{
     objectName: string;
     isOpen: boolean;
@@ -198,42 +153,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (listProvidersError)
-      enqueueSnackbar(`Couldn't get providers: ${listProvidersError.message}`, {
-        variant: "error",
-      });
-  }, [listProvidersError, enqueueSnackbar]);
-
-  useEffect(() => {
-    if (deleteProviderError)
-      enqueueSnackbar(
-        `Couldn't delete provider: ${deleteProviderError.message}`,
-        {
-          variant: "error",
-        }
-      );
-  }, [deleteProviderError, enqueueSnackbar]);
-
-  useEffect(() => {
-    if (deleteProviderLoading)
-      enqueueSnackbar("Deleteing provider...", {
-        variant: "info",
-        autoHideDuration: 2500,
-      });
-    else if (deleteProviderData?.deleteProvider) {
-      enqueueSnackbar("Successfully deleted user!", {
-        variant: "success",
-      });
-      refetchProviders();
-    }
-  }, [
-    deleteProviderLoading,
-    deleteProviderData,
-    refetchProviders,
-    enqueueSnackbar,
-  ]);
 
   const handleTabChange = (newValue: number) => {
     setSelectedTab(newValue);
@@ -268,15 +187,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       isOpen: false,
       onClose: () => undefined,
       onSubmit: () => undefined,
-    });
-  };
-
-  const handleDeleteProvider = (providerId: string) => {
-    resetDeleteModal();
-    deleteProvider({
-      variables: {
-        providerId,
-      },
     });
   };
 
@@ -413,72 +323,10 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           />
         </TabPanel>
         <TabPanel value={selectedTab} index={4}>
-          <TableContainer component={Paper}>
-            <Table sx={{ width: "100%" }} aria-label="providers table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="left">ID</TableCell>
-                  <TableCell align="center">Name</TableCell>
-                  <TableCell align="center">Type</TableCell>
-                  <TableCell align="right">Controls</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {listProvidersData?.providers
-                  .map(createProviderData)
-                  .map((row) => (
-                    <TableRow
-                      key={row.id}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="center">{row.name}</TableCell>
-                      <TableCell align="center">
-                        <Chip label={row.type} color="warning" size="small" />
-                      </TableCell>
-                      <TableCell align="right">
-                        <ButtonGroup size="small">
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={() =>
-                              navigate(`/admin/provider/${row.id}`)
-                            }
-                          >
-                            <EditTwoTone />
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() => {
-                              setDeleteModalData({
-                                objectName: row.name,
-                                isOpen: true,
-                                onClose: resetDeleteModal,
-                                onSubmit: () => handleDeleteProvider(row.id),
-                              });
-                            }}
-                          >
-                            <DeleteTwoTone />
-                          </Button>
-                        </ButtonGroup>
-                      </TableCell>
-                    </TableRow>
-                  )) ?? (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    No Providers Found
-                  </TableCell>
-                )}
-                {listProvidersLoading && (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    <CircularProgress />
-                  </TableCell>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <ProviderList
+            setDeleteModalData={setDeleteModalData}
+            resetDeleteModal={resetDeleteModal}
+          />
         </TabPanel>
         <TabPanel value={selectedTab} index={5}>
           <IngestVMs />
