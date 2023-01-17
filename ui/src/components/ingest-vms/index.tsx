@@ -1,6 +1,5 @@
 import { CloudDownload, Save } from "@mui/icons-material";
 import {
-  Container,
   TextField,
   Typography,
   Divider,
@@ -14,8 +13,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  Box,
 } from "@mui/material";
-import { Box } from "@mui/system";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -222,20 +221,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
   };
 
   return (
-    <Container component="main" sx={{ p: 2 }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <Typography variant="h4">Ingest VMs</Typography>
-      </Box>
-      <Divider
-        sx={{
-          my: 2,
-        }}
-      />
+    <Box>
       <Box
         component="form"
         sx={{
@@ -478,6 +464,6 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           Ingest VMs
         </Button>
       </Box>
-    </Container>
+    </Box>
   );
 };
