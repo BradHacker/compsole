@@ -44,11 +44,8 @@ import {
   Role,
   AllVmObjectsQuery,
   useAllVmObjectsQuery,
-  useListTeamsQuery,
-  ListTeamsQuery,
   ListProvidersQuery,
   useListProvidersQuery,
-  useDeleteTeamMutation,
   useDeleteVmObjectMutation,
   useDeleteProviderMutation,
 } from "../../api/generated/graphql";
@@ -56,6 +53,7 @@ import { UserContext } from "../../user-context";
 import { IngestVMs } from "../../components/ingest-vms";
 import { UserList } from "../../components/user-list";
 import { CompetitionList } from "../../components/competition-list";
+import { TeamList } from "../../components/team-list";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -82,22 +80,6 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
-
-const createTeamData = (
-  team: ListTeamsQuery["teams"][0]
-): {
-  id: string;
-  number: number;
-  teamName?: string | null;
-  competitionName: string;
-} => {
-  return {
-    id: team.ID,
-    number: team.TeamNumber,
-    teamName: team.Name,
-    competitionName: team.TeamToCompetition.Name,
-  };
-};
 
 const createVmObjectData = (
   vmObject: AllVmObjectsQuery["vmObjects"][0]
@@ -207,14 +189,6 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const {
-    data: listTeamsData,
-    loading: listTeamsLoading,
-    error: listTeamsError,
-    refetch: refetchTeams,
-  } = useListTeamsQuery({
-    fetchPolicy: "no-cache",
-  });
-  const {
     data: allVmObjectsData,
     loading: allVmObjectsLoading,
     error: allVmObjectsError,
@@ -230,14 +204,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   } = useListProvidersQuery({
     fetchPolicy: "no-cache",
   });
-  const [
-    deleteTeam,
-    {
-      data: deleteTeamData,
-      loading: deleteTeamLoading,
-      error: deleteTeamError,
-    },
-  ] = useDeleteTeamMutation();
   const [
     deleteVmObject,
     {
@@ -270,10 +236,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (listTeamsError)
-      enqueueSnackbar(`Couldn't get teams: ${listTeamsError.message}`, {
-        variant: "error",
-      });
     if (allVmObjectsError)
       enqueueSnackbar(`Couldn't get vm objects: ${allVmObjectsError.message}`, {
         variant: "error",
@@ -282,13 +244,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       enqueueSnackbar(`Couldn't get providers: ${listProvidersError.message}`, {
         variant: "error",
       });
-  }, [listTeamsError, allVmObjectsError, listProvidersError, enqueueSnackbar]);
+  }, [allVmObjectsError, listProvidersError, enqueueSnackbar]);
 
   useEffect(() => {
-    if (deleteTeamError)
-      enqueueSnackbar(`Couldn't delete team: ${deleteTeamError.message}`, {
-        variant: "error",
-      });
     if (deleteVmObjectError)
       enqueueSnackbar(
         `Couldn't delete vm object: ${deleteVmObjectError.message}`,
@@ -303,25 +261,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [
-    deleteTeamError,
-    deleteVmObjectError,
-    deleteProviderError,
-    enqueueSnackbar,
-  ]);
+  }, [deleteVmObjectError, deleteProviderError, enqueueSnackbar]);
 
   useEffect(() => {
-    if (deleteTeamLoading)
-      enqueueSnackbar("Deleteing team...", {
-        variant: "info",
-        autoHideDuration: 2500,
-      });
-    else if (deleteTeamData?.deleteTeam) {
-      enqueueSnackbar("Successfully deleted team!", {
-        variant: "success",
-      });
-      refetchTeams();
-    }
     if (deleteVmObjectLoading)
       enqueueSnackbar("Deleteing vm object...", {
         variant: "info",
@@ -345,9 +287,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       refetchProviders();
     }
   }, [
-    deleteTeamLoading,
-    deleteTeamData,
-    refetchTeams,
     deleteVmObjectLoading,
     deleteVmObjectData,
     refetchVmObjects,
@@ -390,15 +329,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       isOpen: false,
       onClose: () => undefined,
       onSubmit: () => undefined,
-    });
-  };
-
-  const handleDeleteTeam = (teamId: string) => {
-    resetDeleteModal();
-    deleteTeam({
-      variables: {
-        teamId,
-      },
     });
   };
 
@@ -541,76 +471,10 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           />
         </TabPanel>
         <TabPanel value={selectedTab} index={2}>
-          <TableContainer component={Paper}>
-            <Table sx={{ width: "100%" }} aria-label="teams table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="left">ID</TableCell>
-                  <TableCell align="center">Competition Name</TableCell>
-                  <TableCell align="center">Team Number</TableCell>
-                  <TableCell align="center">Team Name</TableCell>
-                  <TableCell align="right">Controls</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {listTeamsData?.teams.map(createTeamData).map((row) => (
-                  <TableRow
-                    key={row.id}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {row.id}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={row.competitionName}
-                        color="secondary"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">{row.number}</TableCell>
-                    <TableCell align="center">
-                      <Chip label={row.teamName} color="primary" size="small" />
-                    </TableCell>
-                    <TableCell align="right">
-                      <ButtonGroup size="small">
-                        <Button
-                          variant="outlined"
-                          color="secondary"
-                          onClick={() => navigate(`/admin/team/${row.id}`)}
-                        >
-                          <EditTwoTone />
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => {
-                            setDeleteModalData({
-                              objectName: row.teamName ?? `Team ${row.number}`,
-                              isOpen: true,
-                              onClose: resetDeleteModal,
-                              onSubmit: () => handleDeleteTeam(row.id),
-                            });
-                          }}
-                        >
-                          <DeleteTwoTone />
-                        </Button>
-                      </ButtonGroup>
-                    </TableCell>
-                  </TableRow>
-                )) ?? (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    No Teams Found
-                  </TableCell>
-                )}
-                {listTeamsLoading && (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    <CircularProgress />
-                  </TableCell>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <TeamList
+            setDeleteModalData={setDeleteModalData}
+            resetDeleteModal={resetDeleteModal}
+          />
         </TabPanel>
         <TabPanel value={selectedTab} index={3}>
           <TableContainer component={Paper}>
