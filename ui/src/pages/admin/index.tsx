@@ -42,11 +42,8 @@ import React, { useContext, useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import {
   Role,
-  AllVmObjectsQuery,
-  useAllVmObjectsQuery,
   ListProvidersQuery,
   useListProvidersQuery,
-  useDeleteVmObjectMutation,
   useDeleteProviderMutation,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
@@ -54,6 +51,7 @@ import { IngestVMs } from "../../components/ingest-vms";
 import { UserList } from "../../components/user-list";
 import { CompetitionList } from "../../components/competition-list";
 import { TeamList } from "../../components/team-list";
+import { VmObjectList } from "../../components/vm-object-list/index";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -80,24 +78,6 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
-
-const createVmObjectData = (
-  vmObject: AllVmObjectsQuery["vmObjects"][0]
-): {
-  id: AllVmObjectsQuery["vmObjects"][0]["ID"];
-  name: AllVmObjectsQuery["vmObjects"][0]["Name"];
-  identifier: AllVmObjectsQuery["vmObjects"][0]["Identifier"];
-  ipAddresses: AllVmObjectsQuery["vmObjects"][0]["IPAddresses"];
-  team: AllVmObjectsQuery["vmObjects"][0]["VmObjectToTeam"];
-} => {
-  return {
-    id: vmObject.ID,
-    name: vmObject.Name,
-    identifier: vmObject.Identifier,
-    ipAddresses: vmObject.IPAddresses,
-    team: vmObject.VmObjectToTeam,
-  };
-};
 
 const createProviderData = (
   provider: ListProvidersQuery["providers"][0]
@@ -189,14 +169,6 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const {
-    data: allVmObjectsData,
-    loading: allVmObjectsLoading,
-    error: allVmObjectsError,
-    refetch: refetchVmObjects,
-  } = useAllVmObjectsQuery({
-    fetchPolicy: "no-cache",
-  });
-  const {
     data: listProvidersData,
     loading: listProvidersLoading,
     error: listProvidersError,
@@ -204,14 +176,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   } = useListProvidersQuery({
     fetchPolicy: "no-cache",
   });
-  const [
-    deleteVmObject,
-    {
-      data: deleteVmObjectData,
-      loading: deleteVmObjectLoading,
-      error: deleteVmObjectError,
-    },
-  ] = useDeleteVmObjectMutation();
   const [
     deleteProvider,
     {
@@ -236,24 +200,13 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (allVmObjectsError)
-      enqueueSnackbar(`Couldn't get vm objects: ${allVmObjectsError.message}`, {
-        variant: "error",
-      });
     if (listProvidersError)
       enqueueSnackbar(`Couldn't get providers: ${listProvidersError.message}`, {
         variant: "error",
       });
-  }, [allVmObjectsError, listProvidersError, enqueueSnackbar]);
+  }, [listProvidersError, enqueueSnackbar]);
 
   useEffect(() => {
-    if (deleteVmObjectError)
-      enqueueSnackbar(
-        `Couldn't delete vm object: ${deleteVmObjectError.message}`,
-        {
-          variant: "error",
-        }
-      );
     if (deleteProviderError)
       enqueueSnackbar(
         `Couldn't delete provider: ${deleteProviderError.message}`,
@@ -261,20 +214,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
-  }, [deleteVmObjectError, deleteProviderError, enqueueSnackbar]);
+  }, [deleteProviderError, enqueueSnackbar]);
 
   useEffect(() => {
-    if (deleteVmObjectLoading)
-      enqueueSnackbar("Deleteing vm object...", {
-        variant: "info",
-        autoHideDuration: 2500,
-      });
-    else if (deleteVmObjectData?.deleteVmObject) {
-      enqueueSnackbar("Successfully deleted vm object!", {
-        variant: "success",
-      });
-      refetchVmObjects();
-    }
     if (deleteProviderLoading)
       enqueueSnackbar("Deleteing provider...", {
         variant: "info",
@@ -287,9 +229,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       refetchProviders();
     }
   }, [
-    deleteVmObjectLoading,
-    deleteVmObjectData,
-    refetchVmObjects,
     deleteProviderLoading,
     deleteProviderData,
     refetchProviders,
@@ -329,15 +268,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       isOpen: false,
       onClose: () => undefined,
       onSubmit: () => undefined,
-    });
-  };
-
-  const handleDeleteVmObject = (vmObjectId: string) => {
-    resetDeleteModal();
-    deleteVmObject({
-      variables: {
-        vmObjectId,
-      },
     });
   };
 
@@ -477,114 +407,10 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           />
         </TabPanel>
         <TabPanel value={selectedTab} index={3}>
-          <TableContainer component={Paper}>
-            <Table sx={{ width: "100%" }} aria-label="vm objects table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="left">ID</TableCell>
-                  <TableCell align="center">Name</TableCell>
-                  <TableCell align="center">Identifier</TableCell>
-                  <TableCell align="center">IP Addresses</TableCell>
-                  <TableCell align="center">Team</TableCell>
-                  <TableCell align="center">Competition</TableCell>
-                  <TableCell align="right">Controls</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {allVmObjectsData?.vmObjects
-                  .map(createVmObjectData)
-                  .map((row) => (
-                    <TableRow
-                      key={row.id}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="center">{row.name}</TableCell>
-                      <TableCell align="center">{row.identifier}</TableCell>
-                      <TableCell align="center">
-                        <Box
-                          sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          {row.ipAddresses.map((ip) => (
-                            <Typography
-                              key={ip}
-                              variant="caption"
-                              component="code"
-                              sx={{
-                                mb: 1,
-                              }}
-                            >
-                              {ip}
-                            </Typography>
-                          ))}
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={
-                            row.team
-                              ? row.team.Name || `Team ${row.team?.TeamNumber}`
-                              : "N/A"
-                          }
-                          color={row.team ? "primary" : "default"}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={
-                            row.team ? row.team.TeamToCompetition.Name : "N/A"
-                          }
-                          color={row.team ? "secondary" : "default"}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <ButtonGroup size="small">
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={() =>
-                              navigate(`/admin/vm-object/${row.id}`)
-                            }
-                          >
-                            <EditTwoTone />
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() => {
-                              setDeleteModalData({
-                                objectName: row.name,
-                                isOpen: true,
-                                onClose: resetDeleteModal,
-                                onSubmit: () => handleDeleteVmObject(row.id),
-                              });
-                            }}
-                          >
-                            <DeleteTwoTone />
-                          </Button>
-                        </ButtonGroup>
-                      </TableCell>
-                    </TableRow>
-                  )) ?? (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    No Vm Objects Found
-                  </TableCell>
-                )}
-                {allVmObjectsLoading && (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    <CircularProgress />
-                  </TableCell>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <VmObjectList
+            setDeleteModalData={setDeleteModalData}
+            resetDeleteModal={resetDeleteModal}
+          />
         </TabPanel>
         <TabPanel value={selectedTab} index={4}>
           <TableContainer component={Paper}>
