@@ -1,4 +1,15 @@
-import { Add, EditTwoTone, DeleteTwoTone } from "@mui/icons-material";
+import {
+  Add,
+  EditTwoTone,
+  DeleteTwoTone,
+  Person,
+  Stadium,
+  Group,
+  Laptop,
+  Link,
+  ImportExport,
+  Factory,
+} from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -6,18 +17,24 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Divider,
+  Drawer,
   Fab,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Modal,
   Paper,
-  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
   TextField,
+  Toolbar,
   Typography,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -27,12 +44,10 @@ import {
   Role,
   AllVmObjectsQuery,
   useAllVmObjectsQuery,
-  useListUsersQuery,
   useListCompetitionsQuery,
   useListTeamsQuery,
   ListTeamsQuery,
   ListCompetitionsQuery,
-  ListUsersQuery,
   ListProvidersQuery,
   useListProvidersQuery,
   useDeleteUserMutation,
@@ -42,6 +57,8 @@ import {
   useDeleteProviderMutation,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
+import { IngestVMs } from "../../components/ingest-vms";
+import { UserList } from "../../components/user-list";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -68,28 +85,6 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
-
-const createUserData = (
-  user: ListUsersQuery["users"][0]
-): {
-  id: string;
-  username: string;
-  name: string;
-  provider: string;
-  role: Role;
-  assignment: string;
-} => {
-  return {
-    id: user.ID,
-    username: user.Username,
-    name: `${user.FirstName} ${user.LastName}`,
-    provider: user.Provider,
-    role: user.Role,
-    assignment: `${
-      user.UserToTeam?.TeamNumber || user.UserToTeam?.Name || ""
-    } ${user.UserToTeam?.TeamToCompetition.Name || ""}`,
-  };
-};
 
 const createCompetitionData = (
   competition: ListCompetitionsQuery["competitions"][0]
@@ -233,14 +228,6 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const {
-    data: listUsersData,
-    loading: listUsersLoading,
-    error: listUsersError,
-    refetch: refetchUsers,
-  } = useListUsersQuery({
-    fetchPolicy: "no-cache",
-  });
-  const {
     data: listCompetitionsData,
     loading: listCompetitionsLoading,
     error: listCompetitionsError,
@@ -323,21 +310,11 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
     onClose: () => undefined,
     onSubmit: () => undefined,
   });
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (listUsersError)
-      enqueueSnackbar(`Couldn't get users: ${listUsersError.message}`, {
-        variant: "error",
-      });
-    if (listCompetitionsError)
-      enqueueSnackbar(
-        `Couldn't get competitions: ${listCompetitionsError.message}`,
-        {
-          variant: "error",
-        }
-      );
     if (listTeamsError)
       enqueueSnackbar(`Couldn't get teams: ${listTeamsError.message}`, {
         variant: "error",
@@ -351,7 +328,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         variant: "error",
       });
   }, [
-    listUsersError,
     listCompetitionsError,
     listTeamsError,
     allVmObjectsError,
@@ -399,17 +375,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   ]);
 
   useEffect(() => {
-    if (deleteUserLoading)
-      enqueueSnackbar("Deleteing user...", {
-        variant: "info",
-        autoHideDuration: 2500,
-      });
-    else if (deleteUserData?.deleteUser) {
-      enqueueSnackbar("Successfully deleted user!", {
-        variant: "success",
-      });
-      refetchUsers();
-    }
     if (deleteCompetitionLoading)
       enqueueSnackbar("Deleteing competition...", {
         variant: "info",
@@ -457,7 +422,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   }, [
     deleteUserLoading,
     deleteUserData,
-    refetchUsers,
     deleteCompetitionLoading,
     deleteCompetitionData,
     refetchCompetitions,
@@ -473,7 +437,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
     enqueueSnackbar,
   ]);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (newValue: number) => {
     setSelectedTab(newValue);
   };
 
@@ -506,15 +470,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       isOpen: false,
       onClose: () => undefined,
       onSubmit: () => undefined,
-    });
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    resetDeleteModal();
-    deleteUser({
-      variables: {
-        userId,
-      },
     });
   };
 
@@ -555,373 +510,209 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   };
 
   return (
-    <Container
-      component="main"
+    <Box
       sx={{
-        p: 2,
+        display: "flex",
       }}
-      maxWidth={false}
+      // maxWidth={false}
     >
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={selectedTab}
-          onChange={handleTabChange}
-          aria-label="admin pages"
-        >
-          <Tab label="Users" />
-          <Tab label="Competitions" />
-          <Tab label="Teams" />
-          <Tab label="VM Objects" />
-          <Tab label="Providers" />
-        </Tabs>
-      </Box>
-      <TabPanel value={selectedTab} index={0}>
-        <TableContainer component={Paper}>
-          <Table sx={{ width: "100%" }} aria-label="users table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="left">ID</TableCell>
-                <TableCell align="center">Username</TableCell>
-                <TableCell align="center">Name</TableCell>
-                <TableCell align="center">Provider</TableCell>
-                <TableCell align="center">Role</TableCell>
-                <TableCell align="center">Assignment</TableCell>
-                <TableCell align="right">Controls</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {listUsersData?.users.map(createUserData).map((row) => (
-                <TableRow
-                  key={row.id}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    {row.id}
-                  </TableCell>
-                  <TableCell align="center">{row.username}</TableCell>
-                  <TableCell align="center">{row.name}</TableCell>
-                  <TableCell align="center">
-                    <Chip label={row.provider} color="info" size="small" />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={row.role}
-                      color={row.role === Role.Admin ? "error" : "warning"}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="center">{row.assignment}</TableCell>
-                  <TableCell align="right">
-                    <ButtonGroup size="small">
-                      <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => navigate(`/admin/user/${row.id}`)}
-                      >
-                        <EditTwoTone />
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => {
-                          setDeleteModalData({
-                            objectName: row.username,
-                            isOpen: true,
-                            onClose: resetDeleteModal,
-                            onSubmit: () => handleDeleteUser(row.id),
-                          });
-                        }}
-                      >
-                        <DeleteTwoTone />
-                      </Button>
-                    </ButtonGroup>
-                  </TableCell>
+      {/* <IconButton onClick={handleDrawerClose}>
+        {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+      </IconButton> */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: 240,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: {
+            width: 240,
+            boxSizing: "border-box",
+          },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: "auto" }}>
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={(e) => handleTabChange(0)}
+                selected={selectedTab === 0}
+              >
+                <ListItemIcon>
+                  <Person />
+                </ListItemIcon>
+                <ListItemText primary="Users" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(1)}
+                selected={selectedTab === 1}
+              >
+                <ListItemIcon>
+                  <Stadium />
+                </ListItemIcon>
+                <ListItemText primary="Competitions" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(2)}
+                selected={selectedTab === 2}
+              >
+                <ListItemIcon>
+                  <Group />
+                </ListItemIcon>
+                <ListItemText primary="Teams" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(3)}
+                selected={selectedTab === 3}
+              >
+                <ListItemIcon>
+                  <Laptop />
+                </ListItemIcon>
+                <ListItemText primary="VM Objects" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(4)}
+                selected={selectedTab === 4}
+              >
+                <ListItemIcon>
+                  <Link />
+                </ListItemIcon>
+                <ListItemText primary="Providers" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+          <Divider />
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(5)}
+                selected={selectedTab === 5}
+              >
+                <ListItemIcon>
+                  <ImportExport />
+                </ListItemIcon>
+                <ListItemText primary="Ingest VMs" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(6)}
+                selected={selectedTab === 6}
+              >
+                <ListItemIcon>
+                  <Factory />
+                </ListItemIcon>
+                <ListItemText primary="Generate Users" />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </Box>
+      </Drawer>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <TabPanel value={selectedTab} index={0}>
+          <UserList
+            setDeleteModalData={setDeleteModalData}
+            resetDeleteModal={resetDeleteModal}
+          />
+        </TabPanel>
+        <TabPanel value={selectedTab} index={1}>
+          <TableContainer component={Paper}>
+            <Table sx={{ width: "100%" }} aria-label="competitions table">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">ID</TableCell>
+                  <TableCell align="center">Name</TableCell>
+                  <TableCell align="center">Team Count</TableCell>
+                  <TableCell align="center">Provider</TableCell>
+                  <TableCell align="right">Controls</TableCell>
                 </TableRow>
-              )) ?? (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  No Users Found
-                </TableCell>
-              )}
-              {listUsersLoading && (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  <CircularProgress />
-                </TableCell>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </TabPanel>
-      <TabPanel value={selectedTab} index={1}>
-        <TableContainer component={Paper}>
-          <Table sx={{ width: "100%" }} aria-label="competitions table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="left">ID</TableCell>
-                <TableCell align="center">Name</TableCell>
-                <TableCell align="center">Team Count</TableCell>
-                <TableCell align="center">Provider</TableCell>
-                <TableCell align="right">Controls</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {listCompetitionsData?.competitions
-                .map(createCompetitionData)
-                .map((row) => (
-                  <TableRow
-                    key={row.id}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {row.id}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip label={row.name} color="secondary" size="small" />
-                    </TableCell>
-                    <TableCell align="center">{row.teamCount}</TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={row.providerType}
-                        color="warning"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <ButtonGroup size="small">
-                        <Button
-                          variant="outlined"
-                          color="secondary"
-                          onClick={() =>
-                            navigate(`/admin/competition/${row.id}`)
-                          }
-                        >
-                          <EditTwoTone />
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => {
-                            setDeleteModalData({
-                              objectName: row.name,
-                              isOpen: true,
-                              onClose: resetDeleteModal,
-                              onSubmit: () => handleDeleteCompetition(row.id),
-                            });
-                          }}
-                        >
-                          <DeleteTwoTone />
-                        </Button>
-                      </ButtonGroup>
-                    </TableCell>
-                  </TableRow>
-                )) ?? (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  No Competitions Found
-                </TableCell>
-              )}
-              {listCompetitionsLoading && (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  <CircularProgress />
-                </TableCell>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </TabPanel>
-      <TabPanel value={selectedTab} index={2}>
-        <TableContainer component={Paper}>
-          <Table sx={{ width: "100%" }} aria-label="teams table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="left">ID</TableCell>
-                <TableCell align="center">Competition Name</TableCell>
-                <TableCell align="center">Team Number</TableCell>
-                <TableCell align="center">Team Name</TableCell>
-                <TableCell align="right">Controls</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {listTeamsData?.teams.map(createTeamData).map((row) => (
-                <TableRow
-                  key={row.id}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    {row.id}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={row.competitionName}
-                      color="secondary"
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="center">{row.number}</TableCell>
-                  <TableCell align="center">
-                    <Chip label={row.teamName} color="primary" size="small" />
-                  </TableCell>
-                  <TableCell align="right">
-                    <ButtonGroup size="small">
-                      <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => navigate(`/admin/team/${row.id}`)}
-                      >
-                        <EditTwoTone />
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        onClick={() => {
-                          setDeleteModalData({
-                            objectName: row.teamName ?? `Team ${row.number}`,
-                            isOpen: true,
-                            onClose: resetDeleteModal,
-                            onSubmit: () => handleDeleteTeam(row.id),
-                          });
-                        }}
-                      >
-                        <DeleteTwoTone />
-                      </Button>
-                    </ButtonGroup>
-                  </TableCell>
-                </TableRow>
-              )) ?? (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  No Teams Found
-                </TableCell>
-              )}
-              {listTeamsLoading && (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  <CircularProgress />
-                </TableCell>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </TabPanel>
-      <TabPanel value={selectedTab} index={3}>
-        <TableContainer component={Paper}>
-          <Table sx={{ width: "100%" }} aria-label="vm objects table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="left">ID</TableCell>
-                <TableCell align="center">Name</TableCell>
-                <TableCell align="center">Identifier</TableCell>
-                <TableCell align="center">IP Addresses</TableCell>
-                <TableCell align="center">Team</TableCell>
-                <TableCell align="center">Competition</TableCell>
-                <TableCell align="right">Controls</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {allVmObjectsData?.vmObjects
-                .map(createVmObjectData)
-                .map((row) => (
-                  <TableRow
-                    key={row.id}
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {row.id}
-                    </TableCell>
-                    <TableCell align="center">{row.name}</TableCell>
-                    <TableCell align="center">{row.identifier}</TableCell>
-                    <TableCell align="center">
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                        }}
-                      >
-                        {row.ipAddresses.map((ip) => (
-                          <Typography
-                            key={ip}
-                            variant="caption"
-                            component="code"
-                            sx={{
-                              mb: 1,
+              </TableHead>
+              <TableBody>
+                {listCompetitionsData?.competitions
+                  .map(createCompetitionData)
+                  .map((row) => (
+                    <TableRow
+                      key={row.id}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {row.id}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label={row.name} color="secondary" size="small" />
+                      </TableCell>
+                      <TableCell align="center">{row.teamCount}</TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={row.providerType}
+                          color="warning"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <ButtonGroup size="small">
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() =>
+                              navigate(`/admin/competition/${row.id}`)
+                            }
+                          >
+                            <EditTwoTone />
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => {
+                              setDeleteModalData({
+                                objectName: row.name,
+                                isOpen: true,
+                                onClose: resetDeleteModal,
+                                onSubmit: () => handleDeleteCompetition(row.id),
+                              });
                             }}
                           >
-                            {ip}
-                          </Typography>
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={
-                          row.team
-                            ? row.team.Name || `Team ${row.team?.TeamNumber}`
-                            : "N/A"
-                        }
-                        color={row.team ? "primary" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={
-                          row.team ? row.team.TeamToCompetition.Name : "N/A"
-                        }
-                        color={row.team ? "secondary" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <ButtonGroup size="small">
-                        <Button
-                          variant="outlined"
-                          color="secondary"
-                          onClick={() => navigate(`/admin/vm-object/${row.id}`)}
-                        >
-                          <EditTwoTone />
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          onClick={() => {
-                            setDeleteModalData({
-                              objectName: row.name,
-                              isOpen: true,
-                              onClose: resetDeleteModal,
-                              onSubmit: () => handleDeleteVmObject(row.id),
-                            });
-                          }}
-                        >
-                          <DeleteTwoTone />
-                        </Button>
-                      </ButtonGroup>
-                    </TableCell>
-                  </TableRow>
-                )) ?? (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  No Vm Objects Found
-                </TableCell>
-              )}
-              {allVmObjectsLoading && (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  <CircularProgress />
-                </TableCell>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </TabPanel>
-      <TabPanel value={selectedTab} index={4}>
-        <TableContainer component={Paper}>
-          <Table sx={{ width: "100%" }} aria-label="providers table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="left">ID</TableCell>
-                <TableCell align="center">Name</TableCell>
-                <TableCell align="center">Type</TableCell>
-                <TableCell align="right">Controls</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {listProvidersData?.providers
-                .map(createProviderData)
-                .map((row) => (
+                            <DeleteTwoTone />
+                          </Button>
+                        </ButtonGroup>
+                      </TableCell>
+                    </TableRow>
+                  )) ?? (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    No Competitions Found
+                  </TableCell>
+                )}
+                {listCompetitionsLoading && (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    <CircularProgress />
+                  </TableCell>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
+        <TabPanel value={selectedTab} index={2}>
+          <TableContainer component={Paper}>
+            <Table sx={{ width: "100%" }} aria-label="teams table">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">ID</TableCell>
+                  <TableCell align="center">Competition Name</TableCell>
+                  <TableCell align="center">Team Number</TableCell>
+                  <TableCell align="center">Team Name</TableCell>
+                  <TableCell align="right">Controls</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {listTeamsData?.teams.map(createTeamData).map((row) => (
                   <TableRow
                     key={row.id}
                     sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
@@ -929,16 +720,23 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                     <TableCell component="th" scope="row">
                       {row.id}
                     </TableCell>
-                    <TableCell align="center">{row.name}</TableCell>
                     <TableCell align="center">
-                      <Chip label={row.type} color="warning" size="small" />
+                      <Chip
+                        label={row.competitionName}
+                        color="secondary"
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="center">{row.number}</TableCell>
+                    <TableCell align="center">
+                      <Chip label={row.teamName} color="primary" size="small" />
                     </TableCell>
                     <TableCell align="right">
                       <ButtonGroup size="small">
                         <Button
                           variant="outlined"
                           color="secondary"
-                          onClick={() => navigate(`/admin/provider/${row.id}`)}
+                          onClick={() => navigate(`/admin/team/${row.id}`)}
                         >
                           <EditTwoTone />
                         </Button>
@@ -947,10 +745,10 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                           color="error"
                           onClick={() => {
                             setDeleteModalData({
-                              objectName: row.name,
+                              objectName: row.teamName ?? `Team ${row.number}`,
                               isOpen: true,
                               onClose: resetDeleteModal,
-                              onSubmit: () => handleDeleteProvider(row.id),
+                              onSubmit: () => handleDeleteTeam(row.id),
                             });
                           }}
                         >
@@ -960,33 +758,218 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                     </TableCell>
                   </TableRow>
                 )) ?? (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  No Providers Found
-                </TableCell>
-              )}
-              {listProvidersLoading && (
-                <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                  <CircularProgress />
-                </TableCell>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </TabPanel>
-      <Fab
-        sx={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-        }}
-        color="secondary"
-        aria-label="add"
-        onClick={addObject}
-      >
-        <Add />
-      </Fab>
-      <DeleteObjectModal {...deleteModalData} />
-    </Container>
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    No Teams Found
+                  </TableCell>
+                )}
+                {listTeamsLoading && (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    <CircularProgress />
+                  </TableCell>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
+        <TabPanel value={selectedTab} index={3}>
+          <TableContainer component={Paper}>
+            <Table sx={{ width: "100%" }} aria-label="vm objects table">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">ID</TableCell>
+                  <TableCell align="center">Name</TableCell>
+                  <TableCell align="center">Identifier</TableCell>
+                  <TableCell align="center">IP Addresses</TableCell>
+                  <TableCell align="center">Team</TableCell>
+                  <TableCell align="center">Competition</TableCell>
+                  <TableCell align="right">Controls</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {allVmObjectsData?.vmObjects
+                  .map(createVmObjectData)
+                  .map((row) => (
+                    <TableRow
+                      key={row.id}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {row.id}
+                      </TableCell>
+                      <TableCell align="center">{row.name}</TableCell>
+                      <TableCell align="center">{row.identifier}</TableCell>
+                      <TableCell align="center">
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          {row.ipAddresses.map((ip) => (
+                            <Typography
+                              key={ip}
+                              variant="caption"
+                              component="code"
+                              sx={{
+                                mb: 1,
+                              }}
+                            >
+                              {ip}
+                            </Typography>
+                          ))}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={
+                            row.team
+                              ? row.team.Name || `Team ${row.team?.TeamNumber}`
+                              : "N/A"
+                          }
+                          color={row.team ? "primary" : "default"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={
+                            row.team ? row.team.TeamToCompetition.Name : "N/A"
+                          }
+                          color={row.team ? "secondary" : "default"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <ButtonGroup size="small">
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() =>
+                              navigate(`/admin/vm-object/${row.id}`)
+                            }
+                          >
+                            <EditTwoTone />
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => {
+                              setDeleteModalData({
+                                objectName: row.name,
+                                isOpen: true,
+                                onClose: resetDeleteModal,
+                                onSubmit: () => handleDeleteVmObject(row.id),
+                              });
+                            }}
+                          >
+                            <DeleteTwoTone />
+                          </Button>
+                        </ButtonGroup>
+                      </TableCell>
+                    </TableRow>
+                  )) ?? (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    No Vm Objects Found
+                  </TableCell>
+                )}
+                {allVmObjectsLoading && (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    <CircularProgress />
+                  </TableCell>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
+        <TabPanel value={selectedTab} index={4}>
+          <TableContainer component={Paper}>
+            <Table sx={{ width: "100%" }} aria-label="providers table">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">ID</TableCell>
+                  <TableCell align="center">Name</TableCell>
+                  <TableCell align="center">Type</TableCell>
+                  <TableCell align="right">Controls</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {listProvidersData?.providers
+                  .map(createProviderData)
+                  .map((row) => (
+                    <TableRow
+                      key={row.id}
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {row.id}
+                      </TableCell>
+                      <TableCell align="center">{row.name}</TableCell>
+                      <TableCell align="center">
+                        <Chip label={row.type} color="warning" size="small" />
+                      </TableCell>
+                      <TableCell align="right">
+                        <ButtonGroup size="small">
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() =>
+                              navigate(`/admin/provider/${row.id}`)
+                            }
+                          >
+                            <EditTwoTone />
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={() => {
+                              setDeleteModalData({
+                                objectName: row.name,
+                                isOpen: true,
+                                onClose: resetDeleteModal,
+                                onSubmit: () => handleDeleteProvider(row.id),
+                              });
+                            }}
+                          >
+                            <DeleteTwoTone />
+                          </Button>
+                        </ButtonGroup>
+                      </TableCell>
+                    </TableRow>
+                  )) ?? (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    No Providers Found
+                  </TableCell>
+                )}
+                {listProvidersLoading && (
+                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+                    <CircularProgress />
+                  </TableCell>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </TabPanel>
+        <TabPanel value={selectedTab} index={5}>
+          <IngestVMs />
+        </TabPanel>
+        <TabPanel value={selectedTab} index={6}></TabPanel>
+        {selectedTab < 5 && (
+          <Fab
+            sx={{
+              position: "fixed",
+              bottom: 24,
+              right: 24,
+            }}
+            color="secondary"
+            aria-label="add"
+            onClick={addObject}
+          >
+            <Add />
+          </Fab>
+        )}
+        <DeleteObjectModal {...deleteModalData} />
+      </Box>
+    </Box>
   );
 };
 
