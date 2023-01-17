@@ -44,14 +44,10 @@ import {
   Role,
   AllVmObjectsQuery,
   useAllVmObjectsQuery,
-  useListCompetitionsQuery,
   useListTeamsQuery,
   ListTeamsQuery,
-  ListCompetitionsQuery,
   ListProvidersQuery,
   useListProvidersQuery,
-  useDeleteUserMutation,
-  useDeleteCompetitionMutation,
   useDeleteTeamMutation,
   useDeleteVmObjectMutation,
   useDeleteProviderMutation,
@@ -59,6 +55,7 @@ import {
 import { UserContext } from "../../user-context";
 import { IngestVMs } from "../../components/ingest-vms";
 import { UserList } from "../../components/user-list";
+import { CompetitionList } from "../../components/competition-list";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -85,24 +82,6 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
-
-const createCompetitionData = (
-  competition: ListCompetitionsQuery["competitions"][0]
-): {
-  id: string;
-  name: string;
-  providerType: string;
-  teamCount: number;
-} => {
-  return {
-    id: competition.ID,
-    name: competition.Name,
-    providerType: `${
-      competition.CompetitionToProvider.Name
-    } (${competition.CompetitionToProvider.Type.toLocaleUpperCase()})`,
-    teamCount: competition.CompetitionToTeams.length,
-  };
-};
 
 const createTeamData = (
   team: ListTeamsQuery["teams"][0]
@@ -228,14 +207,6 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
 export const AdminProtected: React.FC = (): React.ReactElement => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const {
-    data: listCompetitionsData,
-    loading: listCompetitionsLoading,
-    error: listCompetitionsError,
-    refetch: refetchCompetitions,
-  } = useListCompetitionsQuery({
-    fetchPolicy: "no-cache",
-  });
-  const {
     data: listTeamsData,
     loading: listTeamsLoading,
     error: listTeamsError,
@@ -259,22 +230,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   } = useListProvidersQuery({
     fetchPolicy: "no-cache",
   });
-  const [
-    deleteUser,
-    {
-      data: deleteUserData,
-      loading: deleteUserLoading,
-      error: deleteUserError,
-    },
-  ] = useDeleteUserMutation();
-  const [
-    deleteCompetition,
-    {
-      data: deleteCompetitionData,
-      loading: deleteCompetitionLoading,
-      error: deleteCompetitionError,
-    },
-  ] = useDeleteCompetitionMutation();
   const [
     deleteTeam,
     {
@@ -327,26 +282,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       enqueueSnackbar(`Couldn't get providers: ${listProvidersError.message}`, {
         variant: "error",
       });
-  }, [
-    listCompetitionsError,
-    listTeamsError,
-    allVmObjectsError,
-    listProvidersError,
-    enqueueSnackbar,
-  ]);
+  }, [listTeamsError, allVmObjectsError, listProvidersError, enqueueSnackbar]);
 
   useEffect(() => {
-    if (deleteUserError)
-      enqueueSnackbar(`Couldn't delete user: ${deleteUserError.message}`, {
-        variant: "error",
-      });
-    if (deleteCompetitionError)
-      enqueueSnackbar(
-        `Couldn't delete competition: ${deleteCompetitionError.message}`,
-        {
-          variant: "error",
-        }
-      );
     if (deleteTeamError)
       enqueueSnackbar(`Couldn't delete team: ${deleteTeamError.message}`, {
         variant: "error",
@@ -366,8 +304,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         }
       );
   }, [
-    deleteUserError,
-    deleteCompetitionError,
     deleteTeamError,
     deleteVmObjectError,
     deleteProviderError,
@@ -375,17 +311,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
   ]);
 
   useEffect(() => {
-    if (deleteCompetitionLoading)
-      enqueueSnackbar("Deleteing competition...", {
-        variant: "info",
-        autoHideDuration: 2500,
-      });
-    else if (deleteCompetitionData?.deleteCompetition) {
-      enqueueSnackbar("Successfully deleted competition!", {
-        variant: "success",
-      });
-      refetchCompetitions();
-    }
     if (deleteTeamLoading)
       enqueueSnackbar("Deleteing team...", {
         variant: "info",
@@ -420,11 +345,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       refetchProviders();
     }
   }, [
-    deleteUserLoading,
-    deleteUserData,
-    deleteCompetitionLoading,
-    deleteCompetitionData,
-    refetchCompetitions,
     deleteTeamLoading,
     deleteTeamData,
     refetchTeams,
@@ -470,15 +390,6 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       isOpen: false,
       onClose: () => undefined,
       onSubmit: () => undefined,
-    });
-  };
-
-  const handleDeleteCompetition = (competitionId: string) => {
-    resetDeleteModal();
-    deleteCompetition({
-      variables: {
-        competitionId,
-      },
     });
   };
 
@@ -624,80 +535,10 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           />
         </TabPanel>
         <TabPanel value={selectedTab} index={1}>
-          <TableContainer component={Paper}>
-            <Table sx={{ width: "100%" }} aria-label="competitions table">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="left">ID</TableCell>
-                  <TableCell align="center">Name</TableCell>
-                  <TableCell align="center">Team Count</TableCell>
-                  <TableCell align="center">Provider</TableCell>
-                  <TableCell align="right">Controls</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {listCompetitionsData?.competitions
-                  .map(createCompetitionData)
-                  .map((row) => (
-                    <TableRow
-                      key={row.id}
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip label={row.name} color="secondary" size="small" />
-                      </TableCell>
-                      <TableCell align="center">{row.teamCount}</TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={row.providerType}
-                          color="warning"
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <ButtonGroup size="small">
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={() =>
-                              navigate(`/admin/competition/${row.id}`)
-                            }
-                          >
-                            <EditTwoTone />
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            onClick={() => {
-                              setDeleteModalData({
-                                objectName: row.name,
-                                isOpen: true,
-                                onClose: resetDeleteModal,
-                                onSubmit: () => handleDeleteCompetition(row.id),
-                              });
-                            }}
-                          >
-                            <DeleteTwoTone />
-                          </Button>
-                        </ButtonGroup>
-                      </TableCell>
-                    </TableRow>
-                  )) ?? (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    No Competitions Found
-                  </TableCell>
-                )}
-                {listCompetitionsLoading && (
-                  <TableCell colSpan={5} sx={{ textAlign: "center" }}>
-                    <CircularProgress />
-                  </TableCell>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <CompetitionList
+            setDeleteModalData={setDeleteModalData}
+            resetDeleteModal={resetDeleteModal}
+          />
         </TabPanel>
         <TabPanel value={selectedTab} index={2}>
           <TableContainer component={Paper}>

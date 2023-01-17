@@ -80,6 +80,13 @@ export const UserList: React.FC<{
   }, [listUsersError, enqueueSnackbar]);
 
   useEffect(() => {
+    if (deleteUserError)
+      enqueueSnackbar(`Couldn't delete user: ${deleteUserError.message}`, {
+        variant: "error",
+      });
+  }, [deleteUserError, enqueueSnackbar]);
+
+  useEffect(() => {
     if (deleteUserLoading)
       enqueueSnackbar("Deleteing user...", {
         variant: "info",
