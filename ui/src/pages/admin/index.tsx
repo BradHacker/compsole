@@ -36,6 +36,7 @@ import { CompetitionList } from "../../components/competition-list";
 import { TeamList } from "../../components/team-list";
 import { VmObjectList } from "../../components/vm-object-list/index";
 import { ProviderList } from "../../components/provider-list";
+import { GenerateUsers } from "../../components/generate-users";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -334,7 +335,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         <TabPanel value={selectedTab} index={5}>
           <IngestVMs />
         </TabPanel>
-        <TabPanel value={selectedTab} index={6}></TabPanel>
+        <TabPanel value={selectedTab} index={6}>
+          <GenerateUsers />
+        </TabPanel>
         {selectedTab < 5 && (
           <Fab
             sx={{
