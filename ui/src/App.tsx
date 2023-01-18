@@ -29,7 +29,9 @@ function App() {
     loading: currentUserLoading,
     error: currentUserError,
     refetch: refetchCurrentUser,
-  } = useGetCurrentUserQuery();
+  } = useGetCurrentUserQuery({
+    fetchPolicy: "no-cache",
+  });
   let navigate = useNavigate();
   let location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
