@@ -546,6 +546,7 @@ export const Console: React.FC = (): React.ReactElement => {
           height: "100vh",
           background: "rgba(0,0,0,0.75)",
           transition: "all 0.5s ease-in-out",
+          zIndex: 1302,
         }}
       ></Box>
       <Box
@@ -557,6 +558,7 @@ export const Console: React.FC = (): React.ReactElement => {
           position: "absolute",
           transition: "all 0.3s ease-in-out",
           overflow: "hidden",
+          zIndex: 1303,
         }}
       >
         <Paper

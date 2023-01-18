@@ -23,7 +23,6 @@ import { Admin, AdminProtected } from "./pages/admin";
 import { UserForm } from "./pages/admin/user-form";
 import { CompetitionForm } from "./pages/admin/competition-form";
 import { ProviderForm } from "./pages/admin/provider-form";
-import { IngestVMs } from "./pages/admin/ingest-vms";
 import { VmObjectForm } from "./pages/admin/vm-object-form";
 import { TeamForm } from "./pages/admin/team-form";
 import { Account } from "./pages/account/index";
@@ -110,7 +109,6 @@ root.render(
                   <Route path="vm-object/:id" element={<VmObjectForm />} />
                   <Route path="team/new" element={<TeamForm />} />
                   <Route path="team/:id" element={<TeamForm />} />
-                  <Route path="ingest" element={<IngestVMs />} />
                   <Route path="logs" element={<Logs />} />
                 </Route>
               </Route>

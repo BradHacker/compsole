@@ -31,6 +31,13 @@ type CompetitionInput struct {
 	CompetitionToProvider string  `json:"CompetitionToProvider"`
 }
 
+type CompetitionUser struct {
+	ID         string    `json:"ID"`
+	Username   string    `json:"Username"`
+	Password   string    `json:"Password"`
+	UserToTeam *ent.Team `json:"UserToTeam"`
+}
+
 type ProviderInput struct {
 	ID     *string `json:"ID"`
 	Name   string  `json:"Name"`

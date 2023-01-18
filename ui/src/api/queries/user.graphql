@@ -20,6 +20,15 @@ fragment AdminUserFragment on User {
   }
 }
 
+fragment CompetitionUserFragment on CompetitionUser {
+  ID
+  Username
+  Password
+  UserToTeam {
+    ...TeamFragment
+  }
+}
+
 query GetCurrentUser {
   me {
     ...UserFragment
@@ -66,4 +75,13 @@ mutation UpdateAccount($input: AccountInput!) {
 
 mutation ChangeSelfPassword($newPassword: String!) {
   changeSelfPassword(password: $newPassword)
+}
+
+mutation GenerateCompetitionUsers($competitionId: ID!, $usersPerTeam: Int!) {
+  generateCompetitionUsers(
+    competitionId: $competitionId
+    usersPerTeam: $usersPerTeam
+  ) {
+    ...CompetitionUserFragment
+  }
 }

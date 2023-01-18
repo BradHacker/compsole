@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strconv"
 
 	"github.com/BradHacker/compsole/auth"
 	"github.com/BradHacker/compsole/compsole/providers"
@@ -21,6 +22,7 @@ import (
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
 	"github.com/google/uuid"
+	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -533,6 +535,75 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, id string, passwo
 		logrus.Warnf("failed to log CHANGE_PASSWORD: %v", err)
 	}
 	return true, nil
+}
+
+// GenerateCompetitionUsers is the resolver for the generateCompetitionUsers field.
+func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competitionID string, usersPerTeam int) ([]*model.CompetitionUser, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateTeam\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	competitionUuid, err := uuid.Parse(competitionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse competition UUID: %v", err)
+	}
+	entCompetition, err := r.client.Competition.Query().Where(competition.IDEQ(competitionUuid)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query competition: %v", err)
+	}
+	entTeams, err := r.client.Team.Query().Where(team.HasTeamToCompetitionWith(competition.IDEQ(competitionUuid))).All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query teams for competition: %v", err)
+	}
+	competitionUsers := make([]*model.CompetitionUser, 0)
+	for _, entTeam := range entTeams {
+		for i := 0; i < usersPerTeam; i++ {
+			// user details:
+			// username = [comp_name][team_num][user_letter]
+			//   ex. comp01a
+			// password = randomly generated (noun + num + adj + num + noun)
+			entUser, err := r.client.User.Create().
+				SetFirstName("Team").
+				SetLastName(strconv.Itoa(entTeam.TeamNumber)).
+				SetUsername(
+					fmt.Sprintf(
+						"%s%02d%c",
+						strcase.ToCamel(entCompetition.Name),
+						entTeam.TeamNumber, rune('a'+i),
+					),
+				).
+				SetPassword(utils.NewPassword()).
+				SetProvider(user.ProviderLOCAL).
+				SetRole(user.RoleUSER).
+				SetUserToTeam(entTeam).
+				Save(ctx)
+			if err != nil {
+				// log failed users and keep trying to make them
+				logrus.Errorf("failed to create user: %v", err)
+				continue
+			}
+			competitionUsers = append(competitionUsers, &model.CompetitionUser{
+				ID:         entUser.ID.String(),
+				Username:   entUser.Username,
+				Password:   entUser.Password,
+				UserToTeam: entTeam,
+			})
+		}
+	}
+	return competitionUsers, nil
 }
 
 // CreateTeam is the resolver for the createTeam field.
