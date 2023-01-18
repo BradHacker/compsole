@@ -131,9 +131,6 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
         persist: true,
         preventDuplicate: true,
       });
-      let unsortedTeam = selectedCompetition?.CompetitionToTeams.find(
-        (t) => t?.TeamNumber === 0
-      );
       let newTeamAssignments: {
         [key: string]: string;
       } = {};
@@ -152,7 +149,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           }
         }
         if (!newTeamAssignments[vmObject.Identifier])
-          newTeamAssignments[vmObject.Identifier] = unsortedTeam?.ID ?? "";
+          newTeamAssignments[vmObject.Identifier] = "skip";
       });
       setTeamAssignments(newTeamAssignments);
       closeSnackbar(snackbarId);
@@ -207,11 +204,21 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
     if (listProviderVmsData) {
       const vmObjects: VmObjectInput[] = [];
       listProviderVmsData.listProviderVms.forEach((vmObject) => {
-        vmObjects.push({
-          ...vmObject,
-          VmObjectToTeam: teamAssignments[vmObject.Identifier],
-        } as VmObjectInput);
+        if (
+          teamAssignments[vmObject.Identifier] &&
+          teamAssignments[vmObject.Identifier] !== "skip"
+        )
+          vmObjects.push({
+            ...vmObject,
+            VmObjectToTeam: teamAssignments[vmObject.Identifier],
+          } as VmObjectInput);
       });
+      if (vmObjects.length === 0) {
+        enqueueSnackbar("Must select at least 1 VM to ingest", {
+          variant: "warning",
+        });
+        return;
+      }
       batchCreateVms({
         variables: {
           vmObjects,
@@ -417,13 +424,18 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                         })
                       }
                     >
+                      <MenuItem value="skip">
+                        <em>Skip Import</em>
+                      </MenuItem>
                       {[...(selectedCompetition?.CompetitionToTeams || [])]
                         .sort(
                           (a, b) => (a?.TeamNumber || 0) - (b?.TeamNumber || 0)
                         )
                         .map((team) => (
                           <MenuItem key={team?.ID} value={team?.ID}>
-                            {team?.Name} ({team?.TeamNumber})
+                            <ListItemText>
+                              {team?.Name} ({team?.TeamNumber})
+                            </ListItemText>
                           </MenuItem>
                         ))}
                     </Select>
