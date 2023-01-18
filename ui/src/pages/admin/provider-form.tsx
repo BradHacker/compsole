@@ -196,7 +196,13 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           <Button
             variant="text"
             sx={{ mr: 1 }}
-            onClick={() => navigate("/admin")}
+            onClick={() =>
+              navigate("/admin", {
+                state: {
+                  tab: 4,
+                },
+              })
+            }
           >
             <ArrowBackTwoTone />
           </Button>

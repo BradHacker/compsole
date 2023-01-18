@@ -194,7 +194,13 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
           <Button
             variant="text"
             sx={{ mr: 1 }}
-            onClick={() => navigate("/admin")}
+            onClick={() =>
+              navigate("/admin", {
+                state: {
+                  tab: 3,
+                },
+              })
+            }
           >
             <ArrowBackTwoTone />
           </Button>

@@ -26,9 +26,8 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useContext, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Role } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
 import { IngestVMs } from "../../components/ingest-vms";
@@ -150,9 +149,17 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
     onClose: () => undefined,
     onSubmit: () => undefined,
   });
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const { enqueueSnackbar } = useSnackbar();
+  let location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (
+      location?.state &&
+      (location.state as any).tab &&
+      typeof (location.state as any).tab === "number"
+    )
+      setSelectedTab((location.state as any).tab);
+  }, [location, setSelectedTab]);
 
   const handleTabChange = (newValue: number) => {
     setSelectedTab(newValue);
@@ -195,11 +202,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       sx={{
         display: "flex",
       }}
-      // maxWidth={false}
     >
-      {/* <IconButton onClick={handleDrawerClose}>
-        {theme.direction === "rtl" ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-      </IconButton> */}
       <Drawer
         variant="permanent"
         sx={{
@@ -216,7 +219,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           <List>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={(e) => handleTabChange(0)}
+                onClick={() => handleTabChange(0)}
                 selected={selectedTab === 0}
               >
                 <ListItemIcon>
