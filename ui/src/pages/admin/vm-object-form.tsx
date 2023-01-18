@@ -1,4 +1,9 @@
-import { ArrowBackTwoTone, Save } from "@mui/icons-material";
+import {
+  ArrowBackTwoTone,
+  LockOpenTwoTone,
+  LockTwoTone,
+  Save,
+} from "@mui/icons-material";
 import {
   Container,
   TextField,
@@ -9,6 +14,8 @@ import {
   Fab,
   CircularProgress,
   Button,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import { Box } from "@mui/system";
 import { useSnackbar } from "notistack";
@@ -22,6 +29,7 @@ import {
   GetCompTeamSearchValuesQuery,
   useGetCompTeamSearchValuesQuery,
   Team,
+  useLockoutVmMutation,
 } from "../../api/generated/graphql";
 
 export const VmObjectForm: React.FC = (): React.ReactElement => {
@@ -32,6 +40,7 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
       data: getVmObjectData,
       loading: getVmObjectLoading,
       error: getVmObjectError,
+      refetch: refetchGetVmObject,
     },
   ] = useGetVmObjectLazyQuery();
   const { data: getCompTeamData, error: getCompTeamError } =
@@ -54,6 +63,15 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
       error: createVmObjectError,
     },
   ] = useCreateVmObjectMutation();
+  const [
+    lockoutVm,
+    {
+      data: lockoutVmData,
+      loading: lockoutVmLoading,
+      error: lockoutVmError,
+      reset: resetLockoutVm,
+    },
+  ] = useLockoutVmMutation();
   const [vmObject, setVmObject] = useState<VmObjectInput>({
     ID: "",
     IPAddresses: [],
@@ -162,6 +180,25 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
         VmObjectToTeam: "",
       });
   }, [getVmObjectData, getCompTeamData]);
+
+  useEffect(() => {
+    if (lockoutVmError)
+      enqueueSnackbar(
+        `Failed to update vm object lockout: ${lockoutVmError.message}`,
+        {
+          variant: "error",
+        }
+      );
+    else if (lockoutVmData?.lockoutVm) {
+      enqueueSnackbar("Vm object lockout updated", {
+        variant: "success",
+      });
+      resetLockoutVm();
+      refetchGetVmObject({
+        vmObjectId: id,
+      });
+    }
+  }, [lockoutVmData, lockoutVmError, enqueueSnackbar]);
 
   const submitCompetition = () => {
     if (vmObject.ID)
@@ -299,6 +336,49 @@ export const VmObjectForm: React.FC = (): React.ReactElement => {
           }}
         />
       </Box>
+
+      {id && (
+        <ToggleButtonGroup
+          disabled={lockoutVmLoading}
+          value={vmObject.Locked}
+          exclusive
+          aria-label="lockout controls"
+          sx={{
+            display: "flex",
+            "& .MuiToggleButton-root": {
+              minWidth: "40%",
+              flexGrow: 1,
+              padding: 2,
+            },
+            m: 1,
+          }}
+          onChange={(e: any, locked: boolean) => {
+            lockoutVm({
+              variables: {
+                vmObjectId: id,
+                locked,
+              },
+            });
+          }}
+        >
+          <ToggleButton color="error" value={true}>
+            {lockoutVmLoading ? (
+              <CircularProgress />
+            ) : (
+              <LockTwoTone sx={{ mr: 1 }} />
+            )}{" "}
+            Locked
+          </ToggleButton>
+          <ToggleButton color="secondary" value={false}>
+            {lockoutVmLoading ? (
+              <CircularProgress />
+            ) : (
+              <LockOpenTwoTone sx={{ mr: 1 }} />
+            )}{" "}
+            Unlocked
+          </ToggleButton>
+        </ToggleButtonGroup>
+      )}
       <Box
         sx={{
           position: "fixed",
