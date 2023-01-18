@@ -15,7 +15,7 @@ import {
   LinkProps,
 } from "react-router-dom";
 import { LinkProps as MuiLinkProps } from "@mui/material/Link";
-import { Auth, Signin, Signup } from "./pages/auth";
+import { Auth, Signin } from "./pages/auth";
 import { Dashboard } from "./pages/dashboard";
 import { SnackbarProvider } from "notistack";
 import { Console } from "./pages/console";
@@ -116,7 +116,6 @@ root.render(
               <Route path="/auth" element={<Auth />}>
                 <Route index element={<Signin />} />
                 <Route path="signin" element={<Signin />} />
-                <Route path="signup" element={<Signup />} />
               </Route>
             </Routes>
           </SnackbarProvider>
