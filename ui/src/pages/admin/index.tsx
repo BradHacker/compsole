@@ -8,6 +8,7 @@ import {
   Link,
   ImportExport,
   Factory,
+  Lock,
 } from "@mui/icons-material";
 import {
   Box,
@@ -37,6 +38,7 @@ import { TeamList } from "../../components/team-list";
 import { VmObjectList } from "../../components/vm-object-list/index";
 import { ProviderList } from "../../components/provider-list";
 import { GenerateUsers } from "../../components/generate-users";
+import { LockoutForm } from "../../components/lockout-form";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -298,6 +300,17 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                 <ListItemText primary="Generate Users" />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(7)}
+                selected={selectedTab === 7}
+              >
+                <ListItemIcon>
+                  <Lock />
+                </ListItemIcon>
+                <ListItemText primary="Manage Lockouts" />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Box>
       </Drawer>
@@ -337,6 +350,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         </TabPanel>
         <TabPanel value={selectedTab} index={6}>
           <GenerateUsers />
+        </TabPanel>
+        <TabPanel value={selectedTab} index={7}>
+          <LockoutForm />
         </TabPanel>
         {selectedTab < 5 && (
           <Fab
