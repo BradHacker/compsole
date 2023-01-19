@@ -1343,6 +1343,51 @@ func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool
 	return true, nil
 }
 
+// BatchLockout is the resolver for the batchLockout field.
+func (r *mutationResolver) BatchLockout(ctx context.Context, vmObjects []string, locked bool) (bool, error) {
+	authUser, err := auth.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	clientIp, err := auth.ForContextIp(ctx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"BatchLockout\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	for _, id := range vmObjects {
+		vmObjectUuid, err := uuid.Parse(id)
+		if err != nil {
+			logrus.Errorf("failed to parse UUID: %v", err)
+			continue
+		}
+		err = r.client.VmObject.Update().Where(vmobject.IDEQ(vmObjectUuid)).SetLocked(locked).Exec(ctx)
+		if err != nil {
+			logrus.Errorf("failed to set vm object lock state: %v", err)
+			continue
+		}
+		err = r.client.Action.Create().
+			SetIPAddress(clientIp).
+			SetType(action.TypeUPDATE_LOCKOUT).
+			SetMessage(fmt.Sprintf("set lockout to %t for vm %s", locked, id)).
+			SetActionToUser(authUser).
+			Exec(ctx)
+		if err != nil {
+			logrus.Warnf("failed to log UPDATE_LOCKOUT: %v", err)
+			continue
+		}
+		r.rdb.Publish(ctx, "lockout", vmObjectUuid.String())
+	}
+	return true, nil
+}
+
 // LockoutCompetition is the resolver for the lockoutCompetition field.
 func (r *mutationResolver) LockoutCompetition(ctx context.Context, id string, locked bool) (bool, error) {
 	authUser, err := auth.ForContext(ctx)
