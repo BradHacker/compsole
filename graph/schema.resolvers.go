@@ -1734,7 +1734,7 @@ func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) 
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	entVmObjects, err := r.client.VmObject.Query().All(ctx)
+	entVmObjects, err := r.client.VmObject.Query().Order(ent.Asc(vmobject.FieldID)).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects: %v", err)
 	}
