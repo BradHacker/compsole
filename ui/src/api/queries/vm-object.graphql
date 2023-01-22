@@ -80,3 +80,7 @@ subscription Lockout($vmObjectId: ID!) {
 mutation DeleteVmObject($vmObjectId: ID!) {
   deleteVmObject(id: $vmObjectId)
 }
+
+mutation BatchLockout($vmObjects: [ID!]!, $locked: Boolean!) {
+  batchLockout(vmObjects: $vmObjects, locked: $locked)
+}

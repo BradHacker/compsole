@@ -101,6 +101,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   batchCreateTeams: Array<Team>;
   batchCreateVmObjects: Array<VmObject>;
+  batchLockout: Scalars['Boolean'];
   changePassword: Scalars['Boolean'];
   changeSelfPassword: Scalars['Boolean'];
   createCompetition: Competition;
@@ -135,6 +136,12 @@ export type MutationBatchCreateTeamsArgs = {
 
 export type MutationBatchCreateVmObjectsArgs = {
   input: Array<VmObjectInput>;
+};
+
+
+export type MutationBatchLockoutArgs = {
+  locked: Scalars['Boolean'];
+  vmObjects: Array<Scalars['ID']>;
 };
 
 
@@ -754,6 +761,14 @@ export type DeleteVmObjectMutationVariables = Exact<{
 
 
 export type DeleteVmObjectMutation = { __typename?: 'Mutation', deleteVmObject: boolean };
+
+export type BatchLockoutMutationVariables = Exact<{
+  vmObjects: Array<Scalars['ID']> | Scalars['ID'];
+  locked: Scalars['Boolean'];
+}>;
+
+
+export type BatchLockoutMutation = { __typename?: 'Mutation', batchLockout: boolean };
 
 export const UserFragmentFragmentDoc = gql`
     fragment UserFragment on User {
@@ -2329,3 +2344,35 @@ export function useDeleteVmObjectMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteVmObjectMutationHookResult = ReturnType<typeof useDeleteVmObjectMutation>;
 export type DeleteVmObjectMutationResult = Apollo.MutationResult<DeleteVmObjectMutation>;
 export type DeleteVmObjectMutationOptions = Apollo.BaseMutationOptions<DeleteVmObjectMutation, DeleteVmObjectMutationVariables>;
+export const BatchLockoutDocument = gql`
+    mutation BatchLockout($vmObjects: [ID!]!, $locked: Boolean!) {
+  batchLockout(vmObjects: $vmObjects, locked: $locked)
+}
+    `;
+export type BatchLockoutMutationFn = Apollo.MutationFunction<BatchLockoutMutation, BatchLockoutMutationVariables>;
+
+/**
+ * __useBatchLockoutMutation__
+ *
+ * To run a mutation, you first call `useBatchLockoutMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useBatchLockoutMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [batchLockoutMutation, { data, loading, error }] = useBatchLockoutMutation({
+ *   variables: {
+ *      vmObjects: // value for 'vmObjects'
+ *      locked: // value for 'locked'
+ *   },
+ * });
+ */
+export function useBatchLockoutMutation(baseOptions?: Apollo.MutationHookOptions<BatchLockoutMutation, BatchLockoutMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<BatchLockoutMutation, BatchLockoutMutationVariables>(BatchLockoutDocument, options);
+      }
+export type BatchLockoutMutationHookResult = ReturnType<typeof useBatchLockoutMutation>;
+export type BatchLockoutMutationResult = Apollo.MutationResult<BatchLockoutMutation>;
+export type BatchLockoutMutationOptions = Apollo.BaseMutationOptions<BatchLockoutMutation, BatchLockoutMutationVariables>;
