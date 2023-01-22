@@ -229,6 +229,7 @@ type Mutation {
   deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   # Lockout
   lockoutVm(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
+  batchLockout(vmObjects: [ID!]!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
   lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
 }
 

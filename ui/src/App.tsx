@@ -51,7 +51,7 @@ function App() {
     if (!currentUserLoading && (currentUserError || !currentUser))
       navigate("/auth/signin", {
         state: {
-          from: location,
+          from: location.pathname,
         },
       });
     else if (!currentUserLoading && !currentUserError && currentUser)
