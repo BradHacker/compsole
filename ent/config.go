@@ -24,13 +24,14 @@ type config struct {
 
 // hooks per client, for fast access.
 type hooks struct {
-	Action      []ent.Hook
-	Competition []ent.Hook
-	Provider    []ent.Hook
-	Team        []ent.Hook
-	Token       []ent.Hook
-	User        []ent.Hook
-	VmObject    []ent.Hook
+	Action         []ent.Hook
+	Competition    []ent.Hook
+	Provider       []ent.Hook
+	ServiceAccount []ent.Hook
+	Team           []ent.Hook
+	Token          []ent.Hook
+	User           []ent.Hook
+	VmObject       []ent.Hook
 }
 
 // Options applies the options on the config object.

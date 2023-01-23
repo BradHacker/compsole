@@ -489,6 +489,34 @@ func HasActionToUserWith(preds ...predicate.User) predicate.Action {
 	})
 }
 
+// HasActionToServiceAccount applies the HasEdge predicate on the "ActionToServiceAccount" edge.
+func HasActionToServiceAccount() predicate.Action {
+	return predicate.Action(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ActionToServiceAccountTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ActionToServiceAccountTable, ActionToServiceAccountColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasActionToServiceAccountWith applies the HasEdge predicate on the "ActionToServiceAccount" edge with a given conditions (other predicates).
+func HasActionToServiceAccountWith(preds ...predicate.ServiceAccount) predicate.Action {
+	return predicate.Action(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ActionToServiceAccountInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ActionToServiceAccountTable, ActionToServiceAccountColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Action) predicate.Action {
 	return predicate.Action(func(s *sql.Selector) {

@@ -13,6 +13,7 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -34,6 +35,8 @@ type Client struct {
 	Competition *CompetitionClient
 	// Provider is the client for interacting with the Provider builders.
 	Provider *ProviderClient
+	// ServiceAccount is the client for interacting with the ServiceAccount builders.
+	ServiceAccount *ServiceAccountClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// Token is the client for interacting with the Token builders.
@@ -58,6 +61,7 @@ func (c *Client) init() {
 	c.Action = NewActionClient(c.config)
 	c.Competition = NewCompetitionClient(c.config)
 	c.Provider = NewProviderClient(c.config)
+	c.ServiceAccount = NewServiceAccountClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.Token = NewTokenClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -93,15 +97,16 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Action:      NewActionClient(cfg),
-		Competition: NewCompetitionClient(cfg),
-		Provider:    NewProviderClient(cfg),
-		Team:        NewTeamClient(cfg),
-		Token:       NewTokenClient(cfg),
-		User:        NewUserClient(cfg),
-		VmObject:    NewVmObjectClient(cfg),
+		ctx:            ctx,
+		config:         cfg,
+		Action:         NewActionClient(cfg),
+		Competition:    NewCompetitionClient(cfg),
+		Provider:       NewProviderClient(cfg),
+		ServiceAccount: NewServiceAccountClient(cfg),
+		Team:           NewTeamClient(cfg),
+		Token:          NewTokenClient(cfg),
+		User:           NewUserClient(cfg),
+		VmObject:       NewVmObjectClient(cfg),
 	}, nil
 }
 
@@ -119,15 +124,16 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Action:      NewActionClient(cfg),
-		Competition: NewCompetitionClient(cfg),
-		Provider:    NewProviderClient(cfg),
-		Team:        NewTeamClient(cfg),
-		Token:       NewTokenClient(cfg),
-		User:        NewUserClient(cfg),
-		VmObject:    NewVmObjectClient(cfg),
+		ctx:            ctx,
+		config:         cfg,
+		Action:         NewActionClient(cfg),
+		Competition:    NewCompetitionClient(cfg),
+		Provider:       NewProviderClient(cfg),
+		ServiceAccount: NewServiceAccountClient(cfg),
+		Team:           NewTeamClient(cfg),
+		Token:          NewTokenClient(cfg),
+		User:           NewUserClient(cfg),
+		VmObject:       NewVmObjectClient(cfg),
 	}, nil
 }
 
@@ -159,6 +165,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Action.Use(hooks...)
 	c.Competition.Use(hooks...)
 	c.Provider.Use(hooks...)
+	c.ServiceAccount.Use(hooks...)
 	c.Team.Use(hooks...)
 	c.Token.Use(hooks...)
 	c.User.Use(hooks...)
@@ -259,6 +266,22 @@ func (c *ActionClient) QueryActionToUser(a *Action) *UserQuery {
 			sqlgraph.From(action.Table, action.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, action.ActionToUserTable, action.ActionToUserColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActionToServiceAccount queries the ActionToServiceAccount edge of a Action.
+func (c *ActionClient) QueryActionToServiceAccount(a *Action) *ServiceAccountQuery {
+	query := &ServiceAccountQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(action.Table, action.FieldID, id),
+			sqlgraph.To(serviceaccount.Table, serviceaccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, action.ActionToServiceAccountTable, action.ActionToServiceAccountColumn),
 		)
 		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
 		return fromV, nil
@@ -497,6 +520,112 @@ func (c *ProviderClient) QueryProviderToCompetition(pr *Provider) *CompetitionQu
 // Hooks returns the client hooks.
 func (c *ProviderClient) Hooks() []Hook {
 	return c.hooks.Provider
+}
+
+// ServiceAccountClient is a client for the ServiceAccount schema.
+type ServiceAccountClient struct {
+	config
+}
+
+// NewServiceAccountClient returns a client for the ServiceAccount from the given config.
+func NewServiceAccountClient(c config) *ServiceAccountClient {
+	return &ServiceAccountClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `serviceaccount.Hooks(f(g(h())))`.
+func (c *ServiceAccountClient) Use(hooks ...Hook) {
+	c.hooks.ServiceAccount = append(c.hooks.ServiceAccount, hooks...)
+}
+
+// Create returns a create builder for ServiceAccount.
+func (c *ServiceAccountClient) Create() *ServiceAccountCreate {
+	mutation := newServiceAccountMutation(c.config, OpCreate)
+	return &ServiceAccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ServiceAccount entities.
+func (c *ServiceAccountClient) CreateBulk(builders ...*ServiceAccountCreate) *ServiceAccountCreateBulk {
+	return &ServiceAccountCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ServiceAccount.
+func (c *ServiceAccountClient) Update() *ServiceAccountUpdate {
+	mutation := newServiceAccountMutation(c.config, OpUpdate)
+	return &ServiceAccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServiceAccountClient) UpdateOne(sa *ServiceAccount) *ServiceAccountUpdateOne {
+	mutation := newServiceAccountMutation(c.config, OpUpdateOne, withServiceAccount(sa))
+	return &ServiceAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServiceAccountClient) UpdateOneID(id uuid.UUID) *ServiceAccountUpdateOne {
+	mutation := newServiceAccountMutation(c.config, OpUpdateOne, withServiceAccountID(id))
+	return &ServiceAccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ServiceAccount.
+func (c *ServiceAccountClient) Delete() *ServiceAccountDelete {
+	mutation := newServiceAccountMutation(c.config, OpDelete)
+	return &ServiceAccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ServiceAccountClient) DeleteOne(sa *ServiceAccount) *ServiceAccountDeleteOne {
+	return c.DeleteOneID(sa.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ServiceAccountClient) DeleteOneID(id uuid.UUID) *ServiceAccountDeleteOne {
+	builder := c.Delete().Where(serviceaccount.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ServiceAccountDeleteOne{builder}
+}
+
+// Query returns a query builder for ServiceAccount.
+func (c *ServiceAccountClient) Query() *ServiceAccountQuery {
+	return &ServiceAccountQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a ServiceAccount entity by its id.
+func (c *ServiceAccountClient) Get(ctx context.Context, id uuid.UUID) (*ServiceAccount, error) {
+	return c.Query().Where(serviceaccount.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServiceAccountClient) GetX(ctx context.Context, id uuid.UUID) *ServiceAccount {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryServiceAccountToActions queries the ServiceAccountToActions edge of a ServiceAccount.
+func (c *ServiceAccountClient) QueryServiceAccountToActions(sa *ServiceAccount) *ActionQuery {
+	query := &ActionQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := sa.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(serviceaccount.Table, serviceaccount.FieldID, id),
+			sqlgraph.To(action.Table, action.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, serviceaccount.ServiceAccountToActionsTable, serviceaccount.ServiceAccountToActionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(sa.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ServiceAccountClient) Hooks() []Hook {
+	return c.hooks.ServiceAccount
 }
 
 // TeamClient is a client for the Team schema.

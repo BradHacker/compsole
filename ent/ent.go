@@ -11,6 +11,7 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -35,13 +36,14 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		action.Table:      action.ValidColumn,
-		competition.Table: competition.ValidColumn,
-		provider.Table:    provider.ValidColumn,
-		team.Table:        team.ValidColumn,
-		token.Table:       token.ValidColumn,
-		user.Table:        user.ValidColumn,
-		vmobject.Table:    vmobject.ValidColumn,
+		action.Table:         action.ValidColumn,
+		competition.Table:    competition.ValidColumn,
+		provider.Table:       provider.ValidColumn,
+		serviceaccount.Table: serviceaccount.ValidColumn,
+		team.Table:           team.ValidColumn,
+		token.Table:          token.ValidColumn,
+		user.Table:           user.ValidColumn,
+		vmobject.Table:       vmobject.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

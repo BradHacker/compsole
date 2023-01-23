@@ -13,6 +13,7 @@ import (
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -31,31 +32,34 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAction      = "Action"
-	TypeCompetition = "Competition"
-	TypeProvider    = "Provider"
-	TypeTeam        = "Team"
-	TypeToken       = "Token"
-	TypeUser        = "User"
-	TypeVmObject    = "VmObject"
+	TypeAction         = "Action"
+	TypeCompetition    = "Competition"
+	TypeProvider       = "Provider"
+	TypeServiceAccount = "ServiceAccount"
+	TypeTeam           = "Team"
+	TypeToken          = "Token"
+	TypeUser           = "User"
+	TypeVmObject       = "VmObject"
 )
 
 // ActionMutation represents an operation that mutates the Action nodes in the graph.
 type ActionMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *uuid.UUID
-	ip_address           *string
-	_type                *action.Type
-	message              *string
-	performed_at         *time.Time
-	clearedFields        map[string]struct{}
-	_ActionToUser        *uuid.UUID
-	cleared_ActionToUser bool
-	done                 bool
-	oldValue             func(context.Context) (*Action, error)
-	predicates           []predicate.Action
+	op                             Op
+	typ                            string
+	id                             *uuid.UUID
+	ip_address                     *string
+	_type                          *action.Type
+	message                        *string
+	performed_at                   *time.Time
+	clearedFields                  map[string]struct{}
+	_ActionToUser                  *uuid.UUID
+	cleared_ActionToUser           bool
+	_ActionToServiceAccount        *uuid.UUID
+	cleared_ActionToServiceAccount bool
+	done                           bool
+	oldValue                       func(context.Context) (*Action, error)
+	predicates                     []predicate.Action
 }
 
 var _ ent.Mutation = (*ActionMutation)(nil)
@@ -345,6 +349,45 @@ func (m *ActionMutation) ResetActionToUser() {
 	m.cleared_ActionToUser = false
 }
 
+// SetActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by id.
+func (m *ActionMutation) SetActionToServiceAccountID(id uuid.UUID) {
+	m._ActionToServiceAccount = &id
+}
+
+// ClearActionToServiceAccount clears the "ActionToServiceAccount" edge to the ServiceAccount entity.
+func (m *ActionMutation) ClearActionToServiceAccount() {
+	m.cleared_ActionToServiceAccount = true
+}
+
+// ActionToServiceAccountCleared reports if the "ActionToServiceAccount" edge to the ServiceAccount entity was cleared.
+func (m *ActionMutation) ActionToServiceAccountCleared() bool {
+	return m.cleared_ActionToServiceAccount
+}
+
+// ActionToServiceAccountID returns the "ActionToServiceAccount" edge ID in the mutation.
+func (m *ActionMutation) ActionToServiceAccountID() (id uuid.UUID, exists bool) {
+	if m._ActionToServiceAccount != nil {
+		return *m._ActionToServiceAccount, true
+	}
+	return
+}
+
+// ActionToServiceAccountIDs returns the "ActionToServiceAccount" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ActionToServiceAccountID instead. It exists only for internal usage by the builders.
+func (m *ActionMutation) ActionToServiceAccountIDs() (ids []uuid.UUID) {
+	if id := m._ActionToServiceAccount; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetActionToServiceAccount resets all changes to the "ActionToServiceAccount" edge.
+func (m *ActionMutation) ResetActionToServiceAccount() {
+	m._ActionToServiceAccount = nil
+	m.cleared_ActionToServiceAccount = false
+}
+
 // Where appends a list predicates to the ActionMutation builder.
 func (m *ActionMutation) Where(ps ...predicate.Action) {
 	m.predicates = append(m.predicates, ps...)
@@ -514,9 +557,12 @@ func (m *ActionMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ActionMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m._ActionToUser != nil {
 		edges = append(edges, action.EdgeActionToUser)
+	}
+	if m._ActionToServiceAccount != nil {
+		edges = append(edges, action.EdgeActionToServiceAccount)
 	}
 	return edges
 }
@@ -529,13 +575,17 @@ func (m *ActionMutation) AddedIDs(name string) []ent.Value {
 		if id := m._ActionToUser; id != nil {
 			return []ent.Value{*id}
 		}
+	case action.EdgeActionToServiceAccount:
+		if id := m._ActionToServiceAccount; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ActionMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
@@ -549,9 +599,12 @@ func (m *ActionMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ActionMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.cleared_ActionToUser {
 		edges = append(edges, action.EdgeActionToUser)
+	}
+	if m.cleared_ActionToServiceAccount {
+		edges = append(edges, action.EdgeActionToServiceAccount)
 	}
 	return edges
 }
@@ -562,6 +615,8 @@ func (m *ActionMutation) EdgeCleared(name string) bool {
 	switch name {
 	case action.EdgeActionToUser:
 		return m.cleared_ActionToUser
+	case action.EdgeActionToServiceAccount:
+		return m.cleared_ActionToServiceAccount
 	}
 	return false
 }
@@ -573,6 +628,9 @@ func (m *ActionMutation) ClearEdge(name string) error {
 	case action.EdgeActionToUser:
 		m.ClearActionToUser()
 		return nil
+	case action.EdgeActionToServiceAccount:
+		m.ClearActionToServiceAccount()
+		return nil
 	}
 	return fmt.Errorf("unknown Action unique edge %s", name)
 }
@@ -583,6 +641,9 @@ func (m *ActionMutation) ResetEdge(name string) error {
 	switch name {
 	case action.EdgeActionToUser:
 		m.ResetActionToUser()
+		return nil
+	case action.EdgeActionToServiceAccount:
+		m.ResetActionToServiceAccount()
 		return nil
 	}
 	return fmt.Errorf("unknown Action edge %s", name)
@@ -1573,6 +1634,578 @@ func (m *ProviderMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Provider edge %s", name)
+}
+
+// ServiceAccountMutation represents an operation that mutates the ServiceAccount nodes in the graph.
+type ServiceAccountMutation struct {
+	config
+	op                              Op
+	typ                             string
+	id                              *uuid.UUID
+	display_name                    *string
+	api_key                         *uuid.UUID
+	api_secret                      *uuid.UUID
+	active                          *serviceaccount.Active
+	clearedFields                   map[string]struct{}
+	_ServiceAccountToActions        map[uuid.UUID]struct{}
+	removed_ServiceAccountToActions map[uuid.UUID]struct{}
+	cleared_ServiceAccountToActions bool
+	done                            bool
+	oldValue                        func(context.Context) (*ServiceAccount, error)
+	predicates                      []predicate.ServiceAccount
+}
+
+var _ ent.Mutation = (*ServiceAccountMutation)(nil)
+
+// serviceaccountOption allows management of the mutation configuration using functional options.
+type serviceaccountOption func(*ServiceAccountMutation)
+
+// newServiceAccountMutation creates new mutation for the ServiceAccount entity.
+func newServiceAccountMutation(c config, op Op, opts ...serviceaccountOption) *ServiceAccountMutation {
+	m := &ServiceAccountMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeServiceAccount,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withServiceAccountID sets the ID field of the mutation.
+func withServiceAccountID(id uuid.UUID) serviceaccountOption {
+	return func(m *ServiceAccountMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ServiceAccount
+		)
+		m.oldValue = func(ctx context.Context) (*ServiceAccount, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ServiceAccount.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withServiceAccount sets the old ServiceAccount of the mutation.
+func withServiceAccount(node *ServiceAccount) serviceaccountOption {
+	return func(m *ServiceAccountMutation) {
+		m.oldValue = func(context.Context) (*ServiceAccount, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ServiceAccountMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ServiceAccountMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ServiceAccount entities.
+func (m *ServiceAccountMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ServiceAccountMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ServiceAccountMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ServiceAccount.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetDisplayName sets the "display_name" field.
+func (m *ServiceAccountMutation) SetDisplayName(s string) {
+	m.display_name = &s
+}
+
+// DisplayName returns the value of the "display_name" field in the mutation.
+func (m *ServiceAccountMutation) DisplayName() (r string, exists bool) {
+	v := m.display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayName returns the old "display_name" field's value of the ServiceAccount entity.
+// If the ServiceAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceAccountMutation) OldDisplayName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
+	}
+	return oldValue.DisplayName, nil
+}
+
+// ResetDisplayName resets all changes to the "display_name" field.
+func (m *ServiceAccountMutation) ResetDisplayName() {
+	m.display_name = nil
+}
+
+// SetAPIKey sets the "api_key" field.
+func (m *ServiceAccountMutation) SetAPIKey(u uuid.UUID) {
+	m.api_key = &u
+}
+
+// APIKey returns the value of the "api_key" field in the mutation.
+func (m *ServiceAccountMutation) APIKey() (r uuid.UUID, exists bool) {
+	v := m.api_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAPIKey returns the old "api_key" field's value of the ServiceAccount entity.
+// If the ServiceAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceAccountMutation) OldAPIKey(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAPIKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAPIKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAPIKey: %w", err)
+	}
+	return oldValue.APIKey, nil
+}
+
+// ResetAPIKey resets all changes to the "api_key" field.
+func (m *ServiceAccountMutation) ResetAPIKey() {
+	m.api_key = nil
+}
+
+// SetAPISecret sets the "api_secret" field.
+func (m *ServiceAccountMutation) SetAPISecret(u uuid.UUID) {
+	m.api_secret = &u
+}
+
+// APISecret returns the value of the "api_secret" field in the mutation.
+func (m *ServiceAccountMutation) APISecret() (r uuid.UUID, exists bool) {
+	v := m.api_secret
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAPISecret returns the old "api_secret" field's value of the ServiceAccount entity.
+// If the ServiceAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceAccountMutation) OldAPISecret(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAPISecret is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAPISecret requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAPISecret: %w", err)
+	}
+	return oldValue.APISecret, nil
+}
+
+// ResetAPISecret resets all changes to the "api_secret" field.
+func (m *ServiceAccountMutation) ResetAPISecret() {
+	m.api_secret = nil
+}
+
+// SetActive sets the "active" field.
+func (m *ServiceAccountMutation) SetActive(s serviceaccount.Active) {
+	m.active = &s
+}
+
+// Active returns the value of the "active" field in the mutation.
+func (m *ServiceAccountMutation) Active() (r serviceaccount.Active, exists bool) {
+	v := m.active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActive returns the old "active" field's value of the ServiceAccount entity.
+// If the ServiceAccount object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceAccountMutation) OldActive(ctx context.Context) (v serviceaccount.Active, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActive: %w", err)
+	}
+	return oldValue.Active, nil
+}
+
+// ResetActive resets all changes to the "active" field.
+func (m *ServiceAccountMutation) ResetActive() {
+	m.active = nil
+}
+
+// AddServiceAccountToActionIDs adds the "ServiceAccountToActions" edge to the Action entity by ids.
+func (m *ServiceAccountMutation) AddServiceAccountToActionIDs(ids ...uuid.UUID) {
+	if m._ServiceAccountToActions == nil {
+		m._ServiceAccountToActions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._ServiceAccountToActions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearServiceAccountToActions clears the "ServiceAccountToActions" edge to the Action entity.
+func (m *ServiceAccountMutation) ClearServiceAccountToActions() {
+	m.cleared_ServiceAccountToActions = true
+}
+
+// ServiceAccountToActionsCleared reports if the "ServiceAccountToActions" edge to the Action entity was cleared.
+func (m *ServiceAccountMutation) ServiceAccountToActionsCleared() bool {
+	return m.cleared_ServiceAccountToActions
+}
+
+// RemoveServiceAccountToActionIDs removes the "ServiceAccountToActions" edge to the Action entity by IDs.
+func (m *ServiceAccountMutation) RemoveServiceAccountToActionIDs(ids ...uuid.UUID) {
+	if m.removed_ServiceAccountToActions == nil {
+		m.removed_ServiceAccountToActions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._ServiceAccountToActions, ids[i])
+		m.removed_ServiceAccountToActions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedServiceAccountToActions returns the removed IDs of the "ServiceAccountToActions" edge to the Action entity.
+func (m *ServiceAccountMutation) RemovedServiceAccountToActionsIDs() (ids []uuid.UUID) {
+	for id := range m.removed_ServiceAccountToActions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ServiceAccountToActionsIDs returns the "ServiceAccountToActions" edge IDs in the mutation.
+func (m *ServiceAccountMutation) ServiceAccountToActionsIDs() (ids []uuid.UUID) {
+	for id := range m._ServiceAccountToActions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetServiceAccountToActions resets all changes to the "ServiceAccountToActions" edge.
+func (m *ServiceAccountMutation) ResetServiceAccountToActions() {
+	m._ServiceAccountToActions = nil
+	m.cleared_ServiceAccountToActions = false
+	m.removed_ServiceAccountToActions = nil
+}
+
+// Where appends a list predicates to the ServiceAccountMutation builder.
+func (m *ServiceAccountMutation) Where(ps ...predicate.ServiceAccount) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ServiceAccountMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (ServiceAccount).
+func (m *ServiceAccountMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ServiceAccountMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.display_name != nil {
+		fields = append(fields, serviceaccount.FieldDisplayName)
+	}
+	if m.api_key != nil {
+		fields = append(fields, serviceaccount.FieldAPIKey)
+	}
+	if m.api_secret != nil {
+		fields = append(fields, serviceaccount.FieldAPISecret)
+	}
+	if m.active != nil {
+		fields = append(fields, serviceaccount.FieldActive)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ServiceAccountMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case serviceaccount.FieldDisplayName:
+		return m.DisplayName()
+	case serviceaccount.FieldAPIKey:
+		return m.APIKey()
+	case serviceaccount.FieldAPISecret:
+		return m.APISecret()
+	case serviceaccount.FieldActive:
+		return m.Active()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ServiceAccountMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case serviceaccount.FieldDisplayName:
+		return m.OldDisplayName(ctx)
+	case serviceaccount.FieldAPIKey:
+		return m.OldAPIKey(ctx)
+	case serviceaccount.FieldAPISecret:
+		return m.OldAPISecret(ctx)
+	case serviceaccount.FieldActive:
+		return m.OldActive(ctx)
+	}
+	return nil, fmt.Errorf("unknown ServiceAccount field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ServiceAccountMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case serviceaccount.FieldDisplayName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayName(v)
+		return nil
+	case serviceaccount.FieldAPIKey:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAPIKey(v)
+		return nil
+	case serviceaccount.FieldAPISecret:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAPISecret(v)
+		return nil
+	case serviceaccount.FieldActive:
+		v, ok := value.(serviceaccount.Active)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActive(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceAccount field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ServiceAccountMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ServiceAccountMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ServiceAccountMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ServiceAccount numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ServiceAccountMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ServiceAccountMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ServiceAccountMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ServiceAccount nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ServiceAccountMutation) ResetField(name string) error {
+	switch name {
+	case serviceaccount.FieldDisplayName:
+		m.ResetDisplayName()
+		return nil
+	case serviceaccount.FieldAPIKey:
+		m.ResetAPIKey()
+		return nil
+	case serviceaccount.FieldAPISecret:
+		m.ResetAPISecret()
+		return nil
+	case serviceaccount.FieldActive:
+		m.ResetActive()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceAccount field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ServiceAccountMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m._ServiceAccountToActions != nil {
+		edges = append(edges, serviceaccount.EdgeServiceAccountToActions)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ServiceAccountMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case serviceaccount.EdgeServiceAccountToActions:
+		ids := make([]ent.Value, 0, len(m._ServiceAccountToActions))
+		for id := range m._ServiceAccountToActions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ServiceAccountMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removed_ServiceAccountToActions != nil {
+		edges = append(edges, serviceaccount.EdgeServiceAccountToActions)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ServiceAccountMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case serviceaccount.EdgeServiceAccountToActions:
+		ids := make([]ent.Value, 0, len(m.removed_ServiceAccountToActions))
+		for id := range m.removed_ServiceAccountToActions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ServiceAccountMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleared_ServiceAccountToActions {
+		edges = append(edges, serviceaccount.EdgeServiceAccountToActions)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ServiceAccountMutation) EdgeCleared(name string) bool {
+	switch name {
+	case serviceaccount.EdgeServiceAccountToActions:
+		return m.cleared_ServiceAccountToActions
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ServiceAccountMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown ServiceAccount unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ServiceAccountMutation) ResetEdge(name string) error {
+	switch name {
+	case serviceaccount.EdgeServiceAccountToActions:
+		m.ResetServiceAccountToActions()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceAccount edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.

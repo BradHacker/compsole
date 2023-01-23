@@ -12,6 +12,7 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -52,7 +53,7 @@ func (a *Action) Node(ctx context.Context) (node *Node, err error) {
 		ID:     a.ID,
 		Type:   "Action",
 		Fields: make([]*Field, 4),
-		Edges:  make([]*Edge, 1),
+		Edges:  make([]*Edge, 2),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(a.IPAddress); err != nil {
@@ -94,6 +95,16 @@ func (a *Action) Node(ctx context.Context) (node *Node, err error) {
 	err = a.QueryActionToUser().
 		Select(user.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
+		Type: "ServiceAccount",
+		Name: "ActionToServiceAccount",
+	}
+	err = a.QueryActionToServiceAccount().
+		Select(serviceaccount.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -177,6 +188,59 @@ func (pr *Provider) Node(ctx context.Context) (node *Node, err error) {
 	}
 	err = pr.QueryProviderToCompetition().
 		Select(competition.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
+func (sa *ServiceAccount) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     sa.ID,
+		Type:   "ServiceAccount",
+		Fields: make([]*Field, 4),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(sa.DisplayName); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "display_name",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(sa.APIKey); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "uuid.UUID",
+		Name:  "api_key",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(sa.APISecret); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "uuid.UUID",
+		Name:  "api_secret",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(sa.Active); err != nil {
+		return nil, err
+	}
+	node.Fields[3] = &Field{
+		Type:  "serviceaccount.Active",
+		Name:  "active",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "Action",
+		Name: "ServiceAccountToActions",
+	}
+	err = sa.QueryServiceAccountToActions().
+		Select(action.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
 	if err != nil {
 		return nil, err
@@ -513,6 +577,15 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			return nil, err
 		}
 		return n, nil
+	case serviceaccount.Table:
+		n, err := c.ServiceAccount.Query().
+			Where(serviceaccount.ID(id)).
+			CollectFields(ctx, "ServiceAccount").
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case team.Table:
 		n, err := c.Team.Query().
 			Where(team.ID(id)).
@@ -652,6 +725,19 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		nodes, err := c.Provider.Query().
 			Where(provider.IDIn(ids...)).
 			CollectFields(ctx, "Provider").
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case serviceaccount.Table:
+		nodes, err := c.ServiceAccount.Query().
+			Where(serviceaccount.IDIn(ids...)).
+			CollectFields(ctx, "ServiceAccount").
 			All(ctx)
 		if err != nil {
 			return nil, err

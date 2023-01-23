@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/BradHacker/compsole/ent/action"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/google/uuid"
 )
@@ -28,17 +29,20 @@ type Action struct {
 	PerformedAt time.Time `json:"performed_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ActionQuery when eager-loading is set.
-	Edges                ActionEdges `json:"edges"`
-	user_user_to_actions *uuid.UUID
+	Edges                                      ActionEdges `json:"edges"`
+	service_account_service_account_to_actions *uuid.UUID
+	user_user_to_actions                       *uuid.UUID
 }
 
 // ActionEdges holds the relations/edges for other nodes in the graph.
 type ActionEdges struct {
 	// ActionToUser holds the value of the ActionToUser edge.
 	ActionToUser *User `json:"ActionToUser,omitempty"`
+	// ActionToServiceAccount holds the value of the ActionToServiceAccount edge.
+	ActionToServiceAccount *ServiceAccount `json:"ActionToServiceAccount,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // ActionToUserOrErr returns the ActionToUser value or an error if the edge
@@ -55,6 +59,20 @@ func (e ActionEdges) ActionToUserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "ActionToUser"}
 }
 
+// ActionToServiceAccountOrErr returns the ActionToServiceAccount value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ActionEdges) ActionToServiceAccountOrErr() (*ServiceAccount, error) {
+	if e.loadedTypes[1] {
+		if e.ActionToServiceAccount == nil {
+			// The edge ActionToServiceAccount was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: serviceaccount.Label}
+		}
+		return e.ActionToServiceAccount, nil
+	}
+	return nil, &NotLoadedError{edge: "ActionToServiceAccount"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Action) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
@@ -66,7 +84,9 @@ func (*Action) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullTime)
 		case action.FieldID:
 			values[i] = new(uuid.UUID)
-		case action.ForeignKeys[0]: // user_user_to_actions
+		case action.ForeignKeys[0]: // service_account_service_account_to_actions
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case action.ForeignKeys[1]: // user_user_to_actions
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Action", columns[i])
@@ -115,6 +135,13 @@ func (a *Action) assignValues(columns []string, values []interface{}) error {
 			}
 		case action.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field service_account_service_account_to_actions", values[i])
+			} else if value.Valid {
+				a.service_account_service_account_to_actions = new(uuid.UUID)
+				*a.service_account_service_account_to_actions = *value.S.(*uuid.UUID)
+			}
+		case action.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_user_to_actions", values[i])
 			} else if value.Valid {
 				a.user_user_to_actions = new(uuid.UUID)
@@ -128,6 +155,11 @@ func (a *Action) assignValues(columns []string, values []interface{}) error {
 // QueryActionToUser queries the "ActionToUser" edge of the Action entity.
 func (a *Action) QueryActionToUser() *UserQuery {
 	return (&ActionClient{config: a.config}).QueryActionToUser(a)
+}
+
+// QueryActionToServiceAccount queries the "ActionToServiceAccount" edge of the Action entity.
+func (a *Action) QueryActionToServiceAccount() *ServiceAccountQuery {
+	return (&ActionClient{config: a.config}).QueryActionToServiceAccount(a)
 }
 
 // Update returns a builder for updating this Action.

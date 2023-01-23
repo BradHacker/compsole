@@ -45,6 +45,18 @@ func (pr *ProviderQuery) collectField(ctx *graphql.OperationContext, field graph
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (sa *ServiceAccountQuery) CollectFields(ctx context.Context, satisfies ...string) *ServiceAccountQuery {
+	if fc := graphql.GetFieldContext(ctx); fc != nil {
+		sa = sa.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)
+	}
+	return sa
+}
+
+func (sa *ServiceAccountQuery) collectField(ctx *graphql.OperationContext, field graphql.CollectedField, satisfies ...string) *ServiceAccountQuery {
+	return sa
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (t *TeamQuery) CollectFields(ctx context.Context, satisfies ...string) *TeamQuery {
 	if fc := graphql.GetFieldContext(ctx); fc != nil {
 		t = t.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)

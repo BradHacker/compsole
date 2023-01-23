@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/action"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/google/uuid"
 )
@@ -82,9 +83,36 @@ func (ac *ActionCreate) SetActionToUserID(id uuid.UUID) *ActionCreate {
 	return ac
 }
 
+// SetNillableActionToUserID sets the "ActionToUser" edge to the User entity by ID if the given value is not nil.
+func (ac *ActionCreate) SetNillableActionToUserID(id *uuid.UUID) *ActionCreate {
+	if id != nil {
+		ac = ac.SetActionToUserID(*id)
+	}
+	return ac
+}
+
 // SetActionToUser sets the "ActionToUser" edge to the User entity.
 func (ac *ActionCreate) SetActionToUser(u *User) *ActionCreate {
 	return ac.SetActionToUserID(u.ID)
+}
+
+// SetActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by ID.
+func (ac *ActionCreate) SetActionToServiceAccountID(id uuid.UUID) *ActionCreate {
+	ac.mutation.SetActionToServiceAccountID(id)
+	return ac
+}
+
+// SetNillableActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by ID if the given value is not nil.
+func (ac *ActionCreate) SetNillableActionToServiceAccountID(id *uuid.UUID) *ActionCreate {
+	if id != nil {
+		ac = ac.SetActionToServiceAccountID(*id)
+	}
+	return ac
+}
+
+// SetActionToServiceAccount sets the "ActionToServiceAccount" edge to the ServiceAccount entity.
+func (ac *ActionCreate) SetActionToServiceAccount(s *ServiceAccount) *ActionCreate {
+	return ac.SetActionToServiceAccountID(s.ID)
 }
 
 // Mutation returns the ActionMutation object of the builder.
@@ -191,9 +219,6 @@ func (ac *ActionCreate) check() error {
 	if _, ok := ac.mutation.PerformedAt(); !ok {
 		return &ValidationError{Name: "performed_at", err: errors.New(`ent: missing required field "Action.performed_at"`)}
 	}
-	if _, ok := ac.mutation.ActionToUserID(); !ok {
-		return &ValidationError{Name: "ActionToUser", err: errors.New(`ent: missing required edge "Action.ActionToUser"`)}
-	}
 	return nil
 }
 
@@ -280,6 +305,26 @@ func (ac *ActionCreate) createSpec() (*Action, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.user_user_to_actions = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.ActionToServiceAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   action.ActionToServiceAccountTable,
+			Columns: []string{action.ActionToServiceAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: serviceaccount.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.service_account_service_account_to_actions = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -9,7 +9,15 @@ func (a *Action) ActionToUser(ctx context.Context) (*User, error) {
 	if IsNotLoaded(err) {
 		result, err = a.QueryActionToUser().Only(ctx)
 	}
-	return result, err
+	return result, MaskNotFound(err)
+}
+
+func (a *Action) ActionToServiceAccount(ctx context.Context) (*ServiceAccount, error) {
+	result, err := a.Edges.ActionToServiceAccountOrErr()
+	if IsNotLoaded(err) {
+		result, err = a.QueryActionToServiceAccount().Only(ctx)
+	}
+	return result, MaskNotFound(err)
 }
 
 func (c *Competition) CompetitionToTeams(ctx context.Context) ([]*Team, error) {
@@ -32,6 +40,14 @@ func (pr *Provider) ProviderToCompetition(ctx context.Context) ([]*Competition, 
 	result, err := pr.Edges.ProviderToCompetitionOrErr()
 	if IsNotLoaded(err) {
 		result, err = pr.QueryProviderToCompetition().All(ctx)
+	}
+	return result, err
+}
+
+func (sa *ServiceAccount) ServiceAccountToActions(ctx context.Context) ([]*Action, error) {
+	result, err := sa.Edges.ServiceAccountToActionsOrErr()
+	if IsNotLoaded(err) {
+		result, err = sa.QueryServiceAccountToActions().All(ctx)
 	}
 	return result, err
 }
