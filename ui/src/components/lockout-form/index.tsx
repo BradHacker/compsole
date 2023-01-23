@@ -447,7 +447,6 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
               <TableCell align="center">IP Addresses</TableCell>
               <TableCell align="center">Team</TableCell>
               <TableCell align="center">Competition</TableCell>
-              <TableCell align="center">Competition</TableCell>
               <TableCell align="center">Controls</TableCell>
             </TableRow>
           </TableHead>
@@ -460,7 +459,7 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
                   key={vmObject.ID}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                 >
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" component="th" scope="row">
                     <Checkbox
                       color="primary"
                       checked={isItemSelected}
