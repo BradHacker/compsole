@@ -197,6 +197,12 @@ func main() {
 
 	gqlHandler := graphqlHandler(client, rdb)
 
+	_, exists := os.LookupEnv("JWT_SECRET")
+	if !exists {
+		logrus.Error("env var JWT_SECRET not set for authentication")
+		return
+	}
+
 	authGroup := router.Group("/auth")
 	authGroup.GET("/login", func(c *gin.Context) {
 		c.Redirect(301, "/ui/")

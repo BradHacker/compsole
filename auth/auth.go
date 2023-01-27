@@ -21,7 +21,6 @@ import (
 // to prevent collisions between different context uses
 var userCtxKey = &contextKey{"user"}
 var ipCtxKey = &contextKey{"ip"}
-var jwtKey = []byte("JHGDKAHSK*&Y@U(*&@U#I(UYG@HJWIS(*&YTGJQKI")
 
 type contextKey struct {
 	name string
