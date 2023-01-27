@@ -14,6 +14,7 @@ import (
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -37,6 +38,8 @@ type Client struct {
 	Provider *ProviderClient
 	// ServiceAccount is the client for interacting with the ServiceAccount builders.
 	ServiceAccount *ServiceAccountClient
+	// ServiceToken is the client for interacting with the ServiceToken builders.
+	ServiceToken *ServiceTokenClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// Token is the client for interacting with the Token builders.
@@ -62,6 +65,7 @@ func (c *Client) init() {
 	c.Competition = NewCompetitionClient(c.config)
 	c.Provider = NewProviderClient(c.config)
 	c.ServiceAccount = NewServiceAccountClient(c.config)
+	c.ServiceToken = NewServiceTokenClient(c.config)
 	c.Team = NewTeamClient(c.config)
 	c.Token = NewTokenClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -103,6 +107,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Competition:    NewCompetitionClient(cfg),
 		Provider:       NewProviderClient(cfg),
 		ServiceAccount: NewServiceAccountClient(cfg),
+		ServiceToken:   NewServiceTokenClient(cfg),
 		Team:           NewTeamClient(cfg),
 		Token:          NewTokenClient(cfg),
 		User:           NewUserClient(cfg),
@@ -130,6 +135,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Competition:    NewCompetitionClient(cfg),
 		Provider:       NewProviderClient(cfg),
 		ServiceAccount: NewServiceAccountClient(cfg),
+		ServiceToken:   NewServiceTokenClient(cfg),
 		Team:           NewTeamClient(cfg),
 		Token:          NewTokenClient(cfg),
 		User:           NewUserClient(cfg),
@@ -166,6 +172,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Competition.Use(hooks...)
 	c.Provider.Use(hooks...)
 	c.ServiceAccount.Use(hooks...)
+	c.ServiceToken.Use(hooks...)
 	c.Team.Use(hooks...)
 	c.Token.Use(hooks...)
 	c.User.Use(hooks...)
@@ -607,6 +614,22 @@ func (c *ServiceAccountClient) GetX(ctx context.Context, id uuid.UUID) *ServiceA
 	return obj
 }
 
+// QueryServiceAccountToToken queries the ServiceAccountToToken edge of a ServiceAccount.
+func (c *ServiceAccountClient) QueryServiceAccountToToken(sa *ServiceAccount) *ServiceTokenQuery {
+	query := &ServiceTokenQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := sa.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(serviceaccount.Table, serviceaccount.FieldID, id),
+			sqlgraph.To(servicetoken.Table, servicetoken.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, serviceaccount.ServiceAccountToTokenTable, serviceaccount.ServiceAccountToTokenColumn),
+		)
+		fromV = sqlgraph.Neighbors(sa.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryServiceAccountToActions queries the ServiceAccountToActions edge of a ServiceAccount.
 func (c *ServiceAccountClient) QueryServiceAccountToActions(sa *ServiceAccount) *ActionQuery {
 	query := &ActionQuery{config: c.config}
@@ -626,6 +649,112 @@ func (c *ServiceAccountClient) QueryServiceAccountToActions(sa *ServiceAccount) 
 // Hooks returns the client hooks.
 func (c *ServiceAccountClient) Hooks() []Hook {
 	return c.hooks.ServiceAccount
+}
+
+// ServiceTokenClient is a client for the ServiceToken schema.
+type ServiceTokenClient struct {
+	config
+}
+
+// NewServiceTokenClient returns a client for the ServiceToken from the given config.
+func NewServiceTokenClient(c config) *ServiceTokenClient {
+	return &ServiceTokenClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `servicetoken.Hooks(f(g(h())))`.
+func (c *ServiceTokenClient) Use(hooks ...Hook) {
+	c.hooks.ServiceToken = append(c.hooks.ServiceToken, hooks...)
+}
+
+// Create returns a create builder for ServiceToken.
+func (c *ServiceTokenClient) Create() *ServiceTokenCreate {
+	mutation := newServiceTokenMutation(c.config, OpCreate)
+	return &ServiceTokenCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ServiceToken entities.
+func (c *ServiceTokenClient) CreateBulk(builders ...*ServiceTokenCreate) *ServiceTokenCreateBulk {
+	return &ServiceTokenCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ServiceToken.
+func (c *ServiceTokenClient) Update() *ServiceTokenUpdate {
+	mutation := newServiceTokenMutation(c.config, OpUpdate)
+	return &ServiceTokenUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServiceTokenClient) UpdateOne(st *ServiceToken) *ServiceTokenUpdateOne {
+	mutation := newServiceTokenMutation(c.config, OpUpdateOne, withServiceToken(st))
+	return &ServiceTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServiceTokenClient) UpdateOneID(id uuid.UUID) *ServiceTokenUpdateOne {
+	mutation := newServiceTokenMutation(c.config, OpUpdateOne, withServiceTokenID(id))
+	return &ServiceTokenUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ServiceToken.
+func (c *ServiceTokenClient) Delete() *ServiceTokenDelete {
+	mutation := newServiceTokenMutation(c.config, OpDelete)
+	return &ServiceTokenDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ServiceTokenClient) DeleteOne(st *ServiceToken) *ServiceTokenDeleteOne {
+	return c.DeleteOneID(st.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ServiceTokenClient) DeleteOneID(id uuid.UUID) *ServiceTokenDeleteOne {
+	builder := c.Delete().Where(servicetoken.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ServiceTokenDeleteOne{builder}
+}
+
+// Query returns a query builder for ServiceToken.
+func (c *ServiceTokenClient) Query() *ServiceTokenQuery {
+	return &ServiceTokenQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a ServiceToken entity by its id.
+func (c *ServiceTokenClient) Get(ctx context.Context, id uuid.UUID) (*ServiceToken, error) {
+	return c.Query().Where(servicetoken.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServiceTokenClient) GetX(ctx context.Context, id uuid.UUID) *ServiceToken {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTokenToServiceAccount queries the TokenToServiceAccount edge of a ServiceToken.
+func (c *ServiceTokenClient) QueryTokenToServiceAccount(st *ServiceToken) *ServiceAccountQuery {
+	query := &ServiceAccountQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := st.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(servicetoken.Table, servicetoken.FieldID, id),
+			sqlgraph.To(serviceaccount.Table, serviceaccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, servicetoken.TokenToServiceAccountTable, servicetoken.TokenToServiceAccountColumn),
+		)
+		fromV = sqlgraph.Neighbors(st.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ServiceTokenClient) Hooks() []Hook {
+	return c.hooks.ServiceToken
 }
 
 // TeamClient is a client for the Team schema.

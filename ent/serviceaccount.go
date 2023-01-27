@@ -35,17 +35,28 @@ type ServiceAccount struct {
 
 // ServiceAccountEdges holds the relations/edges for other nodes in the graph.
 type ServiceAccountEdges struct {
+	// ServiceAccountToToken holds the value of the ServiceAccountToToken edge.
+	ServiceAccountToToken []*ServiceToken `json:"ServiceAccountToToken,omitempty"`
 	// ServiceAccountToActions holds the value of the ServiceAccountToActions edge.
 	ServiceAccountToActions []*Action `json:"ServiceAccountToActions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
+}
+
+// ServiceAccountToTokenOrErr returns the ServiceAccountToToken value or an error if the edge
+// was not loaded in eager-loading.
+func (e ServiceAccountEdges) ServiceAccountToTokenOrErr() ([]*ServiceToken, error) {
+	if e.loadedTypes[0] {
+		return e.ServiceAccountToToken, nil
+	}
+	return nil, &NotLoadedError{edge: "ServiceAccountToToken"}
 }
 
 // ServiceAccountToActionsOrErr returns the ServiceAccountToActions value or an error if the edge
 // was not loaded in eager-loading.
 func (e ServiceAccountEdges) ServiceAccountToActionsOrErr() ([]*Action, error) {
-	if e.loadedTypes[0] {
+	if e.loadedTypes[1] {
 		return e.ServiceAccountToActions, nil
 	}
 	return nil, &NotLoadedError{edge: "ServiceAccountToActions"}
@@ -108,6 +119,11 @@ func (sa *ServiceAccount) assignValues(columns []string, values []interface{}) e
 		}
 	}
 	return nil
+}
+
+// QueryServiceAccountToToken queries the "ServiceAccountToToken" edge of the ServiceAccount entity.
+func (sa *ServiceAccount) QueryServiceAccountToToken() *ServiceTokenQuery {
+	return (&ServiceAccountClient{config: sa.config}).QueryServiceAccountToToken(sa)
 }
 
 // QueryServiceAccountToActions queries the "ServiceAccountToActions" edge of the ServiceAccount entity.

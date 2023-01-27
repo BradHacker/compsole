@@ -13,6 +13,7 @@ import (
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -200,7 +201,7 @@ func (sa *ServiceAccount) Node(ctx context.Context) (node *Node, err error) {
 		ID:     sa.ID,
 		Type:   "ServiceAccount",
 		Fields: make([]*Field, 4),
-		Edges:  make([]*Edge, 1),
+		Edges:  make([]*Edge, 2),
 	}
 	var buf []byte
 	if buf, err = json.Marshal(sa.DisplayName); err != nil {
@@ -236,11 +237,66 @@ func (sa *ServiceAccount) Node(ctx context.Context) (node *Node, err error) {
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{
+		Type: "ServiceToken",
+		Name: "ServiceAccountToToken",
+	}
+	err = sa.QueryServiceAccountToToken().
+		Select(servicetoken.FieldID).
+		Scan(ctx, &node.Edges[0].IDs)
+	if err != nil {
+		return nil, err
+	}
+	node.Edges[1] = &Edge{
 		Type: "Action",
 		Name: "ServiceAccountToActions",
 	}
 	err = sa.QueryServiceAccountToActions().
 		Select(action.FieldID).
+		Scan(ctx, &node.Edges[1].IDs)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
+}
+
+func (st *ServiceToken) Node(ctx context.Context) (node *Node, err error) {
+	node = &Node{
+		ID:     st.ID,
+		Type:   "ServiceToken",
+		Fields: make([]*Field, 3),
+		Edges:  make([]*Edge, 1),
+	}
+	var buf []byte
+	if buf, err = json.Marshal(st.Token); err != nil {
+		return nil, err
+	}
+	node.Fields[0] = &Field{
+		Type:  "string",
+		Name:  "token",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(st.RefreshToken); err != nil {
+		return nil, err
+	}
+	node.Fields[1] = &Field{
+		Type:  "string",
+		Name:  "refresh_token",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(st.ExpireAt); err != nil {
+		return nil, err
+	}
+	node.Fields[2] = &Field{
+		Type:  "int64",
+		Name:  "expire_at",
+		Value: string(buf),
+	}
+	node.Edges[0] = &Edge{
+		Type: "ServiceAccount",
+		Name: "TokenToServiceAccount",
+	}
+	err = st.QueryTokenToServiceAccount().
+		Select(serviceaccount.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
 	if err != nil {
 		return nil, err
@@ -586,6 +642,15 @@ func (c *Client) noder(ctx context.Context, table string, id uuid.UUID) (Noder, 
 			return nil, err
 		}
 		return n, nil
+	case servicetoken.Table:
+		n, err := c.ServiceToken.Query().
+			Where(servicetoken.ID(id)).
+			CollectFields(ctx, "ServiceToken").
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
 	case team.Table:
 		n, err := c.Team.Query().
 			Where(team.ID(id)).
@@ -738,6 +803,19 @@ func (c *Client) noders(ctx context.Context, table string, ids []uuid.UUID) ([]N
 		nodes, err := c.ServiceAccount.Query().
 			Where(serviceaccount.IDIn(ids...)).
 			CollectFields(ctx, "ServiceAccount").
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, node := range nodes {
+			for _, noder := range idmap[node.ID] {
+				*noder = node
+			}
+		}
+	case servicetoken.Table:
+		nodes, err := c.ServiceToken.Query().
+			Where(servicetoken.IDIn(ids...)).
+			CollectFields(ctx, "ServiceToken").
 			All(ctx)
 		if err != nil {
 			return nil, err

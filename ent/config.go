@@ -28,6 +28,7 @@ type hooks struct {
 	Competition    []ent.Hook
 	Provider       []ent.Hook
 	ServiceAccount []ent.Hook
+	ServiceToken   []ent.Hook
 	Team           []ent.Hook
 	Token          []ent.Hook
 	User           []ent.Hook

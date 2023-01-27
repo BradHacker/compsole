@@ -23,10 +23,21 @@ const (
 	FieldAPISecret = "api_secret"
 	// FieldActive holds the string denoting the active field in the database.
 	FieldActive = "active"
+	// EdgeServiceAccountToToken holds the string denoting the serviceaccounttotoken edge name in mutations.
+	EdgeServiceAccountToToken = "ServiceAccountToToken"
 	// EdgeServiceAccountToActions holds the string denoting the serviceaccounttoactions edge name in mutations.
 	EdgeServiceAccountToActions = "ServiceAccountToActions"
+	// ServiceTokenFieldID holds the string denoting the ID field of the ServiceToken.
+	ServiceTokenFieldID = "id"
 	// Table holds the table name of the serviceaccount in the database.
 	Table = "service_accounts"
+	// ServiceAccountToTokenTable is the table that holds the ServiceAccountToToken relation/edge.
+	ServiceAccountToTokenTable = "service_tokens"
+	// ServiceAccountToTokenInverseTable is the table name for the ServiceToken entity.
+	// It exists in this package in order to avoid circular dependency with the "servicetoken" package.
+	ServiceAccountToTokenInverseTable = "service_tokens"
+	// ServiceAccountToTokenColumn is the table column denoting the ServiceAccountToToken relation/edge.
+	ServiceAccountToTokenColumn = "service_account_service_account_to_token"
 	// ServiceAccountToActionsTable is the table that holds the ServiceAccountToActions relation/edge.
 	ServiceAccountToActionsTable = "actions"
 	// ServiceAccountToActionsInverseTable is the table name for the Action entity.

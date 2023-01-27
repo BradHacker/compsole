@@ -29,6 +29,10 @@ func (ServiceAccount) Fields() []ent.Field {
 // Edges of the ServiceAccount.
 func (ServiceAccount) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("ServiceAccountToToken", ServiceToken.Type).
+			Annotations(entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			}),
 		edge.To("ServiceAccountToActions", Action.Type).
 			Annotations(entsql.Annotation{
 				OnDelete: entsql.Restrict,

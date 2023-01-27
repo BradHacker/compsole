@@ -36,7 +36,6 @@ type Claims struct {
 // Middleware decodes the share session cookie and packs the session into context
 func Middleware(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
 		if !ok {
 			hostname = "localhost"

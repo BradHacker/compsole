@@ -13,6 +13,7 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/google/uuid"
 )
 
@@ -53,6 +54,21 @@ func (sau *ServiceAccountUpdate) SetActive(s serviceaccount.Active) *ServiceAcco
 	return sau
 }
 
+// AddServiceAccountToTokenIDs adds the "ServiceAccountToToken" edge to the ServiceToken entity by IDs.
+func (sau *ServiceAccountUpdate) AddServiceAccountToTokenIDs(ids ...uuid.UUID) *ServiceAccountUpdate {
+	sau.mutation.AddServiceAccountToTokenIDs(ids...)
+	return sau
+}
+
+// AddServiceAccountToToken adds the "ServiceAccountToToken" edges to the ServiceToken entity.
+func (sau *ServiceAccountUpdate) AddServiceAccountToToken(s ...*ServiceToken) *ServiceAccountUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sau.AddServiceAccountToTokenIDs(ids...)
+}
+
 // AddServiceAccountToActionIDs adds the "ServiceAccountToActions" edge to the Action entity by IDs.
 func (sau *ServiceAccountUpdate) AddServiceAccountToActionIDs(ids ...uuid.UUID) *ServiceAccountUpdate {
 	sau.mutation.AddServiceAccountToActionIDs(ids...)
@@ -71,6 +87,27 @@ func (sau *ServiceAccountUpdate) AddServiceAccountToActions(a ...*Action) *Servi
 // Mutation returns the ServiceAccountMutation object of the builder.
 func (sau *ServiceAccountUpdate) Mutation() *ServiceAccountMutation {
 	return sau.mutation
+}
+
+// ClearServiceAccountToToken clears all "ServiceAccountToToken" edges to the ServiceToken entity.
+func (sau *ServiceAccountUpdate) ClearServiceAccountToToken() *ServiceAccountUpdate {
+	sau.mutation.ClearServiceAccountToToken()
+	return sau
+}
+
+// RemoveServiceAccountToTokenIDs removes the "ServiceAccountToToken" edge to ServiceToken entities by IDs.
+func (sau *ServiceAccountUpdate) RemoveServiceAccountToTokenIDs(ids ...uuid.UUID) *ServiceAccountUpdate {
+	sau.mutation.RemoveServiceAccountToTokenIDs(ids...)
+	return sau
+}
+
+// RemoveServiceAccountToToken removes "ServiceAccountToToken" edges to ServiceToken entities.
+func (sau *ServiceAccountUpdate) RemoveServiceAccountToToken(s ...*ServiceToken) *ServiceAccountUpdate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sau.RemoveServiceAccountToTokenIDs(ids...)
 }
 
 // ClearServiceAccountToActions clears all "ServiceAccountToActions" edges to the Action entity.
@@ -210,6 +247,60 @@ func (sau *ServiceAccountUpdate) sqlSave(ctx context.Context) (n int, err error)
 			Column: serviceaccount.FieldActive,
 		})
 	}
+	if sau.mutation.ServiceAccountToTokenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sau.mutation.RemovedServiceAccountToTokenIDs(); len(nodes) > 0 && !sau.mutation.ServiceAccountToTokenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sau.mutation.ServiceAccountToTokenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if sau.mutation.ServiceAccountToActionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -307,6 +398,21 @@ func (sauo *ServiceAccountUpdateOne) SetActive(s serviceaccount.Active) *Service
 	return sauo
 }
 
+// AddServiceAccountToTokenIDs adds the "ServiceAccountToToken" edge to the ServiceToken entity by IDs.
+func (sauo *ServiceAccountUpdateOne) AddServiceAccountToTokenIDs(ids ...uuid.UUID) *ServiceAccountUpdateOne {
+	sauo.mutation.AddServiceAccountToTokenIDs(ids...)
+	return sauo
+}
+
+// AddServiceAccountToToken adds the "ServiceAccountToToken" edges to the ServiceToken entity.
+func (sauo *ServiceAccountUpdateOne) AddServiceAccountToToken(s ...*ServiceToken) *ServiceAccountUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sauo.AddServiceAccountToTokenIDs(ids...)
+}
+
 // AddServiceAccountToActionIDs adds the "ServiceAccountToActions" edge to the Action entity by IDs.
 func (sauo *ServiceAccountUpdateOne) AddServiceAccountToActionIDs(ids ...uuid.UUID) *ServiceAccountUpdateOne {
 	sauo.mutation.AddServiceAccountToActionIDs(ids...)
@@ -325,6 +431,27 @@ func (sauo *ServiceAccountUpdateOne) AddServiceAccountToActions(a ...*Action) *S
 // Mutation returns the ServiceAccountMutation object of the builder.
 func (sauo *ServiceAccountUpdateOne) Mutation() *ServiceAccountMutation {
 	return sauo.mutation
+}
+
+// ClearServiceAccountToToken clears all "ServiceAccountToToken" edges to the ServiceToken entity.
+func (sauo *ServiceAccountUpdateOne) ClearServiceAccountToToken() *ServiceAccountUpdateOne {
+	sauo.mutation.ClearServiceAccountToToken()
+	return sauo
+}
+
+// RemoveServiceAccountToTokenIDs removes the "ServiceAccountToToken" edge to ServiceToken entities by IDs.
+func (sauo *ServiceAccountUpdateOne) RemoveServiceAccountToTokenIDs(ids ...uuid.UUID) *ServiceAccountUpdateOne {
+	sauo.mutation.RemoveServiceAccountToTokenIDs(ids...)
+	return sauo
+}
+
+// RemoveServiceAccountToToken removes "ServiceAccountToToken" edges to ServiceToken entities.
+func (sauo *ServiceAccountUpdateOne) RemoveServiceAccountToToken(s ...*ServiceToken) *ServiceAccountUpdateOne {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sauo.RemoveServiceAccountToTokenIDs(ids...)
 }
 
 // ClearServiceAccountToActions clears all "ServiceAccountToActions" edges to the Action entity.
@@ -487,6 +614,60 @@ func (sauo *ServiceAccountUpdateOne) sqlSave(ctx context.Context) (_node *Servic
 			Value:  value,
 			Column: serviceaccount.FieldActive,
 		})
+	}
+	if sauo.mutation.ServiceAccountToTokenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sauo.mutation.RemovedServiceAccountToTokenIDs(); len(nodes) > 0 && !sauo.mutation.ServiceAccountToTokenCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := sauo.mutation.ServiceAccountToTokenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if sauo.mutation.ServiceAccountToActionsCleared() {
 		edge := &sqlgraph.EdgeSpec{

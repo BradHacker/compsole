@@ -57,6 +57,18 @@ func (sa *ServiceAccountQuery) collectField(ctx *graphql.OperationContext, field
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
+func (st *ServiceTokenQuery) CollectFields(ctx context.Context, satisfies ...string) *ServiceTokenQuery {
+	if fc := graphql.GetFieldContext(ctx); fc != nil {
+		st = st.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)
+	}
+	return st
+}
+
+func (st *ServiceTokenQuery) collectField(ctx *graphql.OperationContext, field graphql.CollectedField, satisfies ...string) *ServiceTokenQuery {
+	return st
+}
+
+// CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
 func (t *TeamQuery) CollectFields(ctx context.Context, satisfies ...string) *TeamQuery {
 	if fc := graphql.GetFieldContext(ctx); fc != nil {
 		t = t.collectField(graphql.GetOperationContext(ctx), fc.Field, satisfies...)

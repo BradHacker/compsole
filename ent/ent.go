@@ -12,6 +12,7 @@ import (
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -40,6 +41,7 @@ func columnChecker(table string) func(string) error {
 		competition.Table:    competition.ValidColumn,
 		provider.Table:       provider.ValidColumn,
 		serviceaccount.Table: serviceaccount.ValidColumn,
+		servicetoken.Table:   servicetoken.ValidColumn,
 		team.Table:           team.ValidColumn,
 		token.Table:          token.ValidColumn,
 		user.Table:           user.ValidColumn,

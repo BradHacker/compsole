@@ -85,6 +85,28 @@ var (
 		Columns:    ServiceAccountsColumns,
 		PrimaryKey: []*schema.Column{ServiceAccountsColumns[0]},
 	}
+	// ServiceTokensColumns holds the columns for the "service_tokens" table.
+	ServiceTokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "token", Type: field.TypeString},
+		{Name: "refresh_token", Type: field.TypeString},
+		{Name: "expire_at", Type: field.TypeInt64},
+		{Name: "service_account_service_account_to_token", Type: field.TypeUUID},
+	}
+	// ServiceTokensTable holds the schema information for the "service_tokens" table.
+	ServiceTokensTable = &schema.Table{
+		Name:       "service_tokens",
+		Columns:    ServiceTokensColumns,
+		PrimaryKey: []*schema.Column{ServiceTokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "service_tokens_service_accounts_ServiceAccountToToken",
+				Columns:    []*schema.Column{ServiceTokensColumns[4]},
+				RefColumns: []*schema.Column{ServiceAccountsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "oid", Type: field.TypeUUID},
@@ -181,6 +203,7 @@ var (
 		CompetitionsTable,
 		ProvidersTable,
 		ServiceAccountsTable,
+		ServiceTokensTable,
 		TeamsTable,
 		TokensTable,
 		UsersTable,
@@ -192,6 +215,7 @@ func init() {
 	ActionsTable.ForeignKeys[0].RefTable = ServiceAccountsTable
 	ActionsTable.ForeignKeys[1].RefTable = UsersTable
 	CompetitionsTable.ForeignKeys[0].RefTable = ProvidersTable
+	ServiceTokensTable.ForeignKeys[0].RefTable = ServiceAccountsTable
 	TeamsTable.ForeignKeys[0].RefTable = CompetitionsTable
 	TokensTable.ForeignKeys[0].RefTable = UsersTable
 	UsersTable.ForeignKeys[0].RefTable = TeamsTable

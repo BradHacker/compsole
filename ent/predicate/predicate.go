@@ -18,6 +18,9 @@ type Provider func(*sql.Selector)
 // ServiceAccount is the predicate function for serviceaccount builders.
 type ServiceAccount func(*sql.Selector)
 
+// ServiceToken is the predicate function for servicetoken builders.
+type ServiceToken func(*sql.Selector)
+
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
 

@@ -14,6 +14,7 @@ import (
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -36,6 +37,7 @@ const (
 	TypeCompetition    = "Competition"
 	TypeProvider       = "Provider"
 	TypeServiceAccount = "ServiceAccount"
+	TypeServiceToken   = "ServiceToken"
 	TypeTeam           = "Team"
 	TypeToken          = "Token"
 	TypeUser           = "User"
@@ -1647,6 +1649,9 @@ type ServiceAccountMutation struct {
 	api_secret                      *uuid.UUID
 	active                          *serviceaccount.Active
 	clearedFields                   map[string]struct{}
+	_ServiceAccountToToken          map[uuid.UUID]struct{}
+	removed_ServiceAccountToToken   map[uuid.UUID]struct{}
+	cleared_ServiceAccountToToken   bool
 	_ServiceAccountToActions        map[uuid.UUID]struct{}
 	removed_ServiceAccountToActions map[uuid.UUID]struct{}
 	cleared_ServiceAccountToActions bool
@@ -1903,6 +1908,60 @@ func (m *ServiceAccountMutation) ResetActive() {
 	m.active = nil
 }
 
+// AddServiceAccountToTokenIDs adds the "ServiceAccountToToken" edge to the ServiceToken entity by ids.
+func (m *ServiceAccountMutation) AddServiceAccountToTokenIDs(ids ...uuid.UUID) {
+	if m._ServiceAccountToToken == nil {
+		m._ServiceAccountToToken = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m._ServiceAccountToToken[ids[i]] = struct{}{}
+	}
+}
+
+// ClearServiceAccountToToken clears the "ServiceAccountToToken" edge to the ServiceToken entity.
+func (m *ServiceAccountMutation) ClearServiceAccountToToken() {
+	m.cleared_ServiceAccountToToken = true
+}
+
+// ServiceAccountToTokenCleared reports if the "ServiceAccountToToken" edge to the ServiceToken entity was cleared.
+func (m *ServiceAccountMutation) ServiceAccountToTokenCleared() bool {
+	return m.cleared_ServiceAccountToToken
+}
+
+// RemoveServiceAccountToTokenIDs removes the "ServiceAccountToToken" edge to the ServiceToken entity by IDs.
+func (m *ServiceAccountMutation) RemoveServiceAccountToTokenIDs(ids ...uuid.UUID) {
+	if m.removed_ServiceAccountToToken == nil {
+		m.removed_ServiceAccountToToken = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m._ServiceAccountToToken, ids[i])
+		m.removed_ServiceAccountToToken[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedServiceAccountToToken returns the removed IDs of the "ServiceAccountToToken" edge to the ServiceToken entity.
+func (m *ServiceAccountMutation) RemovedServiceAccountToTokenIDs() (ids []uuid.UUID) {
+	for id := range m.removed_ServiceAccountToToken {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ServiceAccountToTokenIDs returns the "ServiceAccountToToken" edge IDs in the mutation.
+func (m *ServiceAccountMutation) ServiceAccountToTokenIDs() (ids []uuid.UUID) {
+	for id := range m._ServiceAccountToToken {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetServiceAccountToToken resets all changes to the "ServiceAccountToToken" edge.
+func (m *ServiceAccountMutation) ResetServiceAccountToToken() {
+	m._ServiceAccountToToken = nil
+	m.cleared_ServiceAccountToToken = false
+	m.removed_ServiceAccountToToken = nil
+}
+
 // AddServiceAccountToActionIDs adds the "ServiceAccountToActions" edge to the Action entity by ids.
 func (m *ServiceAccountMutation) AddServiceAccountToActionIDs(ids ...uuid.UUID) {
 	if m._ServiceAccountToActions == nil {
@@ -2126,7 +2185,10 @@ func (m *ServiceAccountMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ServiceAccountMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m._ServiceAccountToToken != nil {
+		edges = append(edges, serviceaccount.EdgeServiceAccountToToken)
+	}
 	if m._ServiceAccountToActions != nil {
 		edges = append(edges, serviceaccount.EdgeServiceAccountToActions)
 	}
@@ -2137,6 +2199,12 @@ func (m *ServiceAccountMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ServiceAccountMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case serviceaccount.EdgeServiceAccountToToken:
+		ids := make([]ent.Value, 0, len(m._ServiceAccountToToken))
+		for id := range m._ServiceAccountToToken {
+			ids = append(ids, id)
+		}
+		return ids
 	case serviceaccount.EdgeServiceAccountToActions:
 		ids := make([]ent.Value, 0, len(m._ServiceAccountToActions))
 		for id := range m._ServiceAccountToActions {
@@ -2149,7 +2217,10 @@ func (m *ServiceAccountMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ServiceAccountMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removed_ServiceAccountToToken != nil {
+		edges = append(edges, serviceaccount.EdgeServiceAccountToToken)
+	}
 	if m.removed_ServiceAccountToActions != nil {
 		edges = append(edges, serviceaccount.EdgeServiceAccountToActions)
 	}
@@ -2160,6 +2231,12 @@ func (m *ServiceAccountMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *ServiceAccountMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
+	case serviceaccount.EdgeServiceAccountToToken:
+		ids := make([]ent.Value, 0, len(m.removed_ServiceAccountToToken))
+		for id := range m.removed_ServiceAccountToToken {
+			ids = append(ids, id)
+		}
+		return ids
 	case serviceaccount.EdgeServiceAccountToActions:
 		ids := make([]ent.Value, 0, len(m.removed_ServiceAccountToActions))
 		for id := range m.removed_ServiceAccountToActions {
@@ -2172,7 +2249,10 @@ func (m *ServiceAccountMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ServiceAccountMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.cleared_ServiceAccountToToken {
+		edges = append(edges, serviceaccount.EdgeServiceAccountToToken)
+	}
 	if m.cleared_ServiceAccountToActions {
 		edges = append(edges, serviceaccount.EdgeServiceAccountToActions)
 	}
@@ -2183,6 +2263,8 @@ func (m *ServiceAccountMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ServiceAccountMutation) EdgeCleared(name string) bool {
 	switch name {
+	case serviceaccount.EdgeServiceAccountToToken:
+		return m.cleared_ServiceAccountToToken
 	case serviceaccount.EdgeServiceAccountToActions:
 		return m.cleared_ServiceAccountToActions
 	}
@@ -2201,11 +2283,544 @@ func (m *ServiceAccountMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ServiceAccountMutation) ResetEdge(name string) error {
 	switch name {
+	case serviceaccount.EdgeServiceAccountToToken:
+		m.ResetServiceAccountToToken()
+		return nil
 	case serviceaccount.EdgeServiceAccountToActions:
 		m.ResetServiceAccountToActions()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceAccount edge %s", name)
+}
+
+// ServiceTokenMutation represents an operation that mutates the ServiceToken nodes in the graph.
+type ServiceTokenMutation struct {
+	config
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	token                         *string
+	refresh_token                 *string
+	expire_at                     *int64
+	addexpire_at                  *int64
+	clearedFields                 map[string]struct{}
+	_TokenToServiceAccount        *uuid.UUID
+	cleared_TokenToServiceAccount bool
+	done                          bool
+	oldValue                      func(context.Context) (*ServiceToken, error)
+	predicates                    []predicate.ServiceToken
+}
+
+var _ ent.Mutation = (*ServiceTokenMutation)(nil)
+
+// servicetokenOption allows management of the mutation configuration using functional options.
+type servicetokenOption func(*ServiceTokenMutation)
+
+// newServiceTokenMutation creates new mutation for the ServiceToken entity.
+func newServiceTokenMutation(c config, op Op, opts ...servicetokenOption) *ServiceTokenMutation {
+	m := &ServiceTokenMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeServiceToken,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withServiceTokenID sets the ID field of the mutation.
+func withServiceTokenID(id uuid.UUID) servicetokenOption {
+	return func(m *ServiceTokenMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ServiceToken
+		)
+		m.oldValue = func(ctx context.Context) (*ServiceToken, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ServiceToken.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withServiceToken sets the old ServiceToken of the mutation.
+func withServiceToken(node *ServiceToken) servicetokenOption {
+	return func(m *ServiceTokenMutation) {
+		m.oldValue = func(context.Context) (*ServiceToken, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ServiceTokenMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ServiceTokenMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ServiceToken entities.
+func (m *ServiceTokenMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ServiceTokenMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ServiceTokenMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ServiceToken.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetToken sets the "token" field.
+func (m *ServiceTokenMutation) SetToken(s string) {
+	m.token = &s
+}
+
+// Token returns the value of the "token" field in the mutation.
+func (m *ServiceTokenMutation) Token() (r string, exists bool) {
+	v := m.token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldToken returns the old "token" field's value of the ServiceToken entity.
+// If the ServiceToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceTokenMutation) OldToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldToken: %w", err)
+	}
+	return oldValue.Token, nil
+}
+
+// ResetToken resets all changes to the "token" field.
+func (m *ServiceTokenMutation) ResetToken() {
+	m.token = nil
+}
+
+// SetRefreshToken sets the "refresh_token" field.
+func (m *ServiceTokenMutation) SetRefreshToken(s string) {
+	m.refresh_token = &s
+}
+
+// RefreshToken returns the value of the "refresh_token" field in the mutation.
+func (m *ServiceTokenMutation) RefreshToken() (r string, exists bool) {
+	v := m.refresh_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRefreshToken returns the old "refresh_token" field's value of the ServiceToken entity.
+// If the ServiceToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceTokenMutation) OldRefreshToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRefreshToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRefreshToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRefreshToken: %w", err)
+	}
+	return oldValue.RefreshToken, nil
+}
+
+// ResetRefreshToken resets all changes to the "refresh_token" field.
+func (m *ServiceTokenMutation) ResetRefreshToken() {
+	m.refresh_token = nil
+}
+
+// SetExpireAt sets the "expire_at" field.
+func (m *ServiceTokenMutation) SetExpireAt(i int64) {
+	m.expire_at = &i
+	m.addexpire_at = nil
+}
+
+// ExpireAt returns the value of the "expire_at" field in the mutation.
+func (m *ServiceTokenMutation) ExpireAt() (r int64, exists bool) {
+	v := m.expire_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpireAt returns the old "expire_at" field's value of the ServiceToken entity.
+// If the ServiceToken object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ServiceTokenMutation) OldExpireAt(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpireAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpireAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpireAt: %w", err)
+	}
+	return oldValue.ExpireAt, nil
+}
+
+// AddExpireAt adds i to the "expire_at" field.
+func (m *ServiceTokenMutation) AddExpireAt(i int64) {
+	if m.addexpire_at != nil {
+		*m.addexpire_at += i
+	} else {
+		m.addexpire_at = &i
+	}
+}
+
+// AddedExpireAt returns the value that was added to the "expire_at" field in this mutation.
+func (m *ServiceTokenMutation) AddedExpireAt() (r int64, exists bool) {
+	v := m.addexpire_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetExpireAt resets all changes to the "expire_at" field.
+func (m *ServiceTokenMutation) ResetExpireAt() {
+	m.expire_at = nil
+	m.addexpire_at = nil
+}
+
+// SetTokenToServiceAccountID sets the "TokenToServiceAccount" edge to the ServiceAccount entity by id.
+func (m *ServiceTokenMutation) SetTokenToServiceAccountID(id uuid.UUID) {
+	m._TokenToServiceAccount = &id
+}
+
+// ClearTokenToServiceAccount clears the "TokenToServiceAccount" edge to the ServiceAccount entity.
+func (m *ServiceTokenMutation) ClearTokenToServiceAccount() {
+	m.cleared_TokenToServiceAccount = true
+}
+
+// TokenToServiceAccountCleared reports if the "TokenToServiceAccount" edge to the ServiceAccount entity was cleared.
+func (m *ServiceTokenMutation) TokenToServiceAccountCleared() bool {
+	return m.cleared_TokenToServiceAccount
+}
+
+// TokenToServiceAccountID returns the "TokenToServiceAccount" edge ID in the mutation.
+func (m *ServiceTokenMutation) TokenToServiceAccountID() (id uuid.UUID, exists bool) {
+	if m._TokenToServiceAccount != nil {
+		return *m._TokenToServiceAccount, true
+	}
+	return
+}
+
+// TokenToServiceAccountIDs returns the "TokenToServiceAccount" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TokenToServiceAccountID instead. It exists only for internal usage by the builders.
+func (m *ServiceTokenMutation) TokenToServiceAccountIDs() (ids []uuid.UUID) {
+	if id := m._TokenToServiceAccount; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTokenToServiceAccount resets all changes to the "TokenToServiceAccount" edge.
+func (m *ServiceTokenMutation) ResetTokenToServiceAccount() {
+	m._TokenToServiceAccount = nil
+	m.cleared_TokenToServiceAccount = false
+}
+
+// Where appends a list predicates to the ServiceTokenMutation builder.
+func (m *ServiceTokenMutation) Where(ps ...predicate.ServiceToken) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *ServiceTokenMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (ServiceToken).
+func (m *ServiceTokenMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ServiceTokenMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.token != nil {
+		fields = append(fields, servicetoken.FieldToken)
+	}
+	if m.refresh_token != nil {
+		fields = append(fields, servicetoken.FieldRefreshToken)
+	}
+	if m.expire_at != nil {
+		fields = append(fields, servicetoken.FieldExpireAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ServiceTokenMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case servicetoken.FieldToken:
+		return m.Token()
+	case servicetoken.FieldRefreshToken:
+		return m.RefreshToken()
+	case servicetoken.FieldExpireAt:
+		return m.ExpireAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ServiceTokenMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case servicetoken.FieldToken:
+		return m.OldToken(ctx)
+	case servicetoken.FieldRefreshToken:
+		return m.OldRefreshToken(ctx)
+	case servicetoken.FieldExpireAt:
+		return m.OldExpireAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown ServiceToken field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ServiceTokenMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case servicetoken.FieldToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetToken(v)
+		return nil
+	case servicetoken.FieldRefreshToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRefreshToken(v)
+		return nil
+	case servicetoken.FieldExpireAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpireAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceToken field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ServiceTokenMutation) AddedFields() []string {
+	var fields []string
+	if m.addexpire_at != nil {
+		fields = append(fields, servicetoken.FieldExpireAt)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ServiceTokenMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case servicetoken.FieldExpireAt:
+		return m.AddedExpireAt()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ServiceTokenMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case servicetoken.FieldExpireAt:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddExpireAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceToken numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ServiceTokenMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ServiceTokenMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ServiceTokenMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ServiceToken nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ServiceTokenMutation) ResetField(name string) error {
+	switch name {
+	case servicetoken.FieldToken:
+		m.ResetToken()
+		return nil
+	case servicetoken.FieldRefreshToken:
+		m.ResetRefreshToken()
+		return nil
+	case servicetoken.FieldExpireAt:
+		m.ResetExpireAt()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceToken field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ServiceTokenMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m._TokenToServiceAccount != nil {
+		edges = append(edges, servicetoken.EdgeTokenToServiceAccount)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ServiceTokenMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case servicetoken.EdgeTokenToServiceAccount:
+		if id := m._TokenToServiceAccount; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ServiceTokenMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ServiceTokenMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ServiceTokenMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleared_TokenToServiceAccount {
+		edges = append(edges, servicetoken.EdgeTokenToServiceAccount)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ServiceTokenMutation) EdgeCleared(name string) bool {
+	switch name {
+	case servicetoken.EdgeTokenToServiceAccount:
+		return m.cleared_TokenToServiceAccount
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ServiceTokenMutation) ClearEdge(name string) error {
+	switch name {
+	case servicetoken.EdgeTokenToServiceAccount:
+		m.ClearTokenToServiceAccount()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceToken unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ServiceTokenMutation) ResetEdge(name string) error {
+	switch name {
+	case servicetoken.EdgeTokenToServiceAccount:
+		m.ResetTokenToServiceAccount()
+		return nil
+	}
+	return fmt.Errorf("unknown ServiceToken edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.

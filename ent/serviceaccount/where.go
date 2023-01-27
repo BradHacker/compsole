@@ -424,6 +424,34 @@ func ActiveNotIn(vs ...Active) predicate.ServiceAccount {
 	})
 }
 
+// HasServiceAccountToToken applies the HasEdge predicate on the "ServiceAccountToToken" edge.
+func HasServiceAccountToToken() predicate.ServiceAccount {
+	return predicate.ServiceAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ServiceAccountToTokenTable, ServiceTokenFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ServiceAccountToTokenTable, ServiceAccountToTokenColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasServiceAccountToTokenWith applies the HasEdge predicate on the "ServiceAccountToToken" edge with a given conditions (other predicates).
+func HasServiceAccountToTokenWith(preds ...predicate.ServiceToken) predicate.ServiceAccount {
+	return predicate.ServiceAccount(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ServiceAccountToTokenInverseTable, ServiceTokenFieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ServiceAccountToTokenTable, ServiceAccountToTokenColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasServiceAccountToActions applies the HasEdge predicate on the "ServiceAccountToActions" edge.
 func HasServiceAccountToActions() predicate.ServiceAccount {
 	return predicate.ServiceAccount(func(s *sql.Selector) {

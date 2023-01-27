@@ -21,7 +21,14 @@ type login struct {
 	Password string `form:"password" json:"password" binding:"required"`
 }
 
-// LocalLogin decodes the share session cookie and packs the session into context
+// ServiceLogin handles login of service accounts and packs the session into context
+func ServiceLogin(client *ent.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+	}
+}
+
+// LocalLogin decides the share session cookie and packs the session into context
 func LocalLogin(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")

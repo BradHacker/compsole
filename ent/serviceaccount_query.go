@@ -15,6 +15,7 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/predicate"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/google/uuid"
 )
 
@@ -28,6 +29,7 @@ type ServiceAccountQuery struct {
 	fields     []string
 	predicates []predicate.ServiceAccount
 	// eager-loading edges.
+	withServiceAccountToToken   *ServiceTokenQuery
 	withServiceAccountToActions *ActionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -63,6 +65,28 @@ func (saq *ServiceAccountQuery) Unique(unique bool) *ServiceAccountQuery {
 func (saq *ServiceAccountQuery) Order(o ...OrderFunc) *ServiceAccountQuery {
 	saq.order = append(saq.order, o...)
 	return saq
+}
+
+// QueryServiceAccountToToken chains the current query on the "ServiceAccountToToken" edge.
+func (saq *ServiceAccountQuery) QueryServiceAccountToToken() *ServiceTokenQuery {
+	query := &ServiceTokenQuery{config: saq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := saq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := saq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(serviceaccount.Table, serviceaccount.FieldID, selector),
+			sqlgraph.To(servicetoken.Table, servicetoken.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, serviceaccount.ServiceAccountToTokenTable, serviceaccount.ServiceAccountToTokenColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(saq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryServiceAccountToActions chains the current query on the "ServiceAccountToActions" edge.
@@ -268,12 +292,24 @@ func (saq *ServiceAccountQuery) Clone() *ServiceAccountQuery {
 		offset:                      saq.offset,
 		order:                       append([]OrderFunc{}, saq.order...),
 		predicates:                  append([]predicate.ServiceAccount{}, saq.predicates...),
+		withServiceAccountToToken:   saq.withServiceAccountToToken.Clone(),
 		withServiceAccountToActions: saq.withServiceAccountToActions.Clone(),
 		// clone intermediate query.
 		sql:    saq.sql.Clone(),
 		path:   saq.path,
 		unique: saq.unique,
 	}
+}
+
+// WithServiceAccountToToken tells the query-builder to eager-load the nodes that are connected to
+// the "ServiceAccountToToken" edge. The optional arguments are used to configure the query builder of the edge.
+func (saq *ServiceAccountQuery) WithServiceAccountToToken(opts ...func(*ServiceTokenQuery)) *ServiceAccountQuery {
+	query := &ServiceTokenQuery{config: saq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	saq.withServiceAccountToToken = query
+	return saq
 }
 
 // WithServiceAccountToActions tells the query-builder to eager-load the nodes that are connected to
@@ -350,7 +386,8 @@ func (saq *ServiceAccountQuery) sqlAll(ctx context.Context) ([]*ServiceAccount, 
 	var (
 		nodes       = []*ServiceAccount{}
 		_spec       = saq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
+			saq.withServiceAccountToToken != nil,
 			saq.withServiceAccountToActions != nil,
 		}
 	)
@@ -372,6 +409,35 @@ func (saq *ServiceAccountQuery) sqlAll(ctx context.Context) ([]*ServiceAccount, 
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
+	}
+
+	if query := saq.withServiceAccountToToken; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[uuid.UUID]*ServiceAccount)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.ServiceAccountToToken = []*ServiceToken{}
+		}
+		query.withFKs = true
+		query.Where(predicate.ServiceToken(func(s *sql.Selector) {
+			s.Where(sql.InValues(serviceaccount.ServiceAccountToTokenColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.service_account_service_account_to_token
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "service_account_service_account_to_token" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "service_account_service_account_to_token" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.ServiceAccountToToken = append(node.Edges.ServiceAccountToToken, n)
+		}
 	}
 
 	if query := saq.withServiceAccountToActions; query != nil {

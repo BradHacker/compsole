@@ -10,6 +10,7 @@ import (
 	"github.com/BradHacker/compsole/ent/provider"
 	"github.com/BradHacker/compsole/ent/schema"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -53,6 +54,12 @@ func init() {
 	serviceaccountDescID := serviceaccountFields[0].Descriptor()
 	// serviceaccount.DefaultID holds the default value on creation for the id field.
 	serviceaccount.DefaultID = serviceaccountDescID.Default.(func() uuid.UUID)
+	servicetokenFields := schema.ServiceToken{}.Fields()
+	_ = servicetokenFields
+	// servicetokenDescID is the schema descriptor for id field.
+	servicetokenDescID := servicetokenFields[0].Descriptor()
+	// servicetoken.DefaultID holds the default value on creation for the id field.
+	servicetoken.DefaultID = servicetokenDescID.Default.(func() uuid.UUID)
 	teamFields := schema.Team{}.Fields()
 	_ = teamFields
 	// teamDescID is the schema descriptor for id field.

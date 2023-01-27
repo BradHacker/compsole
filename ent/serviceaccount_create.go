@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/google/uuid"
 )
 
@@ -57,6 +58,21 @@ func (sac *ServiceAccountCreate) SetNillableID(u *uuid.UUID) *ServiceAccountCrea
 		sac.SetID(*u)
 	}
 	return sac
+}
+
+// AddServiceAccountToTokenIDs adds the "ServiceAccountToToken" edge to the ServiceToken entity by IDs.
+func (sac *ServiceAccountCreate) AddServiceAccountToTokenIDs(ids ...uuid.UUID) *ServiceAccountCreate {
+	sac.mutation.AddServiceAccountToTokenIDs(ids...)
+	return sac
+}
+
+// AddServiceAccountToToken adds the "ServiceAccountToToken" edges to the ServiceToken entity.
+func (sac *ServiceAccountCreate) AddServiceAccountToToken(s ...*ServiceToken) *ServiceAccountCreate {
+	ids := make([]uuid.UUID, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return sac.AddServiceAccountToTokenIDs(ids...)
 }
 
 // AddServiceAccountToActionIDs adds the "ServiceAccountToActions" edge to the Action entity by IDs.
@@ -237,6 +253,25 @@ func (sac *ServiceAccountCreate) createSpec() (*ServiceAccount, *sqlgraph.Create
 			Column: serviceaccount.FieldActive,
 		})
 		_node.Active = value
+	}
+	if nodes := sac.mutation.ServiceAccountToTokenIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   serviceaccount.ServiceAccountToTokenTable,
+			Columns: []string{serviceaccount.ServiceAccountToTokenColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: servicetoken.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := sac.mutation.ServiceAccountToActionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

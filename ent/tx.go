@@ -20,6 +20,8 @@ type Tx struct {
 	Provider *ProviderClient
 	// ServiceAccount is the client for interacting with the ServiceAccount builders.
 	ServiceAccount *ServiceAccountClient
+	// ServiceToken is the client for interacting with the ServiceToken builders.
+	ServiceToken *ServiceTokenClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// Token is the client for interacting with the Token builders.
@@ -167,6 +169,7 @@ func (tx *Tx) init() {
 	tx.Competition = NewCompetitionClient(tx.config)
 	tx.Provider = NewProviderClient(tx.config)
 	tx.ServiceAccount = NewServiceAccountClient(tx.config)
+	tx.ServiceToken = NewServiceTokenClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.Token = NewTokenClient(tx.config)
 	tx.User = NewUserClient(tx.config)

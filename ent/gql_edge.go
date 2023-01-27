@@ -44,10 +44,26 @@ func (pr *Provider) ProviderToCompetition(ctx context.Context) ([]*Competition, 
 	return result, err
 }
 
+func (sa *ServiceAccount) ServiceAccountToToken(ctx context.Context) ([]*ServiceToken, error) {
+	result, err := sa.Edges.ServiceAccountToTokenOrErr()
+	if IsNotLoaded(err) {
+		result, err = sa.QueryServiceAccountToToken().All(ctx)
+	}
+	return result, err
+}
+
 func (sa *ServiceAccount) ServiceAccountToActions(ctx context.Context) ([]*Action, error) {
 	result, err := sa.Edges.ServiceAccountToActionsOrErr()
 	if IsNotLoaded(err) {
 		result, err = sa.QueryServiceAccountToActions().All(ctx)
+	}
+	return result, err
+}
+
+func (st *ServiceToken) TokenToServiceAccount(ctx context.Context) (*ServiceAccount, error) {
+	result, err := st.Edges.TokenToServiceAccountOrErr()
+	if IsNotLoaded(err) {
+		result, err = st.QueryTokenToServiceAccount().Only(ctx)
 	}
 	return result, err
 }

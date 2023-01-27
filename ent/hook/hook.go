@@ -61,6 +61,19 @@ func (f ServiceAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return f(ctx, mv)
 }
 
+// The ServiceTokenFunc type is an adapter to allow the use of ordinary
+// function as ServiceToken mutator.
+type ServiceTokenFunc func(context.Context, *ent.ServiceTokenMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ServiceTokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.ServiceTokenMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ServiceTokenMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The TeamFunc type is an adapter to allow the use of ordinary
 // function as Team mutator.
 type TeamFunc func(context.Context, *ent.TeamMutation) (ent.Value, error)
