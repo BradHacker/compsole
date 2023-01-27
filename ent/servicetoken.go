@@ -22,7 +22,7 @@ type ServiceToken struct {
 	Token string `json:"token,omitempty"`
 	// RefreshToken holds the value of the "refresh_token" field.
 	// [REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.
-	RefreshToken string `json:"refresh_token,omitempty"`
+	RefreshToken uuid.UUID `json:"refresh_token,omitempty"`
 	// ExpireAt holds the value of the "expire_at" field.
 	// [REQUIRED] The time the token should expire.
 	ExpireAt int64 `json:"expire_at,omitempty"`
@@ -62,9 +62,9 @@ func (*ServiceToken) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case servicetoken.FieldExpireAt:
 			values[i] = new(sql.NullInt64)
-		case servicetoken.FieldToken, servicetoken.FieldRefreshToken:
+		case servicetoken.FieldToken:
 			values[i] = new(sql.NullString)
-		case servicetoken.FieldID:
+		case servicetoken.FieldID, servicetoken.FieldRefreshToken:
 			values[i] = new(uuid.UUID)
 		case servicetoken.ForeignKeys[0]: // service_account_service_account_to_token
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -96,10 +96,10 @@ func (st *ServiceToken) assignValues(columns []string, values []interface{}) err
 				st.Token = value.String
 			}
 		case servicetoken.FieldRefreshToken:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field refresh_token", values[i])
-			} else if value.Valid {
-				st.RefreshToken = value.String
+			} else if value != nil {
+				st.RefreshToken = *value
 			}
 		case servicetoken.FieldExpireAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -150,7 +150,7 @@ func (st *ServiceToken) String() string {
 	builder.WriteString(", token=")
 	builder.WriteString(st.Token)
 	builder.WriteString(", refresh_token=")
-	builder.WriteString(st.RefreshToken)
+	builder.WriteString(fmt.Sprintf("%v", st.RefreshToken))
 	builder.WriteString(", expire_at=")
 	builder.WriteString(fmt.Sprintf("%v", st.ExpireAt))
 	builder.WriteByte(')')

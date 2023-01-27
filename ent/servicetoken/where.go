@@ -100,7 +100,7 @@ func Token(v string) predicate.ServiceToken {
 }
 
 // RefreshToken applies equality check predicate on the "refresh_token" field. It's identical to RefreshTokenEQ.
-func RefreshToken(v string) predicate.ServiceToken {
+func RefreshToken(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldRefreshToken), v))
 	})
@@ -225,21 +225,21 @@ func TokenContainsFold(v string) predicate.ServiceToken {
 }
 
 // RefreshTokenEQ applies the EQ predicate on the "refresh_token" field.
-func RefreshTokenEQ(v string) predicate.ServiceToken {
+func RefreshTokenEQ(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldRefreshToken), v))
 	})
 }
 
 // RefreshTokenNEQ applies the NEQ predicate on the "refresh_token" field.
-func RefreshTokenNEQ(v string) predicate.ServiceToken {
+func RefreshTokenNEQ(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldRefreshToken), v))
 	})
 }
 
 // RefreshTokenIn applies the In predicate on the "refresh_token" field.
-func RefreshTokenIn(vs ...string) predicate.ServiceToken {
+func RefreshTokenIn(vs ...uuid.UUID) predicate.ServiceToken {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -256,7 +256,7 @@ func RefreshTokenIn(vs ...string) predicate.ServiceToken {
 }
 
 // RefreshTokenNotIn applies the NotIn predicate on the "refresh_token" field.
-func RefreshTokenNotIn(vs ...string) predicate.ServiceToken {
+func RefreshTokenNotIn(vs ...uuid.UUID) predicate.ServiceToken {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -273,65 +273,30 @@ func RefreshTokenNotIn(vs ...string) predicate.ServiceToken {
 }
 
 // RefreshTokenGT applies the GT predicate on the "refresh_token" field.
-func RefreshTokenGT(v string) predicate.ServiceToken {
+func RefreshTokenGT(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldRefreshToken), v))
 	})
 }
 
 // RefreshTokenGTE applies the GTE predicate on the "refresh_token" field.
-func RefreshTokenGTE(v string) predicate.ServiceToken {
+func RefreshTokenGTE(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldRefreshToken), v))
 	})
 }
 
 // RefreshTokenLT applies the LT predicate on the "refresh_token" field.
-func RefreshTokenLT(v string) predicate.ServiceToken {
+func RefreshTokenLT(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldRefreshToken), v))
 	})
 }
 
 // RefreshTokenLTE applies the LTE predicate on the "refresh_token" field.
-func RefreshTokenLTE(v string) predicate.ServiceToken {
+func RefreshTokenLTE(v uuid.UUID) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldRefreshToken), v))
-	})
-}
-
-// RefreshTokenContains applies the Contains predicate on the "refresh_token" field.
-func RefreshTokenContains(v string) predicate.ServiceToken {
-	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldRefreshToken), v))
-	})
-}
-
-// RefreshTokenHasPrefix applies the HasPrefix predicate on the "refresh_token" field.
-func RefreshTokenHasPrefix(v string) predicate.ServiceToken {
-	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldRefreshToken), v))
-	})
-}
-
-// RefreshTokenHasSuffix applies the HasSuffix predicate on the "refresh_token" field.
-func RefreshTokenHasSuffix(v string) predicate.ServiceToken {
-	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldRefreshToken), v))
-	})
-}
-
-// RefreshTokenEqualFold applies the EqualFold predicate on the "refresh_token" field.
-func RefreshTokenEqualFold(v string) predicate.ServiceToken {
-	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldRefreshToken), v))
-	})
-}
-
-// RefreshTokenContainsFold applies the ContainsFold predicate on the "refresh_token" field.
-func RefreshTokenContainsFold(v string) predicate.ServiceToken {
-	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldRefreshToken), v))
 	})
 }
 
