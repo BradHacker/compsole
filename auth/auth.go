@@ -62,6 +62,17 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		// Initialize a new instance of `Claims`
 		claims := &Claims{}
 
+		jwtKey, exists := os.LookupEnv("JWT_SECRET")
+		if !exists {
+			if secure_cookie {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+			} else {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+			}
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
 		// Parse the JWT string and store the result in `claims`.
 		// Note that we are passing the key in this method as well. This method will return an error
 		// if the token is invalid (if it has expired according to the expiry time we set on sign in),
@@ -163,6 +174,17 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 
 		// Initialize a new instance of `Claims`
 		claims := &Claims{}
+
+		jwtKey, exists := os.LookupEnv("JWT_SECRET")
+		if !exists {
+			if secure_cookie {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+			} else {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+			}
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 
 		// Parse the JWT string and store the result in `claims`.
 		// Note that we are passing the key in this method as well. This method will return an error

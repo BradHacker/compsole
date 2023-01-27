@@ -140,6 +140,14 @@ func GothicCallbackHandler(client *ent.Client) gin.HandlerFunc {
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
+		jwtKey, exists := os.LookupEnv("JWT_SECRET")
+		if !exists {
+			// Kill the request if we don't have a valid JWT_SECRET
+			logrus.Error("env variable JWT_SECRET not set")
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Error signing token"})
+			return
+		}
+
 		tokenString, err := token.SignedString(jwtKey)
 		if err != nil {
 			if secure_cookie {
