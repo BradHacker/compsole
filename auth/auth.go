@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/action"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,10 +30,14 @@ type contextKey struct {
 	name string
 }
 
-// Claims Create a struct that will be encoded to a JWT.
-type Claims struct {
+// CompsoleJWTClaims Create a struct that will be encoded to a JWT.
+type CompsoleJWTClaims struct {
 	IssuedAt int64
 	jwt.StandardClaims
+}
+
+type ServiceAccountHeader struct {
+	Authorization *string `header:"Authorization" binding:"required"`
 }
 
 // Middleware decodes the share session cookie and packs the session into context
@@ -60,7 +68,7 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		tknStr := authCookie
 
 		// Initialize a new instance of `Claims`
-		claims := &Claims{}
+		claims := &CompsoleJWTClaims{}
 
 		jwtKey, exists := os.LookupEnv("JWT_SECRET")
 		if !exists {
@@ -143,6 +151,87 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 	}
 }
 
+func ServiceMiddleware(client *ent.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		headers := &ServiceAccountHeader{}
+
+		if err := ctx.ShouldBindHeader(headers); err != nil {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": err})
+			return
+		}
+
+		jwtKey, exists := os.LookupEnv("JWT_SECRET")
+		if !exists {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		authorizationParts := strings.Split(*headers.Authorization, "Bearer ")
+		if len(authorizationParts) < 2 {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Must provide authorization token"})
+			return
+		}
+		jwtToken := authorizationParts[1]
+
+		authToken, err := jwt.ParseWithClaims(jwtToken, &CompsoleJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+		if err != nil || !authToken.Valid {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		claims, ok := authToken.Claims.(*CompsoleJWTClaims)
+		if !ok {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		apiKey := claims.StandardClaims.Subject
+		apiKeyUUID, err := uuid.Parse(apiKey)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		entServiceToken, err := client.ServiceToken.Query().Where(
+			servicetoken.And(
+				servicetoken.HasTokenToServiceAccountWith(serviceaccount.APIKeyEQ(apiKeyUUID)),
+				servicetoken.TokenEQ(jwtToken),
+			),
+		).Only(ctx)
+		if ent.IsNotFound(err) {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+
+		entServiceAccount, err := entServiceToken.TokenToServiceAccount(ctx)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+
+		// put it in context
+		c := context.WithValue(ctx.Request.Context(), userCtxKey, entServiceAccount)
+
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
+		}
+		// put it in context
+		c = context.WithValue(c, ipCtxKey, clientIp)
+		ctx.Request = ctx.Request.WithContext(c)
+
+		ctx.Next()
+	}
+}
+
 // Logout decodes the share session cookie and packs the session into context
 func Logout(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -173,7 +262,7 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 		tknStr := authCookie
 
 		// Initialize a new instance of `Claims`
-		claims := &Claims{}
+		claims := &CompsoleJWTClaims{}
 
 		jwtKey, exists := os.LookupEnv("JWT_SECRET")
 		if !exists {

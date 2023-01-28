@@ -131,7 +131,7 @@ func GothicCallbackHandler(client *ent.Client) gin.HandlerFunc {
 
 		expiresAt := time.Now().Add(time.Minute * time.Duration(cookie_timeout)).Unix()
 
-		claims := &Claims{
+		claims := &CompsoleJWTClaims{
 			IssuedAt: time.Now().Unix(),
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expiresAt,

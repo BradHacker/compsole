@@ -54,12 +54,9 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 		}
 
 		// Get the client's IP address
-		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
-		clientIp := ""
-		if exists {
-			clientIp = clientIpValues[0]
-		} else {
-			clientIp = ctx.RemoteIP()
+		clientIp, err := ForContextIp(ctx)
+		if err != nil {
+			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
 
 		apiKey, err := uuid.Parse(loginVals.ApiKey)
@@ -96,7 +93,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 
 		expiresAt := time.Now().Add(time.Minute * time.Duration(session_timeout)).Unix()
 
-		claims := &Claims{
+		claims := &CompsoleJWTClaims{
 			IssuedAt: time.Now().Unix(),
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expiresAt,
@@ -179,12 +176,9 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		}
 
 		// Get the client's IP address
-		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
-		clientIp := ""
-		if exists {
-			clientIp = clientIpValues[0]
-		} else {
-			clientIp = ctx.RemoteIP()
+		clientIp, err := ForContextIp(ctx)
+		if err != nil {
+			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
 
 		entUser, err := client.User.Query().Where(
@@ -235,7 +229,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 
 		expiresAt := time.Now().Add(time.Minute * time.Duration(cookie_timeout)).Unix()
 
-		claims := &Claims{
+		claims := &CompsoleJWTClaims{
 			IssuedAt: time.Now().Unix(),
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expiresAt,
