@@ -208,6 +208,7 @@ func main() {
 		c.Redirect(301, "/ui/")
 	})
 	authGroup.POST("/local/login", auth.LocalLogin(client))
+	authGroup.POST("/service", auth.ServiceLogin(client))
 	authGroup.GET("/:provider/login", auth.GothicBeginAuth())
 	authGroup.GET("/:provider/callback", auth.GothicCallbackHandler(client))
 	authGroup.GET("/logout", auth.Logout(client))
