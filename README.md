@@ -111,3 +111,15 @@ The swagger docs are auto-generating. To generate them, simply run:
 ```shell
 go generate ./api
 ```
+
+### Accessing API Documentation
+
+The API docs for Compsole are hosted by the Compsole server. To access, simply start the server (whether [development](#development) or [producution](#production)) and then access the docs by navigating to:
+
+```plaintext
+# Development
+http://localhost:8080/api/docs/index.html
+
+# Production
+http(s)://<deployment url>/api/docs/index.html
+```
