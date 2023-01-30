@@ -41,8 +41,8 @@ func (sac *ServiceAccountCreate) SetAPISecret(u uuid.UUID) *ServiceAccountCreate
 }
 
 // SetActive sets the "active" field.
-func (sac *ServiceAccountCreate) SetActive(s serviceaccount.Active) *ServiceAccountCreate {
-	sac.mutation.SetActive(s)
+func (sac *ServiceAccountCreate) SetActive(b bool) *ServiceAccountCreate {
+	sac.mutation.SetActive(b)
 	return sac
 }
 
@@ -181,11 +181,6 @@ func (sac *ServiceAccountCreate) check() error {
 	if _, ok := sac.mutation.Active(); !ok {
 		return &ValidationError{Name: "active", err: errors.New(`ent: missing required field "ServiceAccount.active"`)}
 	}
-	if v, ok := sac.mutation.Active(); ok {
-		if err := serviceaccount.ActiveValidator(v); err != nil {
-			return &ValidationError{Name: "active", err: fmt.Errorf(`ent: validator failed for field "ServiceAccount.active": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -248,7 +243,7 @@ func (sac *ServiceAccountCreate) createSpec() (*ServiceAccount, *sqlgraph.Create
 	}
 	if value, ok := sac.mutation.Active(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeBool,
 			Value:  value,
 			Column: serviceaccount.FieldActive,
 		})

@@ -218,7 +218,12 @@ func ServiceMiddleware(client *ent.Client) gin.HandlerFunc {
 
 		entServiceToken, err := client.ServiceToken.Query().Where(
 			servicetoken.And(
-				servicetoken.HasTokenToServiceAccountWith(serviceaccount.APIKeyEQ(apiKeyUUID)),
+				servicetoken.HasTokenToServiceAccountWith(
+					serviceaccount.And(
+						serviceaccount.APIKeyEQ(apiKeyUUID),
+						serviceaccount.ActiveEQ(true),
+					),
+				),
 				servicetoken.TokenEQ(jwtToken),
 			),
 		).Only(ctx)

@@ -1647,7 +1647,7 @@ type ServiceAccountMutation struct {
 	display_name                    *string
 	api_key                         *uuid.UUID
 	api_secret                      *uuid.UUID
-	active                          *serviceaccount.Active
+	active                          *bool
 	clearedFields                   map[string]struct{}
 	_ServiceAccountToToken          map[uuid.UUID]struct{}
 	removed_ServiceAccountToToken   map[uuid.UUID]struct{}
@@ -1873,12 +1873,12 @@ func (m *ServiceAccountMutation) ResetAPISecret() {
 }
 
 // SetActive sets the "active" field.
-func (m *ServiceAccountMutation) SetActive(s serviceaccount.Active) {
-	m.active = &s
+func (m *ServiceAccountMutation) SetActive(b bool) {
+	m.active = &b
 }
 
 // Active returns the value of the "active" field in the mutation.
-func (m *ServiceAccountMutation) Active() (r serviceaccount.Active, exists bool) {
+func (m *ServiceAccountMutation) Active() (r bool, exists bool) {
 	v := m.active
 	if v == nil {
 		return
@@ -1889,7 +1889,7 @@ func (m *ServiceAccountMutation) Active() (r serviceaccount.Active, exists bool)
 // OldActive returns the old "active" field's value of the ServiceAccount entity.
 // If the ServiceAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceAccountMutation) OldActive(ctx context.Context) (v serviceaccount.Active, err error) {
+func (m *ServiceAccountMutation) OldActive(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldActive is only allowed on UpdateOne operations")
 	}
@@ -2112,7 +2112,7 @@ func (m *ServiceAccountMutation) SetField(name string, value ent.Value) error {
 		m.SetAPISecret(v)
 		return nil
 	case serviceaccount.FieldActive:
-		v, ok := value.(serviceaccount.Active)
+		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

@@ -49,8 +49,8 @@ func (sau *ServiceAccountUpdate) SetAPISecret(u uuid.UUID) *ServiceAccountUpdate
 }
 
 // SetActive sets the "active" field.
-func (sau *ServiceAccountUpdate) SetActive(s serviceaccount.Active) *ServiceAccountUpdate {
-	sau.mutation.SetActive(s)
+func (sau *ServiceAccountUpdate) SetActive(b bool) *ServiceAccountUpdate {
+	sau.mutation.SetActive(b)
 	return sau
 }
 
@@ -138,18 +138,12 @@ func (sau *ServiceAccountUpdate) Save(ctx context.Context) (int, error) {
 		affected int
 	)
 	if len(sau.hooks) == 0 {
-		if err = sau.check(); err != nil {
-			return 0, err
-		}
 		affected, err = sau.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ServiceAccountMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = sau.check(); err != nil {
-				return 0, err
 			}
 			sau.mutation = mutation
 			affected, err = sau.sqlSave(ctx)
@@ -189,16 +183,6 @@ func (sau *ServiceAccountUpdate) ExecX(ctx context.Context) {
 	if err := sau.Exec(ctx); err != nil {
 		panic(err)
 	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (sau *ServiceAccountUpdate) check() error {
-	if v, ok := sau.mutation.Active(); ok {
-		if err := serviceaccount.ActiveValidator(v); err != nil {
-			return &ValidationError{Name: "active", err: fmt.Errorf(`ent: validator failed for field "ServiceAccount.active": %w`, err)}
-		}
-	}
-	return nil
 }
 
 func (sau *ServiceAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -242,7 +226,7 @@ func (sau *ServiceAccountUpdate) sqlSave(ctx context.Context) (n int, err error)
 	}
 	if value, ok := sau.mutation.Active(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeBool,
 			Value:  value,
 			Column: serviceaccount.FieldActive,
 		})
@@ -393,8 +377,8 @@ func (sauo *ServiceAccountUpdateOne) SetAPISecret(u uuid.UUID) *ServiceAccountUp
 }
 
 // SetActive sets the "active" field.
-func (sauo *ServiceAccountUpdateOne) SetActive(s serviceaccount.Active) *ServiceAccountUpdateOne {
-	sauo.mutation.SetActive(s)
+func (sauo *ServiceAccountUpdateOne) SetActive(b bool) *ServiceAccountUpdateOne {
+	sauo.mutation.SetActive(b)
 	return sauo
 }
 
@@ -489,18 +473,12 @@ func (sauo *ServiceAccountUpdateOne) Save(ctx context.Context) (*ServiceAccount,
 		node *ServiceAccount
 	)
 	if len(sauo.hooks) == 0 {
-		if err = sauo.check(); err != nil {
-			return nil, err
-		}
 		node, err = sauo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*ServiceAccountMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
-			}
-			if err = sauo.check(); err != nil {
-				return nil, err
 			}
 			sauo.mutation = mutation
 			node, err = sauo.sqlSave(ctx)
@@ -540,16 +518,6 @@ func (sauo *ServiceAccountUpdateOne) ExecX(ctx context.Context) {
 	if err := sauo.Exec(ctx); err != nil {
 		panic(err)
 	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (sauo *ServiceAccountUpdateOne) check() error {
-	if v, ok := sauo.mutation.Active(); ok {
-		if err := serviceaccount.ActiveValidator(v); err != nil {
-			return &ValidationError{Name: "active", err: fmt.Errorf(`ent: validator failed for field "ServiceAccount.active": %w`, err)}
-		}
-	}
-	return nil
 }
 
 func (sauo *ServiceAccountUpdateOne) sqlSave(ctx context.Context) (_node *ServiceAccount, err error) {
@@ -610,7 +578,7 @@ func (sauo *ServiceAccountUpdateOne) sqlSave(ctx context.Context) (_node *Servic
 	}
 	if value, ok := sauo.mutation.Active(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeEnum,
+			Type:   field.TypeBool,
 			Value:  value,
 			Column: serviceaccount.FieldActive,
 		})

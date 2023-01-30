@@ -232,7 +232,7 @@ func (sa *ServiceAccount) Node(ctx context.Context) (node *Node, err error) {
 		return nil, err
 	}
 	node.Fields[3] = &Field{
-		Type:  "serviceaccount.Active",
+		Type:  "bool",
 		Name:  "active",
 		Value: string(buf),
 	}

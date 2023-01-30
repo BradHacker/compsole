@@ -27,7 +27,7 @@ type ServiceAccount struct {
 	APISecret uuid.UUID `json:"api_secret,omitempty"`
 	// Active holds the value of the "active" field.
 	// Determines whether or not the service account is active or not
-	Active serviceaccount.Active `json:"active,omitempty"`
+	Active bool `json:"active,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceAccountQuery when eager-loading is set.
 	Edges ServiceAccountEdges `json:"edges"`
@@ -67,7 +67,9 @@ func (*ServiceAccount) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case serviceaccount.FieldDisplayName, serviceaccount.FieldActive:
+		case serviceaccount.FieldActive:
+			values[i] = new(sql.NullBool)
+		case serviceaccount.FieldDisplayName:
 			values[i] = new(sql.NullString)
 		case serviceaccount.FieldID, serviceaccount.FieldAPIKey, serviceaccount.FieldAPISecret:
 			values[i] = new(uuid.UUID)
@@ -111,10 +113,10 @@ func (sa *ServiceAccount) assignValues(columns []string, values []interface{}) e
 				sa.APISecret = *value
 			}
 		case serviceaccount.FieldActive:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field active", values[i])
 			} else if value.Valid {
-				sa.Active = serviceaccount.Active(value.String)
+				sa.Active = value.Bool
 			}
 		}
 	}

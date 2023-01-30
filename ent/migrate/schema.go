@@ -77,7 +77,7 @@ var (
 		{Name: "display_name", Type: field.TypeString},
 		{Name: "api_key", Type: field.TypeUUID},
 		{Name: "api_secret", Type: field.TypeUUID},
-		{Name: "active", Type: field.TypeEnum, Enums: []string{"enabled", "disabled"}},
+		{Name: "active", Type: field.TypeBool},
 	}
 	// ServiceAccountsTable holds the schema information for the "service_accounts" table.
 	ServiceAccountsTable = &schema.Table{

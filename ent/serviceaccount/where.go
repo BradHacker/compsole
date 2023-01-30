@@ -113,6 +113,13 @@ func APISecret(v uuid.UUID) predicate.ServiceAccount {
 	})
 }
 
+// Active applies equality check predicate on the "active" field. It's identical to ActiveEQ.
+func Active(v bool) predicate.ServiceAccount {
+	return predicate.ServiceAccount(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldActive), v))
+	})
+}
+
 // DisplayNameEQ applies the EQ predicate on the "display_name" field.
 func DisplayNameEQ(v string) predicate.ServiceAccount {
 	return predicate.ServiceAccount(func(s *sql.Selector) {
@@ -377,50 +384,16 @@ func APISecretLTE(v uuid.UUID) predicate.ServiceAccount {
 }
 
 // ActiveEQ applies the EQ predicate on the "active" field.
-func ActiveEQ(v Active) predicate.ServiceAccount {
+func ActiveEQ(v bool) predicate.ServiceAccount {
 	return predicate.ServiceAccount(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldActive), v))
 	})
 }
 
 // ActiveNEQ applies the NEQ predicate on the "active" field.
-func ActiveNEQ(v Active) predicate.ServiceAccount {
+func ActiveNEQ(v bool) predicate.ServiceAccount {
 	return predicate.ServiceAccount(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldActive), v))
-	})
-}
-
-// ActiveIn applies the In predicate on the "active" field.
-func ActiveIn(vs ...Active) predicate.ServiceAccount {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.ServiceAccount(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldActive), v...))
-	})
-}
-
-// ActiveNotIn applies the NotIn predicate on the "active" field.
-func ActiveNotIn(vs ...Active) predicate.ServiceAccount {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.ServiceAccount(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldActive), v...))
 	})
 }
 

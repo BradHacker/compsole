@@ -3,10 +3,6 @@
 package serviceaccount
 
 import (
-	"fmt"
-	"io"
-	"strconv"
-
 	"github.com/google/uuid"
 )
 
@@ -70,44 +66,3 @@ var (
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
-
-// Active defines the type for the "active" enum field.
-type Active string
-
-// Active values.
-const (
-	ActiveEnabled  Active = "enabled"
-	ActiveDisabled Active = "disabled"
-)
-
-func (a Active) String() string {
-	return string(a)
-}
-
-// ActiveValidator is a validator for the "active" field enum values. It is called by the builders before save.
-func ActiveValidator(a Active) error {
-	switch a {
-	case ActiveEnabled, ActiveDisabled:
-		return nil
-	default:
-		return fmt.Errorf("serviceaccount: invalid enum value for active field: %q", a)
-	}
-}
-
-// MarshalGQL implements graphql.Marshaler interface.
-func (a Active) MarshalGQL(w io.Writer) {
-	io.WriteString(w, strconv.Quote(a.String()))
-}
-
-// UnmarshalGQL implements graphql.Unmarshaler interface.
-func (a *Active) UnmarshalGQL(val interface{}) error {
-	str, ok := val.(string)
-	if !ok {
-		return fmt.Errorf("enum %T must be a string", val)
-	}
-	*a = Active(str)
-	if err := ActiveValidator(*a); err != nil {
-		return fmt.Errorf("%s is not a valid Active", str)
-	}
-	return nil
-}

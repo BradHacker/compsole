@@ -89,6 +89,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 			serviceaccount.And(
 				serviceaccount.APIKeyEQ(apiKey),
 				serviceaccount.APISecretEQ(apiSecret),
+				serviceaccount.ActiveEQ(true), // only active accounts may authenticate
 			),
 		).Only(ctx)
 		if ent.IsNotFound(err) {
