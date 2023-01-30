@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/BradHacker/compsole/auth"
+	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
@@ -32,7 +32,7 @@ func NewSchema(client *ent.Client, rdb *redis.Client) graphql.ExecutableSchema {
 		},
 	}
 	GQLConfig.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, roles []model.Role) (res interface{}, err error) {
-		currentUser, err := auth.ForContext(ctx)
+		currentUser, err := api.ForContext(ctx)
 		if err != nil {
 			return nil, err
 		}

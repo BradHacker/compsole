@@ -1,3 +1,4 @@
+basePath: /api
 definitions:
   action.Type:
     enum:
@@ -38,30 +39,6 @@ definitions:
       error: {}
       message:
         type: string
-    type: object
-  auth.ServiceLoginError:
-    properties:
-      error:
-        type: string
-    type: object
-  auth.ServiceLoginResult:
-    properties:
-      expires_at:
-        type: integer
-      refresh_token:
-        type: string
-      session_token:
-        type: string
-    type: object
-  auth.ServiceLoginVals:
-    properties:
-      api_key:
-        type: string
-      api_secret:
-        type: string
-    required:
-    - api_key
-    - api_secret
     type: object
   auth.UserLoginVals:
     properties:
@@ -427,6 +404,25 @@ definitions:
         - $ref: '#/definitions/ent.Team'
         description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
     type: object
+  rest.ServiceLoginResult:
+    properties:
+      expires_at:
+        type: integer
+      refresh_token:
+        type: string
+      session_token:
+        type: string
+    type: object
+  rest.ServiceLoginVals:
+    properties:
+      api_key:
+        type: string
+      api_secret:
+        type: string
+    required:
+    - api_key
+    - api_secret
+    type: object
   serviceaccount.Active:
     enum:
     - enabled
@@ -452,7 +448,15 @@ definitions:
     - RoleUSER
     - RoleADMIN
 info:
-  contact: {}
+  contact:
+    name: BradHacker
+    url: http://github.com/BradHacker/compsole/issues
+  description: This is the API for service and user accounts.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Compsole API
+  version: "1.0"
 paths:
   /auth/local/login:
     post:
@@ -478,10 +482,12 @@ paths:
               type: string
           schema:
             $ref: '#/definitions/ent.User'
+      security:
+      - UserAuth: []
       summary: Login with a local account
       tags:
       - Auth API
-  /auth/service/login:
+  /rest/login:
     post:
       consumes:
       - application/json
@@ -493,24 +499,26 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/auth.ServiceLoginVals'
+          $ref: '#/definitions/rest.ServiceLoginVals'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.ServiceLoginResult'
+            $ref: '#/definitions/rest.ServiceLoginResult'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/auth.ServiceLoginError'
+            $ref: '#/definitions/api.APIError'
         "500":
           description: Internal Server Error
+      security:
+      - ServiceAuth: []
       summary: Login with a service account
       tags:
       - Auth API
-  /rest/vm-object/:identifier:
+  /rest/vm-object/{identifier}:
     get:
       description: Get VM Object
       parameters:
@@ -534,7 +542,45 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
       summary: Get VM Object
       tags:
       - Service API
+    put:
+      description: Update VM Object.
+      parameters:
+      - description: The identifier of the vm object (if modifying the VM Object identifier,
+          this must be the old identifier)
+        in: path
+        name: identifier
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.VmObject'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update VM Object
+      tags:
+      - Service API
+securityDefinitions:
+  ServiceAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  UserAuth:
+    type: basic
 swagger: "2.0"

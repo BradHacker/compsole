@@ -14,9 +14,10 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/BradHacker/compsole/api"
-	"github.com/BradHacker/compsole/auth"
+	"github.com/BradHacker/compsole/api/auth"
+	"github.com/BradHacker/compsole/api/rest"
 	"github.com/BradHacker/compsole/compsole/utils"
-	docs "github.com/BradHacker/compsole/docs"
+	_ "github.com/BradHacker/compsole/docs"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/graph"
@@ -29,6 +30,25 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/crypto/bcrypt"
 )
+
+//	@title			Compsole API
+//	@version		1.0
+//	@description	This is the API for service and user accounts.
+
+//	@contact.name	BradHacker
+//	@contact.url	http://github.com/BradHacker/compsole/issues
+
+//	@license.name	MIT
+//	@license.url	https://opensource.org/licenses/MIT
+
+//	@BasePath	/api
+
+//	@securityDefinitions.apiKey	ServiceAuth
+//	@in							header
+//	@name						Authorization
+//	@tokenUrl					https://localhost:8080/api/rest/login
+
+// @securityDefinitions.basic  UserAuth
 
 const defaultPort = "8080"
 
@@ -206,28 +226,24 @@ func main() {
 	}
 
 	authGroup := router.Group("/auth")
-	authGroup.GET("/login", func(c *gin.Context) {
-		c.Redirect(301, "/ui/")
-	})
-	authGroup.POST("/local/login", auth.LocalLogin(client))
-	authGroup.POST("/service/login", auth.ServiceLogin(client))
-	authGroup.GET("/logout", auth.Logout(client))
+	auth.RegisterAuthEndpoints(client, authGroup)
 
 	apiGroup := router.Group("/api")
 
 	gqlApi := apiGroup.Group("/graphql")
-	gqlApi.Use(auth.Middleware(client))
+	gqlApi.Use(api.Middleware(client))
 	gqlApi.POST("/query", gqlHandler)
 	gqlApi.GET("/query", gqlHandler)
 	gqlApi.GET("/playground", playgroundHandler())
 
 	restApi := apiGroup.Group("/rest")
-	restApi.Use(auth.ServiceMiddleware(client))
-	api.RegisterRESTEndpoints(client, restApi)
+	restApi.Use(api.ServiceMiddleware(client))
+	rest.RegisterRESTEndpoints(client, restApi)
 
 	// Swagger Docs
-	docs.SwaggerInfo.BasePath = "/"
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	// router.GET("/swagger/rest/*any", ginSwagger.WrapHandler(swaggerfiles.NewHandler(), ginSwagger.InstanceName("rest")))
+	// router.GET("/swagger/auth/*any", ginSwagger.WrapHandler(swaggerfiles.NewHandler(), ginSwagger.InstanceName("auth")))
 
 	logrus.Infof("Starting Compsole Server on port " + port)
 

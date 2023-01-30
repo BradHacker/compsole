@@ -1,4 +1,4 @@
-package auth
+package rest
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/serviceaccount"
@@ -27,22 +28,21 @@ type ServiceLoginResult struct {
 	ExpiresAt    int64  `json:"expires_at"`
 }
 
-type ServiceLoginError struct {
-	Error string `json:"error"`
-}
-
 // ServiceLogin godoc
-// @Summary Login with a service account
-// @Schemes http https
-// @Description Login with a service account
-// @Tags Auth API
-// @Accept json,mpfd
-// @Param login body ServiceLoginVals true "Service account details"
-// @Produce json
-// @Success 200 {object} ServiceLoginResult
-// @Failure 401 {object} ServiceLoginError
-// @Failure 500
-// @Router /auth/service/login [post]
+//
+//	@Security		ServiceAuth
+//	@Summary		Login with a service account
+//	@Schemes		http https
+//	@Description	Login with a service account
+//	@Tags			Auth API
+//	@Accept			json,mpfd
+//	@Param			login	body	ServiceLoginVals	true	"Service account details"
+//	@Produce		json
+//	@Success		200	{object}	ServiceLoginResult
+//	@Failure		401	{object}	api.APIError
+//	@Failure		500
+//	@Router			/rest/login [post]
+//
 // ServiceLogin handles login of service accounts and packs the session into context
 func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -57,31 +57,31 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 		if !exists {
 			// Kill the request if we don't have a valid JWT_SECRET
 			logrus.Error("env variable JWT_SECRET not set")
-			ctx.AbortWithStatus(http.StatusInternalServerError)
+			api.ReturnError(ctx, http.StatusInternalServerError, "check logs for details", fmt.Errorf("check logs for details"))
 			return
 		}
 
 		var loginVals ServiceLoginVals
 
 		if err := ctx.ShouldBind(&loginVals); err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			api.ReturnError(ctx, http.StatusUnauthorized, "failed to bind to login values", err)
 			return
 		}
 
 		// Get the client's IP address
-		clientIp, err := ForContextIp(ctx)
+		clientIp, err := api.ForContextIp(ctx)
 		if err != nil {
 			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
 
 		apiKey, err := uuid.Parse(loginVals.ApiKey)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			api.ReturnError(ctx, http.StatusUnauthorized, "failed to parse api_key", err)
 			return
 		}
 		apiSecret, err := uuid.Parse(loginVals.ApiSecret)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			api.ReturnError(ctx, http.StatusUnauthorized, "failed to parse api_secret", err)
 			return
 		}
 
@@ -102,13 +102,13 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 			}
 		}
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "api_key or api_secret invalid"})
+			api.ReturnError(ctx, http.StatusUnauthorized, "api_key or api_secret is invalid", err)
 			return
 		}
 
 		expiresAt := time.Now().Add(time.Minute * time.Duration(session_timeout)).Unix()
 
-		claims := &CompsoleJWTClaims{
+		claims := &api.CompsoleJWTClaims{
 			IssuedAt: time.Now().Unix(),
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expiresAt,
@@ -119,7 +119,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 		tokenString, err := token.SignedString(jwtKey)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
+			api.ReturnError(ctx, http.StatusUnauthorized, "failed to sign api token", err)
 			return
 		}
 
@@ -131,7 +131,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 			SetRefreshToken(refreshToken).
 			Save(ctx)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
+			api.ReturnError(ctx, http.StatusUnauthorized, "failed to update token", err)
 			return
 		}
 

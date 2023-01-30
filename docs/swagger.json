@@ -1,11 +1,27 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "This is the API for service and user accounts.",
+        "title": "Compsole API",
+        "contact": {
+            "name": "BradHacker",
+            "url": "http://github.com/BradHacker/compsole/issues"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
     },
+    "basePath": "/api",
     "paths": {
         "/auth/local/login": {
             "post": {
+                "security": [
+                    {
+                        "UserAuth": []
+                    }
+                ],
                 "description": "Login with a local account",
                 "consumes": [
                     "application/json",
@@ -45,8 +61,13 @@
                 }
             }
         },
-        "/auth/service/login": {
+        "/rest/login": {
             "post": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
                 "description": "Login with a service account",
                 "consumes": [
                     "application/json",
@@ -66,7 +87,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.ServiceLoginVals"
+                            "$ref": "#/definitions/rest.ServiceLoginVals"
                         }
                     }
                 ],
@@ -74,13 +95,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.ServiceLoginResult"
+                            "$ref": "#/definitions/rest.ServiceLoginResult"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/auth.ServiceLoginError"
+                            "$ref": "#/definitions/api.APIError"
                         }
                     },
                     "500": {
@@ -89,8 +110,13 @@
                 }
             }
         },
-        "/rest/vm-object/:identifier": {
+        "/rest/vm-object/{identifier}": {
             "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
                 "description": "Get VM Object",
                 "produces": [
                     "application/json"
@@ -103,6 +129,50 @@
                     {
                         "type": "string",
                         "description": "The identifier of the vm object",
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.VmObject"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Update VM Object.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Update VM Object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The identifier of the vm object (if modifying the VM Object identifier, this must be the old identifier)",
                         "name": "identifier",
                         "in": "path",
                         "required": true
@@ -174,43 +244,6 @@
             "properties": {
                 "error": {},
                 "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.ServiceLoginError": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.ServiceLoginResult": {
-            "type": "object",
-            "properties": {
-                "expires_at": {
-                    "type": "integer"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "session_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.ServiceLoginVals": {
-            "type": "object",
-            "required": [
-                "api_key",
-                "api_secret"
-            ],
-            "properties": {
-                "api_key": {
-                    "type": "string"
-                },
-                "api_secret": {
                     "type": "string"
                 }
             }
@@ -681,6 +714,35 @@
                 }
             }
         },
+        "rest.ServiceLoginResult": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "session_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "rest.ServiceLoginVals": {
+            "type": "object",
+            "required": [
+                "api_key",
+                "api_secret"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "api_secret": {
+                    "type": "string"
+                }
+            }
+        },
         "serviceaccount.Active": {
             "type": "string",
             "enum": [
@@ -713,6 +775,16 @@
                 "RoleUSER",
                 "RoleADMIN"
             ]
+        }
+    },
+    "securityDefinitions": {
+        "ServiceAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "UserAuth": {
+            "type": "basic"
         }
     }
 }

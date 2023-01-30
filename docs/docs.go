@@ -9,7 +9,14 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "BradHacker",
+            "url": "http://github.com/BradHacker/compsole/issues"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -17,6 +24,11 @@ const docTemplate = `{
     "paths": {
         "/auth/local/login": {
             "post": {
+                "security": [
+                    {
+                        "UserAuth": []
+                    }
+                ],
                 "description": "Login with a local account",
                 "consumes": [
                     "application/json",
@@ -56,8 +68,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/service/login": {
+        "/rest/login": {
             "post": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
                 "description": "Login with a service account",
                 "consumes": [
                     "application/json",
@@ -77,7 +94,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.ServiceLoginVals"
+                            "$ref": "#/definitions/rest.ServiceLoginVals"
                         }
                     }
                 ],
@@ -85,13 +102,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.ServiceLoginResult"
+                            "$ref": "#/definitions/rest.ServiceLoginResult"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/auth.ServiceLoginError"
+                            "$ref": "#/definitions/api.APIError"
                         }
                     },
                     "500": {
@@ -100,8 +117,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/rest/vm-object/:identifier": {
+        "/rest/vm-object/{identifier}": {
             "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
                 "description": "Get VM Object",
                 "produces": [
                     "application/json"
@@ -114,6 +136,50 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "The identifier of the vm object",
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.VmObject"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Update VM Object.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Update VM Object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The identifier of the vm object (if modifying the VM Object identifier, this must be the old identifier)",
                         "name": "identifier",
                         "in": "path",
                         "required": true
@@ -185,43 +251,6 @@ const docTemplate = `{
             "properties": {
                 "error": {},
                 "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.ServiceLoginError": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.ServiceLoginResult": {
-            "type": "object",
-            "properties": {
-                "expires_at": {
-                    "type": "integer"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "session_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.ServiceLoginVals": {
-            "type": "object",
-            "required": [
-                "api_key",
-                "api_secret"
-            ],
-            "properties": {
-                "api_key": {
-                    "type": "string"
-                },
-                "api_secret": {
                     "type": "string"
                 }
             }
@@ -692,6 +721,35 @@ const docTemplate = `{
                 }
             }
         },
+        "rest.ServiceLoginResult": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "session_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "rest.ServiceLoginVals": {
+            "type": "object",
+            "required": [
+                "api_key",
+                "api_secret"
+            ],
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "api_secret": {
+                    "type": "string"
+                }
+            }
+        },
         "serviceaccount.Active": {
             "type": "string",
             "enum": [
@@ -725,17 +783,27 @@ const docTemplate = `{
                 "RoleADMIN"
             ]
         }
+    },
+    "securityDefinitions": {
+        "ServiceAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "UserAuth": {
+            "type": "basic"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Compsole API",
+	Description:      "This is the API for service and user accounts.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }
