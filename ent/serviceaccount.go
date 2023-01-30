@@ -26,7 +26,7 @@ type ServiceAccount struct {
 	// [REQUIRED] The API secret for the service account. This value MUST be protected.
 	APISecret uuid.UUID `json:"api_secret,omitempty"`
 	// Active holds the value of the "active" field.
-	// Determines whether or not the service account is active or not
+	// [REQUIRED] Determines whether or not the service account is active or not
 	Active bool `json:"active,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceAccountQuery when eager-loading is set.

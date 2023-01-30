@@ -22,7 +22,7 @@ func (ServiceAccount) Fields() []ent.Field {
 		field.String("display_name").Comment("[REQUIRED] The display/common name for the service account."),
 		field.UUID("api_key", uuid.UUID{}).Comment("[REQUIRED] The API key for the service account. Equivalent to a username."),
 		field.UUID("api_secret", uuid.UUID{}).Comment("[REQUIRED] The API secret for the service account. This value MUST be protected."),
-		field.Bool("active").Comment("Determines whether or not the service account is active or not"),
+		field.Bool("active").Comment("[REQUIRED] Determines whether or not the service account is active or not"),
 	}
 }
 

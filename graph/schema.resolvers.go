@@ -16,6 +16,7 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -1399,6 +1400,150 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 	return true, nil
 }
 
+// CreateServiceAccount is the resolver for the createServiceAccount field.
+func (r *mutationResolver) CreateServiceAccount(ctx context.Context, input model.ServiceAccountInput) (*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	entServiceAccount, err := r.client.ServiceAccount.Create().
+		SetDisplayName(input.DisplayName).
+		SetActive(input.Active).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service account: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created service account %s", entServiceAccount.DisplayName)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
+	}
+	return entServiceAccount, nil
+}
+
+// UpdateServiceAccount is the resolver for the updateServiceAccount field.
+func (r *mutationResolver) UpdateServiceAccount(ctx context.Context, input model.ServiceAccountInput) (*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query service account: ID must not be nil")
+	}
+	serviceAccountUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service account UUID: %v", err)
+	}
+	entServiceAccount, err := r.client.ServiceAccount.Query().
+		Where(
+			serviceaccount.IDEQ(serviceAccountUuid),
+		).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query service account: %v", err)
+	}
+	entServiceAccount, err = entServiceAccount.Update().
+		SetDisplayName(input.DisplayName).
+		SetActive(input.Active).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update service account: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated service account %s", entServiceAccount.DisplayName)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
+	return entServiceAccount, nil
+}
+
+// DeleteServiceAccount is the resolver for the deleteServiceAccount field.
+func (r *mutationResolver) DeleteServiceAccount(ctx context.Context, id string) (bool, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	serviceAccountUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.ServiceAccount.Delete().
+		Where(
+			serviceaccount.IDEQ(serviceAccountUuid),
+		).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete service account: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted service account %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETE_OBJECT: %v", err)
+	}
+	return true, nil
+}
+
 // LockoutVM is the resolver for the lockoutVm field.
 func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool) (bool, error) {
 	authUser, err := api.ForContext(ctx)
@@ -2191,6 +2336,75 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 	return skeletonVmObjects, nil
 }
 
+// ServiceAccounts is the resolver for the serviceAccounts field.
+func (r *queryResolver) ServiceAccounts(ctx context.Context) ([]*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ServiceAccounts\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+
+	entServiceAccounts, err := r.client.ServiceAccount.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query service accounts: %v", err)
+	}
+	return entServiceAccounts, nil
+}
+
+// GetServiceAccount is the resolver for the getServiceAccount field.
+func (r *queryResolver) GetServiceAccount(ctx context.Context, id string) (*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+
+	serviceAccountUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service account UUID: %v", err)
+	}
+	entServiceAccounts, err := r.client.ServiceAccount.Query().
+		Where(
+			serviceaccount.IDEQ(serviceAccountUuid),
+		).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query service account: %v", err)
+	}
+	return entServiceAccounts, nil
+}
+
 // Actions is the resolver for the actions field.
 func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error) {
 	authUser, err := api.ForContext(ctx)
@@ -2240,6 +2454,11 @@ func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, type
 		TotalResults: totalActions,
 		Types:        types,
 	}, nil
+}
+
+// APIKey is the resolver for the ApiKey field.
+func (r *serviceAccountResolver) APIKey(ctx context.Context, obj *ent.ServiceAccount) (string, error) {
+	return obj.APIKey.String(), nil
 }
 
 // Lockout is the resolver for the lockout field.
@@ -2320,6 +2539,11 @@ func (r *Resolver) Provider() generated.ProviderResolver { return &providerResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// ServiceAccount returns generated.ServiceAccountResolver implementation.
+func (r *Resolver) ServiceAccount() generated.ServiceAccountResolver {
+	return &serviceAccountResolver{r}
+}
+
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
@@ -2337,6 +2561,7 @@ type competitionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type providerResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type serviceAccountResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
