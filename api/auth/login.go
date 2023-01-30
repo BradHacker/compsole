@@ -141,17 +141,19 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			} else {
 				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
+			logrus.Warn("env var JWT_SECRET is not set")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
 			return
 		}
 
-		tokenString, err := token.SignedString(jwtKey)
+		tokenString, err := token.SignedString([]byte(jwtKey))
 		if err != nil {
 			if secure_cookie {
 				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
 				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
+			logrus.Errorf("error signing token: %v", err)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
 			return
 		}
@@ -239,7 +241,7 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 		// if the token is invalid (if it has expired according to the expiry time we set on sign in),
 		// or if the signature does not match
 		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return []byte(jwtKey), nil
 		})
 
 		if err != nil {

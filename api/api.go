@@ -45,6 +45,23 @@ type ServiceAccountHeader struct {
 	Authorization *string `header:"Authorization" binding:"required"`
 }
 
+func UnauthenticatedMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
+		}
+		// put it in context
+		c := context.WithValue(ctx, ipCtxKey, clientIp)
+		ctx.Request = ctx.Request.WithContext(c)
+
+		ctx.Next()
+	}
+}
+
 // Middleware decodes the share session cookie and packs the session into context
 func Middleware(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -91,7 +108,7 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		// if the token is invalid (if it has expired according to the expiry time we set on sign in),
 		// or if the signature does not match
 		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return []byte(jwtKey), nil
 		})
 
 		if err != nil {
@@ -179,7 +196,7 @@ func ServiceMiddleware(client *ent.Client) gin.HandlerFunc {
 		jwtToken := authorizationParts[1]
 
 		authToken, err := jwt.ParseWithClaims(jwtToken, &CompsoleJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return []byte(jwtKey), nil
 		})
 		if err != nil || !authToken.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -246,8 +263,8 @@ func ForContext(ctx context.Context) (*ent.User, error) {
 	return nil, errors.New("unable to get user from context")
 }
 
-func ForContextIp(ctx context.Context) (string, error) {
-	if ip, ok := ctx.Value(ipCtxKey).(string); ok {
+func ForContextIp(ctx *gin.Context) (string, error) {
+	if ip, ok := ctx.Request.Context().Value(ipCtxKey).(string); ok {
 		return ip, nil
 	}
 	return "", fmt.Errorf("unable to get ip from context")

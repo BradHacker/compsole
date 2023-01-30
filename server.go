@@ -232,12 +232,14 @@ func main() {
 	}
 
 	authGroup := router.Group("/auth")
+	authGroup.Use(api.UnauthenticatedMiddleware())
 	auth.RegisterAuthEndpoints(client, authGroup)
 
 	apiGroup := router.Group("/api")
 
 	gqlApi := apiGroup.Group("/graphql")
 	gqlApi.Use(api.Middleware(client))
+	gqlApi.Use(graph.GinContextToContextMiddleware())
 	gqlApi.POST("/query", gqlHandler)
 	gqlApi.GET("/query", gqlHandler)
 	gqlApi.GET("/playground", playgroundHandler())

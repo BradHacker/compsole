@@ -117,7 +117,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		tokenString, err := token.SignedString(jwtKey)
+		tokenString, err := token.SignedString([]byte(jwtKey))
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnauthorized, "failed to sign api token", err)
 			return
