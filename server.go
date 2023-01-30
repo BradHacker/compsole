@@ -33,7 +33,7 @@ import (
 
 //	@title			Compsole API
 //	@version		1.0
-//	@description	This is the API for service and user accounts.
+//	@description.markdown
 
 //	@contact.name	BradHacker
 //	@contact.url	http://github.com/BradHacker/compsole/issues

@@ -861,7 +861,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "Compsole API",
-	Description:      "This is the API for service and user accounts.",
+	Description:      "This is the Compsole API documentation.\n\n### Authenticating\n\nThere are two methods of authenticating to the Compsole API. **Basic Auth** is used solely for the purpose of the Compsole UI. **Api Key Auth** is used for service accounts to authenticate prior to accessing the REST endpoints.\n\n#### Basic Auth\n\nUse the [`/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.\n\n#### Api Key Auth\n\nAPI Key Authentication is more complicated.\n\n1. You must retreive your `api_key` and `api_secret` from the Compsole UI after creating a service account.\n2. Use the [`/rest/login`](#operations-Auth_API-post_rest_login) endpoint to retrieve an API Token to use in requests\n3. Place the API Token into the `Authorization` header like so: `Authorization: Bearer <api token here...>`\n",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

@@ -19,7 +19,7 @@ import (
 )
 
 //go:generate swag fmt -g ../server.go
-//go:generate swag i -g ../server.go --o ../docs --pd
+//go:generate swag i -g ../server.go --o ../docs --pd --md ../docs
 
 type APIError struct {
 	Message string `json:"message"`
