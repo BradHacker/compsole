@@ -1,0 +1,507 @@
+definitions:
+  action.Type:
+    enum:
+    - SIGN_IN
+    - FAILED_SIGN_IN
+    - SIGN_OUT
+    - API_CALL
+    - CONSOLE_ACCESS
+    - REBOOT
+    - SHUTDOWN
+    - POWER_ON
+    - POWER_OFF
+    - CHANGE_SELF_PASSWORD
+    - CHANGE_PASSWORD
+    - CREATE_OBJECT
+    - UPDATE_OBJECT
+    - DELETE_OBJECT
+    - UPDATE_LOCKOUT
+    type: string
+    x-enum-varnames:
+    - TypeSIGN_IN
+    - TypeFAILED_SIGN_IN
+    - TypeSIGN_OUT
+    - TypeAPI_CALL
+    - TypeCONSOLE_ACCESS
+    - TypeREBOOT
+    - TypeSHUTDOWN
+    - TypePOWER_ON
+    - TypePOWER_OFF
+    - TypeCHANGE_SELF_PASSWORD
+    - TypeCHANGE_PASSWORD
+    - TypeCREATE_OBJECT
+    - TypeUPDATE_OBJECT
+    - TypeDELETE_OBJECT
+    - TypeUPDATE_LOCKOUT
+  auth.ServiceLoginError:
+    properties:
+      error:
+        type: string
+    type: object
+  auth.ServiceLoginResult:
+    properties:
+      expires_at:
+        type: integer
+      refresh_token:
+        type: string
+      session_token:
+        type: string
+    type: object
+  auth.ServiceLoginVals:
+    properties:
+      api_key:
+        type: string
+      api_secret:
+        type: string
+    required:
+    - api_key
+    - api_secret
+    type: object
+  auth.UserLoginVals:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  ent.Action:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ActionEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ActionQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      ip_address:
+        description: IPAddress holds the value of the "ip_address" field.
+        type: string
+      message:
+        description: Message holds the value of the "message" field.
+        type: string
+      performed_at:
+        description: PerformedAt holds the value of the "performed_at" field.
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/action.Type'
+        description: Type holds the value of the "type" field.
+    type: object
+  ent.ActionEdges:
+    properties:
+      ActionToServiceAccount:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceAccount'
+        description: ActionToServiceAccount holds the value of the ActionToServiceAccount
+          edge.
+      ActionToUser:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: ActionToUser holds the value of the ActionToUser edge.
+    type: object
+  ent.Competition:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.CompetitionEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the CompetitionQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [REQUIRED] The unique name (aka. slug) for the competition.
+        type: string
+    type: object
+  ent.CompetitionEdges:
+    properties:
+      CompetitionToProvider:
+        allOf:
+        - $ref: '#/definitions/ent.Provider'
+        description: CompetitionToProvider holds the value of the CompetitionToProvider
+          edge.
+      CompetitionToTeams:
+        description: CompetitionToTeams holds the value of the CompetitionToTeams
+          edge.
+        items:
+          $ref: '#/definitions/ent.Team'
+        type: array
+    type: object
+  ent.Provider:
+    properties:
+      config:
+        description: |-
+          Config holds the value of the "config" field.
+          [REQUIRED] This is the JSON configuration for the provider.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ProviderEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ProviderQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [REQUIRED] The unique name (aka. slug) for the provider.
+        type: string
+      type:
+        description: |-
+          Type holds the value of the "type" field.
+          [REQUIRED] The unique name (aka. slug) for the provider.
+        type: string
+    type: object
+  ent.ProviderEdges:
+    properties:
+      ProviderToCompetition:
+        description: ProviderToCompetition holds the value of the ProviderToCompetition
+          edge.
+        items:
+          $ref: '#/definitions/ent.Competition'
+        type: array
+    type: object
+  ent.ServiceAccount:
+    properties:
+      active:
+        allOf:
+        - $ref: '#/definitions/serviceaccount.Active'
+        description: |-
+          Active holds the value of the "active" field.
+          Determines whether or not the service account is active or not
+      api_key:
+        description: |-
+          APIKey holds the value of the "api_key" field.
+          [REQUIRED] The API key for the service account. Equivalent to a username.
+        type: string
+      api_secret:
+        description: |-
+          APISecret holds the value of the "api_secret" field.
+          [REQUIRED] The API secret for the service account. This value MUST be protected.
+        type: string
+      display_name:
+        description: |-
+          DisplayName holds the value of the "display_name" field.
+          [REQUIRED] The display/common name for the service account.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceAccountEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ServiceAccountQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+    type: object
+  ent.ServiceAccountEdges:
+    properties:
+      ServiceAccountToActions:
+        description: ServiceAccountToActions holds the value of the ServiceAccountToActions
+          edge.
+        items:
+          $ref: '#/definitions/ent.Action'
+        type: array
+      ServiceAccountToToken:
+        description: ServiceAccountToToken holds the value of the ServiceAccountToToken
+          edge.
+        items:
+          $ref: '#/definitions/ent.ServiceToken'
+        type: array
+    type: object
+  ent.ServiceToken:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceTokenEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ServiceTokenQuery when eager-loading is set.
+      expire_at:
+        description: |-
+          ExpireAt holds the value of the "expire_at" field.
+          [REQUIRED] The time the token should expire.
+        type: integer
+      id:
+        description: ID of the ent.
+        type: string
+      refresh_token:
+        description: |-
+          RefreshToken holds the value of the "refresh_token" field.
+          [REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.
+        type: string
+      token:
+        description: |-
+          Token holds the value of the "token" field.
+          [REQUIRED] The API token for a service account session.
+        type: string
+    type: object
+  ent.ServiceTokenEdges:
+    properties:
+      TokenToServiceAccount:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceAccount'
+        description: TokenToServiceAccount holds the value of the TokenToServiceAccount
+          edge.
+    type: object
+  ent.Team:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.TeamEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the TeamQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [OPTIONAL] The display name for the team.
+        type: string
+      team_number:
+        description: |-
+          TeamNumber holds the value of the "team_number" field.
+          [REQUIRED] The team number.
+        type: integer
+    type: object
+  ent.TeamEdges:
+    properties:
+      TeamToCompetition:
+        allOf:
+        - $ref: '#/definitions/ent.Competition'
+        description: TeamToCompetition holds the value of the TeamToCompetition edge.
+      TeamToUsers:
+        description: TeamToUsers holds the value of the TeamToUsers edge.
+        items:
+          $ref: '#/definitions/ent.User'
+        type: array
+      TeamToVmObjects:
+        description: TeamToVmObjects holds the value of the TeamToVmObjects edge.
+        items:
+          $ref: '#/definitions/ent.VmObject'
+        type: array
+    type: object
+  ent.Token:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.TokenEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the TokenQuery when eager-loading is set.
+      expire_at:
+        description: |-
+          ExpireAt holds the value of the "expire_at" field.
+          [REQUIRED] The time the token should expire.
+        type: integer
+      id:
+        description: ID of the ent.
+        type: string
+      token:
+        description: |-
+          Token holds the value of the "token" field.
+          [REQUIRED] The auth-token cookie value for the user session.
+        type: string
+    type: object
+  ent.TokenEdges:
+    properties:
+      TokenToUser:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: TokenToUser holds the value of the TokenToUser edge.
+    type: object
+  ent.User:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.UserEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the UserQuery when eager-loading is set.
+      first_name:
+        description: |-
+          FirstName holds the value of the "first_name" field.
+          [OPTIONAL] The display first name for the user.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      last_name:
+        description: |-
+          LastName holds the value of the "last_name" field.
+          [OPTIONAL] The display last name for the user
+        type: string
+      provider:
+        allOf:
+        - $ref: '#/definitions/user.Provider'
+        description: |-
+          Provider holds the value of the "provider" field.
+          [REQUIRED] The type of login the user will be using.
+      role:
+        allOf:
+        - $ref: '#/definitions/user.Role'
+        description: |-
+          Role holds the value of the "role" field.
+          [REQUIRED] The role of the user. Admins have full access.
+      username:
+        description: |-
+          Username holds the value of the "username" field.
+          [REQUIRED] The username for the user.
+        type: string
+    type: object
+  ent.UserEdges:
+    properties:
+      UserToActions:
+        description: UserToActions holds the value of the UserToActions edge.
+        items:
+          $ref: '#/definitions/ent.Action'
+        type: array
+      UserToTeam:
+        allOf:
+        - $ref: '#/definitions/ent.Team'
+        description: UserToTeam holds the value of the UserToTeam edge.
+      UserToToken:
+        description: UserToToken holds the value of the UserToToken edge.
+        items:
+          $ref: '#/definitions/ent.Token'
+        type: array
+    type: object
+  ent.VmObject:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.VmObjectEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the VmObjectQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      identifier:
+        description: |-
+          Identifier holds the value of the "identifier" field.
+          [REQUIRED] The identifier of the VM. This will be provider-specific.
+        type: string
+      ip_addresses:
+        description: |-
+          IPAddresses holds the value of the "ip_addresses" field.
+          [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
+        items:
+          type: string
+        type: array
+      locked:
+        description: |-
+          Locked holds the value of the "locked" field.
+          [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
+        type: boolean
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
+        type: string
+    type: object
+  ent.VmObjectEdges:
+    properties:
+      VmObjectToTeam:
+        allOf:
+        - $ref: '#/definitions/ent.Team'
+        description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
+    type: object
+  serviceaccount.Active:
+    enum:
+    - enabled
+    - disabled
+    type: string
+    x-enum-varnames:
+    - ActiveEnabled
+    - ActiveDisabled
+  user.Provider:
+    enum:
+    - LOCAL
+    - GITLAB
+    type: string
+    x-enum-varnames:
+    - ProviderLOCAL
+    - ProviderGITLAB
+  user.Role:
+    enum:
+    - USER
+    - ADMIN
+    type: string
+    x-enum-varnames:
+    - RoleUSER
+    - RoleADMIN
+info:
+  contact: {}
+paths:
+  /auth/local/login:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Login with a local account
+      parameters:
+      - description: User account details
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.UserLoginVals'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Cookie:
+              description: '`auth-cookie` contains the session token'
+              type: string
+          schema:
+            $ref: '#/definitions/ent.User'
+      summary: Login with a local account
+      tags:
+      - auth
+  /auth/service/login:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Login with a service account
+      parameters:
+      - description: Service account details
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.ServiceLoginVals'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.ServiceLoginResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/auth.ServiceLoginError'
+        "500":
+          description: Internal Server Error
+      summary: Login with a service account
+      tags:
+      - auth
+swagger: "2.0"

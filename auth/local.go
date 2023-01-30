@@ -16,12 +16,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type login struct {
-	Username string `form:"username" json:"username" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
+type UserLoginVals struct {
+	Username string `form:"username" json:"username" binding:"required" example:"admin"`
+	Password string `form:"password" json:"password" binding:"required" example:"password123"`
 }
 
-// LocalLogin decides the share session cookie and packs the session into context
+// LocalLogin godoc
+// @Summary Login with a local account
+// @Schemes http https
+// @Description Login with a local account
+// @Tags auth
+// @Accept json,mpfd
+// @Param login body UserLoginVals true "User account details"
+// @Produce json
+// @Success 200 {object} ent.User
+// @Header 200 {string} Cookie "`auth-cookie` contains the session token"
+// @Router /auth/local/login [post]
 func LocalLogin(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
@@ -40,7 +50,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 				secure_cookie = true
 			}
 		}
-		var loginVals login
+		var loginVals UserLoginVals
 		username := ""
 		password := ""
 

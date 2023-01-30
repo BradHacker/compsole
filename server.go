@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/BradHacker/compsole/auth"
 	"github.com/BradHacker/compsole/compsole/utils"
+	docs "github.com/BradHacker/compsole/docs"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/graph"
@@ -23,6 +24,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -171,8 +174,6 @@ func main() {
 		}
 	}()
 
-	auth.InitGoth()
-
 	router := gin.Default()
 
 	cors_urls := []string{"http://localhost", "http://localhost:3000"}
@@ -208,9 +209,7 @@ func main() {
 		c.Redirect(301, "/ui/")
 	})
 	authGroup.POST("/local/login", auth.LocalLogin(client))
-	authGroup.POST("/service", auth.ServiceLogin(client))
-	authGroup.GET("/:provider/login", auth.GothicBeginAuth())
-	authGroup.GET("/:provider/callback", auth.GothicCallbackHandler(client))
+	authGroup.POST("/service/login", auth.ServiceLogin(client))
 	authGroup.GET("/logout", auth.Logout(client))
 
 	api := router.Group("/api")
@@ -219,6 +218,10 @@ func main() {
 	api.POST("/query", gqlHandler)
 	api.GET("/query", gqlHandler)
 	api.GET("/playground", playgroundHandler())
+
+	// Swagger Docs
+	docs.SwaggerInfo.BasePath = "/"
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	logrus.Infof("Starting Compsole Server on port " + port)
 

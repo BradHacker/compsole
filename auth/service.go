@@ -21,6 +21,28 @@ type ServiceLoginVals struct {
 	ApiSecret string `form:"api_secret" json:"api_secret" binding:"required"`
 }
 
+type ServiceLoginResult struct {
+	SessionToken string `json:"session_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresAt    int64  `json:"expires_at"`
+}
+
+type ServiceLoginError struct {
+	Error string `json:"error"`
+}
+
+// ServiceLogin godoc
+// @Summary Login with a service account
+// @Schemes http https
+// @Description Login with a service account
+// @Tags auth
+// @Accept json,mpfd
+// @Param login body ServiceLoginVals true "Service account details"
+// @Produce json
+// @Success 200 {object} ServiceLoginResult
+// @Failure 401 {object} ServiceLoginError
+// @Failure 500
+// @Router /auth/service/login [post]
 // ServiceLogin handles login of service accounts and packs the session into context
 func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -124,10 +146,10 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 			logrus.Warn("failed to create SIGN_IN action: %v", err)
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{
-			"session_token": tokenString,
-			"refresh_token": refreshToken,
-			"expires_at":    expiresAt,
+		ctx.JSON(http.StatusOK, ServiceLoginResult{
+			SessionToken: tokenString,
+			RefreshToken: refreshToken.String(),
+			ExpiresAt:    expiresAt,
 		})
 	}
 }
