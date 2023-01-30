@@ -35,7 +35,7 @@ type ServiceLoginError struct {
 // @Summary Login with a service account
 // @Schemes http https
 // @Description Login with a service account
-// @Tags auth
+// @Tags Auth API
 // @Accept json,mpfd
 // @Param login body ServiceLoginVals true "Service account details"
 // @Produce json

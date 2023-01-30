@@ -13,6 +13,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/auth"
 	"github.com/BradHacker/compsole/compsole/utils"
 	docs "github.com/BradHacker/compsole/docs"
@@ -33,7 +34,7 @@ const defaultPort = "8080"
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", "/api/query")
+	h := playground.Handler("GraphQL", "/api/graphql/query")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -212,12 +213,17 @@ func main() {
 	authGroup.POST("/service/login", auth.ServiceLogin(client))
 	authGroup.GET("/logout", auth.Logout(client))
 
-	api := router.Group("/api")
-	api.Use(auth.Middleware(client))
+	apiGroup := router.Group("/api")
 
-	api.POST("/query", gqlHandler)
-	api.GET("/query", gqlHandler)
-	api.GET("/playground", playgroundHandler())
+	gqlApi := apiGroup.Group("/graphql")
+	gqlApi.Use(auth.Middleware(client))
+	gqlApi.POST("/query", gqlHandler)
+	gqlApi.GET("/query", gqlHandler)
+	gqlApi.GET("/playground", playgroundHandler())
+
+	restApi := apiGroup.Group("/rest")
+	restApi.Use(auth.ServiceMiddleware(client))
+	api.RegisterRESTEndpoints(client, restApi)
 
 	// Swagger Docs
 	docs.SwaggerInfo.BasePath = "/"

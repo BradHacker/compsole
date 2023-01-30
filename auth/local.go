@@ -25,7 +25,7 @@ type UserLoginVals struct {
 // @Summary Login with a local account
 // @Schemes http https
 // @Description Login with a local account
-// @Tags auth
+// @Tags Auth API
 // @Accept json,mpfd
 // @Param login body UserLoginVals true "User account details"
 // @Produce json

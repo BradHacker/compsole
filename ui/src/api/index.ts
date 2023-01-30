@@ -4,7 +4,7 @@ import { WebSocketLink } from "@apollo/client/link/ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 
 const wsLink = new WebSocketLink({
-  uri: `${process.env.REACT_APP_WS_URL}/api/query`,
+  uri: `${process.env.REACT_APP_WS_URL}/api/graphql/query`,
   options: {
     reconnect: true,
     timeout: 30000,
@@ -14,7 +14,7 @@ const wsLink = new WebSocketLink({
 });
 
 const httpLink = new HttpLink({
-  uri: `${process.env.REACT_APP_SERVER_URL}/api/query`,
+  uri: `${process.env.REACT_APP_SERVER_URL}/api/graphql/query`,
   credentials: "include",
 });
 
@@ -31,7 +31,7 @@ const link = split(
 );
 
 export const client = new ApolloClient({
-  uri: `${process.env.REACT_APP_SERVER_URL}/api/query`,
+  uri: `${process.env.REACT_APP_SERVER_URL}/api/graphql/query`,
   link,
   cache: new InMemoryCache(),
   credentials: "include",

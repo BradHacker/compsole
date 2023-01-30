@@ -15,7 +15,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth API"
                 ],
                 "summary": "Login with a local account",
                 "parameters": [
@@ -56,7 +56,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth API"
                 ],
                 "summary": "Login with a service account",
                 "parameters": [
@@ -85,6 +85,47 @@
                     },
                     "500": {
                         "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/rest/vm-object/:identifier": {
+            "get": {
+                "description": "Get VM Object",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Get VM Object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The identifier of the vm object",
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.VmObject"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
                     }
                 }
             }
@@ -127,6 +168,15 @@
                 "TypeDELETE_OBJECT",
                 "TypeUPDATE_LOCKOUT"
             ]
+        },
+        "api.APIError": {
+            "type": "object",
+            "properties": {
+                "error": {},
+                "message": {
+                    "type": "string"
+                }
+            }
         },
         "auth.ServiceLoginError": {
             "type": "object",

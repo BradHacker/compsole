@@ -33,6 +33,12 @@ definitions:
     - TypeUPDATE_OBJECT
     - TypeDELETE_OBJECT
     - TypeUPDATE_LOCKOUT
+  api.APIError:
+    properties:
+      error: {}
+      message:
+        type: string
+    type: object
   auth.ServiceLoginError:
     properties:
       error:
@@ -474,7 +480,7 @@ paths:
             $ref: '#/definitions/ent.User'
       summary: Login with a local account
       tags:
-      - auth
+      - Auth API
   /auth/service/login:
     post:
       consumes:
@@ -503,5 +509,32 @@ paths:
           description: Internal Server Error
       summary: Login with a service account
       tags:
-      - auth
+      - Auth API
+  /rest/vm-object/:identifier:
+    get:
+      description: Get VM Object
+      parameters:
+      - description: The identifier of the vm object
+        in: path
+        name: identifier
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.VmObject'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Get VM Object
+      tags:
+      - Service API
 swagger: "2.0"
