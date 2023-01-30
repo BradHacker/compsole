@@ -1401,7 +1401,7 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 }
 
 // CreateServiceAccount is the resolver for the createServiceAccount field.
-func (r *mutationResolver) CreateServiceAccount(ctx context.Context, input model.ServiceAccountInput) (*ent.ServiceAccount, error) {
+func (r *mutationResolver) CreateServiceAccount(ctx context.Context, input model.ServiceAccountInput) (*model.ServiceAccountDetails, error) {
 	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
@@ -1426,6 +1426,8 @@ func (r *mutationResolver) CreateServiceAccount(ctx context.Context, input model
 	entServiceAccount, err := r.client.ServiceAccount.Create().
 		SetDisplayName(input.DisplayName).
 		SetActive(input.Active).
+		SetAPIKey(uuid.New()).
+		SetAPISecret(uuid.New()).
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create service account: %v", err)
@@ -1439,7 +1441,13 @@ func (r *mutationResolver) CreateServiceAccount(ctx context.Context, input model
 	if err != nil {
 		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
 	}
-	return entServiceAccount, nil
+	return &model.ServiceAccountDetails{
+		ID:          entServiceAccount.ID.String(),
+		DisplayName: entServiceAccount.DisplayName,
+		APIKey:      entServiceAccount.APIKey.String(),
+		APISecret:   entServiceAccount.APISecret.String(),
+		Active:      entServiceAccount.Active,
+	}, nil
 }
 
 // UpdateServiceAccount is the resolver for the updateServiceAccount field.

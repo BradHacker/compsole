@@ -106,7 +106,7 @@ export type Mutation = {
   changeSelfPassword: Scalars['Boolean'];
   createCompetition: Competition;
   createProvider: Provider;
-  createServiceAccount: ServiceAccount;
+  createServiceAccount: ServiceAccountDetails;
   createTeam: Team;
   createUser: User;
   createVmObject: VmObject;
@@ -405,6 +405,15 @@ export type ServiceAccount = {
   ID: Scalars['ID'];
 };
 
+export type ServiceAccountDetails = {
+  __typename?: 'ServiceAccountDetails';
+  Active: Scalars['Boolean'];
+  ApiKey: Scalars['String'];
+  ApiSecret: Scalars['String'];
+  DisplayName: Scalars['String'];
+  ID: Scalars['ID'];
+};
+
 export type ServiceAccountInput = {
   Active: Scalars['Boolean'];
   DisplayName: Scalars['String'];
@@ -595,6 +604,8 @@ export type DeleteProviderMutation = { __typename?: 'Mutation', deleteProvider: 
 
 export type ServiceAccountFragmentFragment = { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean };
 
+export type ServiceAccountDetailsFragmentFragment = { __typename?: 'ServiceAccountDetails', ID: string, DisplayName: string, ApiKey: string, ApiSecret: string, Active: boolean };
+
 export type ListServiceAccountsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -619,7 +630,7 @@ export type CreateServiceAccountMutationVariables = Exact<{
 }>;
 
 
-export type CreateServiceAccountMutation = { __typename?: 'Mutation', createServiceAccount: { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean } };
+export type CreateServiceAccountMutation = { __typename?: 'Mutation', createServiceAccount: { __typename?: 'ServiceAccountDetails', ID: string, DisplayName: string, ApiKey: string, ApiSecret: string, Active: boolean } };
 
 export type DeleteServiceAccountMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -890,6 +901,15 @@ export const ServiceAccountFragmentFragmentDoc = gql`
   ID
   DisplayName
   ApiKey
+  Active
+}
+    `;
+export const ServiceAccountDetailsFragmentFragmentDoc = gql`
+    fragment ServiceAccountDetailsFragment on ServiceAccountDetails {
+  ID
+  DisplayName
+  ApiKey
+  ApiSecret
   Active
 }
     `;
@@ -1576,10 +1596,10 @@ export type UpdateServiceAccountMutationOptions = Apollo.BaseMutationOptions<Upd
 export const CreateServiceAccountDocument = gql`
     mutation CreateServiceAccount($input: ServiceAccountInput!) {
   createServiceAccount(input: $input) {
-    ...ServiceAccountFragment
+    ...ServiceAccountDetailsFragment
   }
 }
-    ${ServiceAccountFragmentFragmentDoc}`;
+    ${ServiceAccountDetailsFragmentFragmentDoc}`;
 export type CreateServiceAccountMutationFn = Apollo.MutationFunction<CreateServiceAccountMutation, CreateServiceAccountMutationVariables>;
 
 /**
