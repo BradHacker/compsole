@@ -157,6 +157,7 @@ type ComplexityRoot struct {
 		APIKey      func(childComplexity int) int
 		Active      func(childComplexity int) int
 		DisplayName func(childComplexity int) int
+		ID          func(childComplexity int) int
 	}
 
 	SkeletonVmObject struct {
@@ -264,6 +265,8 @@ type QueryResolver interface {
 	Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error)
 }
 type ServiceAccountResolver interface {
+	ID(ctx context.Context, obj *ent.ServiceAccount) (string, error)
+
 	APIKey(ctx context.Context, obj *ent.ServiceAccount) (string, error)
 }
 type SubscriptionResolver interface {
@@ -1055,6 +1058,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ServiceAccount.DisplayName(childComplexity), true
 
+	case "ServiceAccount.ID":
+		if e.complexity.ServiceAccount.ID == nil {
+			break
+		}
+
+		return e.complexity.ServiceAccount.ID(childComplexity), true
+
 	case "SkeletonVmObject.IPAddresses":
 		if e.complexity.SkeletonVmObject.IPAddresses == nil {
 			break
@@ -1394,6 +1404,7 @@ type ActionsResult {
 }
 
 type ServiceAccount {
+  ID: ID!
   DisplayName: String!
   ApiKey: String!
   Active: Boolean!
@@ -5479,6 +5490,8 @@ func (ec *executionContext) fieldContext_Mutation_createServiceAccount(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "ID":
+				return ec.fieldContext_ServiceAccount_ID(ctx, field)
 			case "DisplayName":
 				return ec.fieldContext_ServiceAccount_DisplayName(ctx, field)
 			case "ApiKey":
@@ -5566,6 +5579,8 @@ func (ec *executionContext) fieldContext_Mutation_updateServiceAccount(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "ID":
+				return ec.fieldContext_ServiceAccount_ID(ctx, field)
 			case "DisplayName":
 				return ec.fieldContext_ServiceAccount_DisplayName(ctx, field)
 			case "ApiKey":
@@ -7666,6 +7681,8 @@ func (ec *executionContext) fieldContext_Query_serviceAccounts(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "ID":
+				return ec.fieldContext_ServiceAccount_ID(ctx, field)
 			case "DisplayName":
 				return ec.fieldContext_ServiceAccount_DisplayName(ctx, field)
 			case "ApiKey":
@@ -7742,6 +7759,8 @@ func (ec *executionContext) fieldContext_Query_getServiceAccount(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "ID":
+				return ec.fieldContext_ServiceAccount_ID(ctx, field)
 			case "DisplayName":
 				return ec.fieldContext_ServiceAccount_DisplayName(ctx, field)
 			case "ApiKey":
@@ -7985,6 +8004,50 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ServiceAccount_ID(ctx context.Context, field graphql.CollectedField, obj *ent.ServiceAccount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ServiceAccount_ID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ServiceAccount().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ServiceAccount_ID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ServiceAccount",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12542,6 +12605,26 @@ func (ec *executionContext) _ServiceAccount(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ServiceAccount")
+		case "ID":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ServiceAccount_ID(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "DisplayName":
 
 			out.Values[i] = ec._ServiceAccount_DisplayName(ctx, field, obj)

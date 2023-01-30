@@ -106,11 +106,13 @@ export type Mutation = {
   changeSelfPassword: Scalars['Boolean'];
   createCompetition: Competition;
   createProvider: Provider;
+  createServiceAccount: ServiceAccount;
   createTeam: Team;
   createUser: User;
   createVmObject: VmObject;
   deleteCompetition: Scalars['Boolean'];
   deleteProvider: Scalars['Boolean'];
+  deleteServiceAccount: Scalars['Boolean'];
   deleteTeam: Scalars['Boolean'];
   deleteUser: Scalars['Boolean'];
   deleteVmObject: Scalars['Boolean'];
@@ -123,6 +125,7 @@ export type Mutation = {
   updateAccount: User;
   updateCompetition: Competition;
   updateProvider: Provider;
+  updateServiceAccount: ServiceAccount;
   updateTeam: Team;
   updateUser: User;
   updateVmObject: VmObject;
@@ -166,6 +169,11 @@ export type MutationCreateProviderArgs = {
 };
 
 
+export type MutationCreateServiceAccountArgs = {
+  input: ServiceAccountInput;
+};
+
+
 export type MutationCreateTeamArgs = {
   input: TeamInput;
 };
@@ -187,6 +195,11 @@ export type MutationDeleteCompetitionArgs = {
 
 
 export type MutationDeleteProviderArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type MutationDeleteServiceAccountArgs = {
   id: Scalars['ID'];
 };
 
@@ -255,6 +268,11 @@ export type MutationUpdateProviderArgs = {
 };
 
 
+export type MutationUpdateServiceAccountArgs = {
+  input: ServiceAccountInput;
+};
+
+
 export type MutationUpdateTeamArgs = {
   input: TeamInput;
 };
@@ -291,6 +309,7 @@ export type Query = {
   console: Scalars['String'];
   getCompetition: Competition;
   getProvider: Provider;
+  getServiceAccount: ServiceAccount;
   getTeam: Team;
   getUser: User;
   getVmObject: VmObject;
@@ -300,6 +319,7 @@ export type Query = {
   myTeam: Team;
   myVmObjects: Array<VmObject>;
   providers: Array<Provider>;
+  serviceAccounts: Array<ServiceAccount>;
   teams: Array<Team>;
   users: Array<User>;
   validateConfig: Scalars['Boolean'];
@@ -327,6 +347,11 @@ export type QueryGetCompetitionArgs = {
 
 
 export type QueryGetProviderArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type QueryGetServiceAccountArgs = {
   id: Scalars['ID'];
 };
 
@@ -371,6 +396,20 @@ export enum Role {
   Undefined = 'UNDEFINED',
   User = 'USER'
 }
+
+export type ServiceAccount = {
+  __typename?: 'ServiceAccount';
+  Active: Scalars['Boolean'];
+  ApiKey: Scalars['String'];
+  DisplayName: Scalars['String'];
+  ID: Scalars['ID'];
+};
+
+export type ServiceAccountInput = {
+  Active: Scalars['Boolean'];
+  DisplayName: Scalars['String'];
+  ID?: InputMaybe<Scalars['ID']>;
+};
 
 export type SkeletonVmObject = {
   __typename?: 'SkeletonVmObject';
@@ -553,6 +592,41 @@ export type DeleteProviderMutationVariables = Exact<{
 
 
 export type DeleteProviderMutation = { __typename?: 'Mutation', deleteProvider: boolean };
+
+export type ServiceAccountFragmentFragment = { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean };
+
+export type ListServiceAccountsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ListServiceAccountsQuery = { __typename?: 'Query', serviceAccounts: Array<{ __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean }> };
+
+export type GetServiceAccountQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type GetServiceAccountQuery = { __typename?: 'Query', getServiceAccount: { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean } };
+
+export type UpdateServiceAccountMutationVariables = Exact<{
+  input: ServiceAccountInput;
+}>;
+
+
+export type UpdateServiceAccountMutation = { __typename?: 'Mutation', updateServiceAccount: { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean } };
+
+export type CreateServiceAccountMutationVariables = Exact<{
+  input: ServiceAccountInput;
+}>;
+
+
+export type CreateServiceAccountMutation = { __typename?: 'Mutation', createServiceAccount: { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean } };
+
+export type DeleteServiceAccountMutationVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type DeleteServiceAccountMutation = { __typename?: 'Mutation', deleteServiceAccount: boolean };
 
 export type TeamFragmentFragment = { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } };
 
@@ -809,6 +883,14 @@ export const ProviderFragmentFragmentDoc = gql`
   Name
   Type
   Config
+}
+    `;
+export const ServiceAccountFragmentFragmentDoc = gql`
+    fragment ServiceAccountFragment on ServiceAccount {
+  ID
+  DisplayName
+  ApiKey
+  Active
 }
     `;
 export const AdminUserFragmentFragmentDoc = gql`
@@ -1389,6 +1471,172 @@ export function useDeleteProviderMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteProviderMutationHookResult = ReturnType<typeof useDeleteProviderMutation>;
 export type DeleteProviderMutationResult = Apollo.MutationResult<DeleteProviderMutation>;
 export type DeleteProviderMutationOptions = Apollo.BaseMutationOptions<DeleteProviderMutation, DeleteProviderMutationVariables>;
+export const ListServiceAccountsDocument = gql`
+    query ListServiceAccounts {
+  serviceAccounts {
+    ...ServiceAccountFragment
+  }
+}
+    ${ServiceAccountFragmentFragmentDoc}`;
+
+/**
+ * __useListServiceAccountsQuery__
+ *
+ * To run a query within a React component, call `useListServiceAccountsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useListServiceAccountsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useListServiceAccountsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useListServiceAccountsQuery(baseOptions?: Apollo.QueryHookOptions<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>(ListServiceAccountsDocument, options);
+      }
+export function useListServiceAccountsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>(ListServiceAccountsDocument, options);
+        }
+export type ListServiceAccountsQueryHookResult = ReturnType<typeof useListServiceAccountsQuery>;
+export type ListServiceAccountsLazyQueryHookResult = ReturnType<typeof useListServiceAccountsLazyQuery>;
+export type ListServiceAccountsQueryResult = Apollo.QueryResult<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>;
+export const GetServiceAccountDocument = gql`
+    query GetServiceAccount($id: ID!) {
+  getServiceAccount(id: $id) {
+    ...ServiceAccountFragment
+  }
+}
+    ${ServiceAccountFragmentFragmentDoc}`;
+
+/**
+ * __useGetServiceAccountQuery__
+ *
+ * To run a query within a React component, call `useGetServiceAccountQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetServiceAccountQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetServiceAccountQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetServiceAccountQuery(baseOptions: Apollo.QueryHookOptions<GetServiceAccountQuery, GetServiceAccountQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetServiceAccountQuery, GetServiceAccountQueryVariables>(GetServiceAccountDocument, options);
+      }
+export function useGetServiceAccountLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetServiceAccountQuery, GetServiceAccountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetServiceAccountQuery, GetServiceAccountQueryVariables>(GetServiceAccountDocument, options);
+        }
+export type GetServiceAccountQueryHookResult = ReturnType<typeof useGetServiceAccountQuery>;
+export type GetServiceAccountLazyQueryHookResult = ReturnType<typeof useGetServiceAccountLazyQuery>;
+export type GetServiceAccountQueryResult = Apollo.QueryResult<GetServiceAccountQuery, GetServiceAccountQueryVariables>;
+export const UpdateServiceAccountDocument = gql`
+    mutation UpdateServiceAccount($input: ServiceAccountInput!) {
+  updateServiceAccount(input: $input) {
+    ...ServiceAccountFragment
+  }
+}
+    ${ServiceAccountFragmentFragmentDoc}`;
+export type UpdateServiceAccountMutationFn = Apollo.MutationFunction<UpdateServiceAccountMutation, UpdateServiceAccountMutationVariables>;
+
+/**
+ * __useUpdateServiceAccountMutation__
+ *
+ * To run a mutation, you first call `useUpdateServiceAccountMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateServiceAccountMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateServiceAccountMutation, { data, loading, error }] = useUpdateServiceAccountMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateServiceAccountMutation(baseOptions?: Apollo.MutationHookOptions<UpdateServiceAccountMutation, UpdateServiceAccountMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateServiceAccountMutation, UpdateServiceAccountMutationVariables>(UpdateServiceAccountDocument, options);
+      }
+export type UpdateServiceAccountMutationHookResult = ReturnType<typeof useUpdateServiceAccountMutation>;
+export type UpdateServiceAccountMutationResult = Apollo.MutationResult<UpdateServiceAccountMutation>;
+export type UpdateServiceAccountMutationOptions = Apollo.BaseMutationOptions<UpdateServiceAccountMutation, UpdateServiceAccountMutationVariables>;
+export const CreateServiceAccountDocument = gql`
+    mutation CreateServiceAccount($input: ServiceAccountInput!) {
+  createServiceAccount(input: $input) {
+    ...ServiceAccountFragment
+  }
+}
+    ${ServiceAccountFragmentFragmentDoc}`;
+export type CreateServiceAccountMutationFn = Apollo.MutationFunction<CreateServiceAccountMutation, CreateServiceAccountMutationVariables>;
+
+/**
+ * __useCreateServiceAccountMutation__
+ *
+ * To run a mutation, you first call `useCreateServiceAccountMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateServiceAccountMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createServiceAccountMutation, { data, loading, error }] = useCreateServiceAccountMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateServiceAccountMutation(baseOptions?: Apollo.MutationHookOptions<CreateServiceAccountMutation, CreateServiceAccountMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateServiceAccountMutation, CreateServiceAccountMutationVariables>(CreateServiceAccountDocument, options);
+      }
+export type CreateServiceAccountMutationHookResult = ReturnType<typeof useCreateServiceAccountMutation>;
+export type CreateServiceAccountMutationResult = Apollo.MutationResult<CreateServiceAccountMutation>;
+export type CreateServiceAccountMutationOptions = Apollo.BaseMutationOptions<CreateServiceAccountMutation, CreateServiceAccountMutationVariables>;
+export const DeleteServiceAccountDocument = gql`
+    mutation DeleteServiceAccount($id: ID!) {
+  deleteServiceAccount(id: $id)
+}
+    `;
+export type DeleteServiceAccountMutationFn = Apollo.MutationFunction<DeleteServiceAccountMutation, DeleteServiceAccountMutationVariables>;
+
+/**
+ * __useDeleteServiceAccountMutation__
+ *
+ * To run a mutation, you first call `useDeleteServiceAccountMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteServiceAccountMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteServiceAccountMutation, { data, loading, error }] = useDeleteServiceAccountMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteServiceAccountMutation(baseOptions?: Apollo.MutationHookOptions<DeleteServiceAccountMutation, DeleteServiceAccountMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteServiceAccountMutation, DeleteServiceAccountMutationVariables>(DeleteServiceAccountDocument, options);
+      }
+export type DeleteServiceAccountMutationHookResult = ReturnType<typeof useDeleteServiceAccountMutation>;
+export type DeleteServiceAccountMutationResult = Apollo.MutationResult<DeleteServiceAccountMutation>;
+export type DeleteServiceAccountMutationOptions = Apollo.BaseMutationOptions<DeleteServiceAccountMutation, DeleteServiceAccountMutationVariables>;
 export const ListTeamsDocument = gql`
     query ListTeams {
   teams {

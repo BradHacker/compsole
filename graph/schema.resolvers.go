@@ -2456,6 +2456,11 @@ func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, type
 	}, nil
 }
 
+// ID is the resolver for the ID field.
+func (r *serviceAccountResolver) ID(ctx context.Context, obj *ent.ServiceAccount) (string, error) {
+	return obj.ID.String(), nil
+}
+
 // APIKey is the resolver for the ApiKey field.
 func (r *serviceAccountResolver) APIKey(ctx context.Context, obj *ent.ServiceAccount) (string, error) {
 	return obj.APIKey.String(), nil

@@ -86,6 +86,7 @@ type ActionsResult {
 }
 
 type ServiceAccount {
+  ID: ID!
   DisplayName: String!
   ApiKey: String!
   Active: Boolean!
