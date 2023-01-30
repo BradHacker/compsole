@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/github/license/BradHacker/compsole)](https://github.com/BradHacker/compsole/blob/main/LICENSE)
 
 <p align="center">
-  <img src="ui/src/res/logo.svg" width="80%" />
+  <img src="ui/src/res/logo.svg" width="80%" style="max-width:500px;" />
 </p>
 
 ## Introduction
@@ -20,7 +20,7 @@ Source the `.envrc` file to generate your `.env` file.
 > _Note: this is necessary to run every time the environment is executed to prefill the environment variables_
 
 ```shell
-$ source .envrc
+source .envrc
 ```
 
 ## Production
@@ -75,7 +75,7 @@ Copy the contents of the [ui/.env.example](./ui/.env.example) to a new file `ui/
 
 Set the environment variable as follows:
 
-```
+```env
 REACT_APP_SERVER_URL=http(s)://<fqdn of host>
 REACT_APP_WS_URL=ws://fqdn of host>
 ```
@@ -83,7 +83,7 @@ REACT_APP_WS_URL=ws://fqdn of host>
 ### Bring up the production environment
 
 ```shell
-$ docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ## Development
@@ -102,4 +102,12 @@ $ cd /vagrant
 $ docker compose -f docker-compose.dev.yml up -d
 $ export $(grep -v '^#' .env | xargs)
 $ go run server.go
+```
+
+### Generating API Documentation
+
+The swagger docs are auto-generating. To generate them, simply run:
+
+```shell
+go generate ./api
 ```
