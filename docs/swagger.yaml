@@ -423,6 +423,30 @@ definitions:
     - api_key
     - api_secret
     type: object
+  rest.UpdateVMObject.VmObjectInput:
+    properties:
+      identifier:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      name:
+        example: team01.dc.comp.co
+        type: string
+      vm_object_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - identifier
+    - ip_addresses
+    - name
+    - vm_object_to_team
+    type: object
   serviceaccount.Active:
     enum:
     - enabled
@@ -518,13 +542,15 @@ paths:
       summary: Login with a service account
       tags:
       - Auth API
-  /rest/vm-object/{identifier}:
+  /rest/vm-object/{id}:
     get:
       description: Get VM Object
       parameters:
-      - description: The identifier of the vm object
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
         in: path
-        name: identifier
+        name: id
         required: true
         type: string
       produces:
@@ -536,6 +562,10 @@ paths:
             $ref: '#/definitions/ent.VmObject'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
           schema:
             $ref: '#/definitions/api.APIError'
         "500":
@@ -550,21 +580,32 @@ paths:
     put:
       description: Update VM Object.
       parameters:
-      - description: The identifier of the vm object (if modifying the VM Object identifier,
-          this must be the old identifier)
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
         in: path
-        name: identifier
+        name: id
         required: true
         type: string
+      - description: The updated vm object
+        in: body
+        name: vm_object
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateVMObject.VmObjectInput'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/ent.VmObject'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
           schema:
             $ref: '#/definitions/api.APIError'
         "500":

@@ -117,7 +117,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/rest/vm-object/{identifier}": {
+        "/rest/vm-object/{id}": {
             "get": {
                 "security": [
                     {
@@ -135,8 +135,10 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "The identifier of the vm object",
-                        "name": "identifier",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the vm object",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -150,6 +152,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/api.APIError"
                         }
@@ -179,21 +187,38 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "The identifier of the vm object (if modifying the VM Object identifier, this must be the old identifier)",
-                        "name": "identifier",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the vm object",
+                        "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "The updated vm object",
+                        "name": "vm_object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.UpdateVMObject.VmObjectInput"
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/ent.VmObject"
                         }
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/api.APIError"
                         }
@@ -747,6 +772,39 @@ const docTemplate = `{
                 },
                 "api_secret": {
                     "type": "string"
+                }
+            }
+        },
+        "rest.UpdateVMObject.VmObjectInput": {
+            "type": "object",
+            "required": [
+                "identifier",
+                "ip_addresses",
+                "name",
+                "vm_object_to_team"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "ip_addresses": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "10.0.0.1",
+                        "100.64.0.1"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "example": "team01.dc.comp.co"
+                },
+                "vm_object_to_team": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 }
             }
         },
