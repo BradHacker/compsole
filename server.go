@@ -50,6 +50,12 @@ import (
 
 // @securityDefinitions.basic  UserAuth
 
+// @tag.name Auth API
+// @tag.description These endpoints are used purely for authentication purposes only
+
+// @tag.name Service API
+// @tag.description These endpoints are only usable after authenticating with a service account. They are used for 3rd-party applications to interact with Compsole.
+
 const defaultPort = "8080"
 
 // Defining the Playground handler

@@ -851,7 +851,17 @@ const docTemplate = `{
         "UserAuth": {
             "type": "basic"
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "These endpoints are used purely for authentication purposes only",
+            "name": "Auth API"
+        },
+        {
+            "description": "These endpoints are only usable after authenticating with a service account. They are used for 3rd-party applications to interact with Compsole.",
+            "name": "Service API"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
