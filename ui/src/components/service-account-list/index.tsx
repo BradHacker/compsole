@@ -1,4 +1,9 @@
-import { EditTwoTone, DeleteTwoTone } from "@mui/icons-material";
+import {
+  EditTwoTone,
+  DeleteTwoTone,
+  CheckTwoTone,
+  BlockTwoTone,
+} from "@mui/icons-material";
 import {
   TableContainer,
   Paper,
@@ -128,6 +133,13 @@ export const ServiceAccountList: React.FC<{
                 >
                   {serviceAccount.ApiKey}
                 </Typography>
+              </TableCell>
+              <TableCell align="center">
+                {serviceAccount.Active ? (
+                  <CheckTwoTone color="success" />
+                ) : (
+                  <BlockTwoTone color="error" />
+                )}
               </TableCell>
               <TableCell align="right">
                 <ButtonGroup size="small">
