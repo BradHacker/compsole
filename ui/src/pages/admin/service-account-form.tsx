@@ -40,7 +40,9 @@ export const ServiceAccountForm: React.FC = (): React.ReactElement => {
       loading: getServiceAccountLoading,
       error: getServiceAccountError,
     },
-  ] = useGetServiceAccountLazyQuery();
+  ] = useGetServiceAccountLazyQuery({
+    fetchPolicy: "no-cache",
+  });
   const [
     updateServiceAccount,
     {
@@ -59,9 +61,7 @@ export const ServiceAccountForm: React.FC = (): React.ReactElement => {
     },
   ] = useCreateServiceAccountMutation();
   // State
-  const [serviceAccount, setServiceAccount] = useState<
-    ServiceAccountInput | GetServiceAccountQuery["getServiceAccount"]
-  >({
+  const [serviceAccount, setServiceAccount] = useState<ServiceAccountInput>({
     ID: "",
     DisplayName: "",
     Active: true,
@@ -178,7 +178,11 @@ export const ServiceAccountForm: React.FC = (): React.ReactElement => {
     if (serviceAccount.ID)
       updateServiceAccount({
         variables: {
-          input: serviceAccount,
+          input: {
+            ID: serviceAccount.ID,
+            DisplayName: serviceAccount.DisplayName,
+            Active: serviceAccount.Active,
+          },
         },
       });
     else
