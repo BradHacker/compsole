@@ -459,7 +459,8 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           disabled={
             batchCreateVmsLoading ||
             !listProviderVmsData ||
-            listProviderVmsData.listProviderVms.length === 0
+            listProviderVmsData.listProviderVms.length === 0 ||
+            batchCreateVmsData?.batchCreateVmObjects !== undefined
           }
           onClick={ingestVms}
           sx={{
