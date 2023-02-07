@@ -56,9 +56,9 @@
                 }
             }
         },
-        "/rest/login": {
+        "/rest/token": {
             "post": {
-                "description": "Login with a service account",
+                "description": "Login with a service account and get a session token",
                 "consumes": [
                     "application/json",
                     "multipart/form-data"
@@ -69,7 +69,7 @@
                 "tags": [
                     "Auth API"
                 ],
-                "summary": "Login with a service account",
+                "summary": "Login with a service account and get a session token",
                 "parameters": [
                     {
                         "description": "Service account details",
@@ -95,7 +95,62 @@
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/rest/token/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Refresh a service account session without re-authenticating",
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth API"
+                ],
+                "summary": "Refresh a service account session without re-authenticating",
+                "parameters": [
+                    {
+                        "description": "Service account refresh token",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.ServiceRefreshVals"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.ServiceLoginResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
                     }
                 }
             }
@@ -483,13 +538,13 @@
                         }
                     ]
                 },
-                "expire_at": {
-                    "description": "ExpireAt holds the value of the \"expire_at\" field.\n[REQUIRED] The time the token should expire.",
-                    "type": "integer"
-                },
                 "id": {
                     "description": "ID of the ent.",
                     "type": "string"
+                },
+                "issued_at": {
+                    "description": "IssuedAt holds the value of the \"issued_at\" field.\n[REQUIRED] The time the token was issued",
+                    "type": "integer"
                 },
                 "refresh_token": {
                     "description": "RefreshToken holds the value of the \"refresh_token\" field.\n[REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.",
@@ -750,6 +805,17 @@
                     "type": "string"
                 },
                 "api_secret": {
+                    "type": "string"
+                }
+            }
+        },
+        "rest.ServiceRefreshVals": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
                     "type": "string"
                 }
             }

@@ -211,14 +211,14 @@ definitions:
         description: |-
           Edges holds the relations/edges for other nodes in the graph.
           The values are being populated by the ServiceTokenQuery when eager-loading is set.
-      expire_at:
-        description: |-
-          ExpireAt holds the value of the "expire_at" field.
-          [REQUIRED] The time the token should expire.
-        type: integer
       id:
         description: ID of the ent.
         type: string
+      issued_at:
+        description: |-
+          IssuedAt holds the value of the "issued_at" field.
+          [REQUIRED] The time the token was issued
+        type: integer
       refresh_token:
         description: |-
           RefreshToken holds the value of the "refresh_token" field.
@@ -422,6 +422,13 @@ definitions:
     - api_key
     - api_secret
     type: object
+  rest.ServiceRefreshVals:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   rest.UpdateVMObject.VmObjectInput:
     properties:
       identifier:
@@ -517,12 +524,12 @@ paths:
       summary: Login with a local account
       tags:
       - Auth API
-  /rest/login:
+  /rest/token:
     post:
       consumes:
       - application/json
       - multipart/form-data
-      description: Login with a service account
+      description: Login with a service account and get a session token
       parameters:
       - description: Service account details
         in: body
@@ -543,7 +550,42 @@ paths:
             $ref: '#/definitions/api.APIError'
         "500":
           description: Internal Server Error
-      summary: Login with a service account
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Login with a service account and get a session token
+      tags:
+      - Auth API
+  /rest/token/refresh:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Refresh a service account session without re-authenticating
+      parameters:
+      - description: Service account refresh token
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/rest.ServiceRefreshVals'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.ServiceLoginResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Refresh a service account session without re-authenticating
       tags:
       - Auth API
   /rest/vm-object/{id}:
