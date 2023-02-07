@@ -106,10 +106,10 @@ func RefreshToken(v uuid.UUID) predicate.ServiceToken {
 	})
 }
 
-// ExpireAt applies equality check predicate on the "expire_at" field. It's identical to ExpireAtEQ.
-func ExpireAt(v int64) predicate.ServiceToken {
+// IssuedAt applies equality check predicate on the "issued_at" field. It's identical to IssuedAtEQ.
+func IssuedAt(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldExpireAt), v))
+		s.Where(sql.EQ(s.C(FieldIssuedAt), v))
 	})
 }
 
@@ -300,22 +300,22 @@ func RefreshTokenLTE(v uuid.UUID) predicate.ServiceToken {
 	})
 }
 
-// ExpireAtEQ applies the EQ predicate on the "expire_at" field.
-func ExpireAtEQ(v int64) predicate.ServiceToken {
+// IssuedAtEQ applies the EQ predicate on the "issued_at" field.
+func IssuedAtEQ(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldExpireAt), v))
+		s.Where(sql.EQ(s.C(FieldIssuedAt), v))
 	})
 }
 
-// ExpireAtNEQ applies the NEQ predicate on the "expire_at" field.
-func ExpireAtNEQ(v int64) predicate.ServiceToken {
+// IssuedAtNEQ applies the NEQ predicate on the "issued_at" field.
+func IssuedAtNEQ(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldExpireAt), v))
+		s.Where(sql.NEQ(s.C(FieldIssuedAt), v))
 	})
 }
 
-// ExpireAtIn applies the In predicate on the "expire_at" field.
-func ExpireAtIn(vs ...int64) predicate.ServiceToken {
+// IssuedAtIn applies the In predicate on the "issued_at" field.
+func IssuedAtIn(vs ...int64) predicate.ServiceToken {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -327,12 +327,12 @@ func ExpireAtIn(vs ...int64) predicate.ServiceToken {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.In(s.C(FieldExpireAt), v...))
+		s.Where(sql.In(s.C(FieldIssuedAt), v...))
 	})
 }
 
-// ExpireAtNotIn applies the NotIn predicate on the "expire_at" field.
-func ExpireAtNotIn(vs ...int64) predicate.ServiceToken {
+// IssuedAtNotIn applies the NotIn predicate on the "issued_at" field.
+func IssuedAtNotIn(vs ...int64) predicate.ServiceToken {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -344,35 +344,35 @@ func ExpireAtNotIn(vs ...int64) predicate.ServiceToken {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.NotIn(s.C(FieldExpireAt), v...))
+		s.Where(sql.NotIn(s.C(FieldIssuedAt), v...))
 	})
 }
 
-// ExpireAtGT applies the GT predicate on the "expire_at" field.
-func ExpireAtGT(v int64) predicate.ServiceToken {
+// IssuedAtGT applies the GT predicate on the "issued_at" field.
+func IssuedAtGT(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldExpireAt), v))
+		s.Where(sql.GT(s.C(FieldIssuedAt), v))
 	})
 }
 
-// ExpireAtGTE applies the GTE predicate on the "expire_at" field.
-func ExpireAtGTE(v int64) predicate.ServiceToken {
+// IssuedAtGTE applies the GTE predicate on the "issued_at" field.
+func IssuedAtGTE(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldExpireAt), v))
+		s.Where(sql.GTE(s.C(FieldIssuedAt), v))
 	})
 }
 
-// ExpireAtLT applies the LT predicate on the "expire_at" field.
-func ExpireAtLT(v int64) predicate.ServiceToken {
+// IssuedAtLT applies the LT predicate on the "issued_at" field.
+func IssuedAtLT(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldExpireAt), v))
+		s.Where(sql.LT(s.C(FieldIssuedAt), v))
 	})
 }
 
-// ExpireAtLTE applies the LTE predicate on the "expire_at" field.
-func ExpireAtLTE(v int64) predicate.ServiceToken {
+// IssuedAtLTE applies the LTE predicate on the "issued_at" field.
+func IssuedAtLTE(v int64) predicate.ServiceToken {
 	return predicate.ServiceToken(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldExpireAt), v))
+		s.Where(sql.LTE(s.C(FieldIssuedAt), v))
 	})
 }
 

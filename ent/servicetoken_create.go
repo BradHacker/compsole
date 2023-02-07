@@ -33,9 +33,9 @@ func (stc *ServiceTokenCreate) SetRefreshToken(u uuid.UUID) *ServiceTokenCreate 
 	return stc
 }
 
-// SetExpireAt sets the "expire_at" field.
-func (stc *ServiceTokenCreate) SetExpireAt(i int64) *ServiceTokenCreate {
-	stc.mutation.SetExpireAt(i)
+// SetIssuedAt sets the "issued_at" field.
+func (stc *ServiceTokenCreate) SetIssuedAt(i int64) *ServiceTokenCreate {
+	stc.mutation.SetIssuedAt(i)
 	return stc
 }
 
@@ -149,8 +149,8 @@ func (stc *ServiceTokenCreate) check() error {
 	if _, ok := stc.mutation.RefreshToken(); !ok {
 		return &ValidationError{Name: "refresh_token", err: errors.New(`ent: missing required field "ServiceToken.refresh_token"`)}
 	}
-	if _, ok := stc.mutation.ExpireAt(); !ok {
-		return &ValidationError{Name: "expire_at", err: errors.New(`ent: missing required field "ServiceToken.expire_at"`)}
+	if _, ok := stc.mutation.IssuedAt(); !ok {
+		return &ValidationError{Name: "issued_at", err: errors.New(`ent: missing required field "ServiceToken.issued_at"`)}
 	}
 	if _, ok := stc.mutation.TokenToServiceAccountID(); !ok {
 		return &ValidationError{Name: "TokenToServiceAccount", err: errors.New(`ent: missing required edge "ServiceToken.TokenToServiceAccount"`)}
@@ -207,13 +207,13 @@ func (stc *ServiceTokenCreate) createSpec() (*ServiceToken, *sqlgraph.CreateSpec
 		})
 		_node.RefreshToken = value
 	}
-	if value, ok := stc.mutation.ExpireAt(); ok {
+	if value, ok := stc.mutation.IssuedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
-			Column: servicetoken.FieldExpireAt,
+			Column: servicetoken.FieldIssuedAt,
 		})
-		_node.ExpireAt = value
+		_node.IssuedAt = value
 	}
 	if nodes := stc.mutation.TokenToServiceAccountIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

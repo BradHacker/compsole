@@ -23,9 +23,9 @@ type ServiceToken struct {
 	// RefreshToken holds the value of the "refresh_token" field.
 	// [REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.
 	RefreshToken uuid.UUID `json:"refresh_token,omitempty"`
-	// ExpireAt holds the value of the "expire_at" field.
-	// [REQUIRED] The time the token should expire.
-	ExpireAt int64 `json:"expire_at,omitempty"`
+	// IssuedAt holds the value of the "issued_at" field.
+	// [REQUIRED] The time the token was issued
+	IssuedAt int64 `json:"issued_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ServiceTokenQuery when eager-loading is set.
 	Edges                                    ServiceTokenEdges `json:"edges"`
@@ -60,7 +60,7 @@ func (*ServiceToken) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case servicetoken.FieldExpireAt:
+		case servicetoken.FieldIssuedAt:
 			values[i] = new(sql.NullInt64)
 		case servicetoken.FieldToken:
 			values[i] = new(sql.NullString)
@@ -101,11 +101,11 @@ func (st *ServiceToken) assignValues(columns []string, values []interface{}) err
 			} else if value != nil {
 				st.RefreshToken = *value
 			}
-		case servicetoken.FieldExpireAt:
+		case servicetoken.FieldIssuedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field expire_at", values[i])
+				return fmt.Errorf("unexpected type %T for field issued_at", values[i])
 			} else if value.Valid {
-				st.ExpireAt = value.Int64
+				st.IssuedAt = value.Int64
 			}
 		case servicetoken.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -151,8 +151,8 @@ func (st *ServiceToken) String() string {
 	builder.WriteString(st.Token)
 	builder.WriteString(", refresh_token=")
 	builder.WriteString(fmt.Sprintf("%v", st.RefreshToken))
-	builder.WriteString(", expire_at=")
-	builder.WriteString(fmt.Sprintf("%v", st.ExpireAt))
+	builder.WriteString(", issued_at=")
+	builder.WriteString(fmt.Sprintf("%v", st.IssuedAt))
 	builder.WriteByte(')')
 	return builder.String()
 }

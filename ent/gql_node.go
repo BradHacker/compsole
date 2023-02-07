@@ -283,12 +283,12 @@ func (st *ServiceToken) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "refresh_token",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(st.ExpireAt); err != nil {
+	if buf, err = json.Marshal(st.IssuedAt); err != nil {
 		return nil, err
 	}
 	node.Fields[2] = &Field{
 		Type:  "int64",
-		Name:  "expire_at",
+		Name:  "issued_at",
 		Value: string(buf),
 	}
 	node.Edges[0] = &Edge{

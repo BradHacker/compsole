@@ -2301,8 +2301,8 @@ type ServiceTokenMutation struct {
 	id                            *uuid.UUID
 	token                         *string
 	refresh_token                 *uuid.UUID
-	expire_at                     *int64
-	addexpire_at                  *int64
+	issued_at                     *int64
+	addissued_at                  *int64
 	clearedFields                 map[string]struct{}
 	_TokenToServiceAccount        *uuid.UUID
 	cleared_TokenToServiceAccount bool
@@ -2487,60 +2487,60 @@ func (m *ServiceTokenMutation) ResetRefreshToken() {
 	m.refresh_token = nil
 }
 
-// SetExpireAt sets the "expire_at" field.
-func (m *ServiceTokenMutation) SetExpireAt(i int64) {
-	m.expire_at = &i
-	m.addexpire_at = nil
+// SetIssuedAt sets the "issued_at" field.
+func (m *ServiceTokenMutation) SetIssuedAt(i int64) {
+	m.issued_at = &i
+	m.addissued_at = nil
 }
 
-// ExpireAt returns the value of the "expire_at" field in the mutation.
-func (m *ServiceTokenMutation) ExpireAt() (r int64, exists bool) {
-	v := m.expire_at
+// IssuedAt returns the value of the "issued_at" field in the mutation.
+func (m *ServiceTokenMutation) IssuedAt() (r int64, exists bool) {
+	v := m.issued_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldExpireAt returns the old "expire_at" field's value of the ServiceToken entity.
+// OldIssuedAt returns the old "issued_at" field's value of the ServiceToken entity.
 // If the ServiceToken object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceTokenMutation) OldExpireAt(ctx context.Context) (v int64, err error) {
+func (m *ServiceTokenMutation) OldIssuedAt(ctx context.Context) (v int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldExpireAt is only allowed on UpdateOne operations")
+		return v, errors.New("OldIssuedAt is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldExpireAt requires an ID field in the mutation")
+		return v, errors.New("OldIssuedAt requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldExpireAt: %w", err)
+		return v, fmt.Errorf("querying old value for OldIssuedAt: %w", err)
 	}
-	return oldValue.ExpireAt, nil
+	return oldValue.IssuedAt, nil
 }
 
-// AddExpireAt adds i to the "expire_at" field.
-func (m *ServiceTokenMutation) AddExpireAt(i int64) {
-	if m.addexpire_at != nil {
-		*m.addexpire_at += i
+// AddIssuedAt adds i to the "issued_at" field.
+func (m *ServiceTokenMutation) AddIssuedAt(i int64) {
+	if m.addissued_at != nil {
+		*m.addissued_at += i
 	} else {
-		m.addexpire_at = &i
+		m.addissued_at = &i
 	}
 }
 
-// AddedExpireAt returns the value that was added to the "expire_at" field in this mutation.
-func (m *ServiceTokenMutation) AddedExpireAt() (r int64, exists bool) {
-	v := m.addexpire_at
+// AddedIssuedAt returns the value that was added to the "issued_at" field in this mutation.
+func (m *ServiceTokenMutation) AddedIssuedAt() (r int64, exists bool) {
+	v := m.addissued_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetExpireAt resets all changes to the "expire_at" field.
-func (m *ServiceTokenMutation) ResetExpireAt() {
-	m.expire_at = nil
-	m.addexpire_at = nil
+// ResetIssuedAt resets all changes to the "issued_at" field.
+func (m *ServiceTokenMutation) ResetIssuedAt() {
+	m.issued_at = nil
+	m.addissued_at = nil
 }
 
 // SetTokenToServiceAccountID sets the "TokenToServiceAccount" edge to the ServiceAccount entity by id.
@@ -2608,8 +2608,8 @@ func (m *ServiceTokenMutation) Fields() []string {
 	if m.refresh_token != nil {
 		fields = append(fields, servicetoken.FieldRefreshToken)
 	}
-	if m.expire_at != nil {
-		fields = append(fields, servicetoken.FieldExpireAt)
+	if m.issued_at != nil {
+		fields = append(fields, servicetoken.FieldIssuedAt)
 	}
 	return fields
 }
@@ -2623,8 +2623,8 @@ func (m *ServiceTokenMutation) Field(name string) (ent.Value, bool) {
 		return m.Token()
 	case servicetoken.FieldRefreshToken:
 		return m.RefreshToken()
-	case servicetoken.FieldExpireAt:
-		return m.ExpireAt()
+	case servicetoken.FieldIssuedAt:
+		return m.IssuedAt()
 	}
 	return nil, false
 }
@@ -2638,8 +2638,8 @@ func (m *ServiceTokenMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldToken(ctx)
 	case servicetoken.FieldRefreshToken:
 		return m.OldRefreshToken(ctx)
-	case servicetoken.FieldExpireAt:
-		return m.OldExpireAt(ctx)
+	case servicetoken.FieldIssuedAt:
+		return m.OldIssuedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown ServiceToken field %s", name)
 }
@@ -2663,12 +2663,12 @@ func (m *ServiceTokenMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRefreshToken(v)
 		return nil
-	case servicetoken.FieldExpireAt:
+	case servicetoken.FieldIssuedAt:
 		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetExpireAt(v)
+		m.SetIssuedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceToken field %s", name)
@@ -2678,8 +2678,8 @@ func (m *ServiceTokenMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *ServiceTokenMutation) AddedFields() []string {
 	var fields []string
-	if m.addexpire_at != nil {
-		fields = append(fields, servicetoken.FieldExpireAt)
+	if m.addissued_at != nil {
+		fields = append(fields, servicetoken.FieldIssuedAt)
 	}
 	return fields
 }
@@ -2689,8 +2689,8 @@ func (m *ServiceTokenMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *ServiceTokenMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case servicetoken.FieldExpireAt:
-		return m.AddedExpireAt()
+	case servicetoken.FieldIssuedAt:
+		return m.AddedIssuedAt()
 	}
 	return nil, false
 }
@@ -2700,12 +2700,12 @@ func (m *ServiceTokenMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *ServiceTokenMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case servicetoken.FieldExpireAt:
+	case servicetoken.FieldIssuedAt:
 		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddExpireAt(v)
+		m.AddIssuedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceToken numeric field %s", name)
@@ -2740,8 +2740,8 @@ func (m *ServiceTokenMutation) ResetField(name string) error {
 	case servicetoken.FieldRefreshToken:
 		m.ResetRefreshToken()
 		return nil
-	case servicetoken.FieldExpireAt:
-		m.ResetExpireAt()
+	case servicetoken.FieldIssuedAt:
+		m.ResetIssuedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown ServiceToken field %s", name)

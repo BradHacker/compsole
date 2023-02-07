@@ -90,7 +90,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "token", Type: field.TypeString},
 		{Name: "refresh_token", Type: field.TypeUUID},
-		{Name: "expire_at", Type: field.TypeInt64},
+		{Name: "issued_at", Type: field.TypeInt64},
 		{Name: "service_account_service_account_to_token", Type: field.TypeUUID},
 	}
 	// ServiceTokensTable holds the schema information for the "service_tokens" table.

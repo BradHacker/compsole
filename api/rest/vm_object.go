@@ -9,12 +9,12 @@ import (
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // GetVMObject godoc
 //
 //	@Security					ServiceAuth
-//	@securitydefinitions.apikey	ApiKeyAuth
 //	@Summary					Get VM Object
 //	@Schemes					http https
 //	@Description				Get VM Object
@@ -33,6 +33,8 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse vm object uuid", err)
 		}
+
+		logrus.Infof("querying for vm object: %s", vmObjectUuid.String())
 
 		entVmObject, err := client.VmObject.Query().
 			Where(

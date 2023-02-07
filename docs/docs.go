@@ -24,11 +24,6 @@ const docTemplate = `{
     "paths": {
         "/auth/local/login": {
             "post": {
-                "security": [
-                    {
-                        "UserAuth": []
-                    }
-                ],
                 "description": "Login with a local account",
                 "consumes": [
                     "application/json",
@@ -70,11 +65,6 @@ const docTemplate = `{
         },
         "/rest/login": {
             "post": {
-                "security": [
-                    {
-                        "ServiceAuth": []
-                    }
-                ],
                 "description": "Login with a service account",
                 "consumes": [
                     "application/json",
@@ -441,12 +431,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "active": {
-                    "description": "Active holds the value of the \"active\" field.\nDetermines whether or not the service account is active or not",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/serviceaccount.Active"
-                        }
-                    ]
+                    "description": "Active holds the value of the \"active\" field.\n[REQUIRED] Determines whether or not the service account is active or not",
+                    "type": "boolean"
                 },
                 "api_key": {
                     "description": "APIKey holds the value of the \"api_key\" field.\n[REQUIRED] The API key for the service account. Equivalent to a username.",
@@ -807,17 +793,6 @@ const docTemplate = `{
                     "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 }
             }
-        },
-        "serviceaccount.Active": {
-            "type": "string",
-            "enum": [
-                "enabled",
-                "disabled"
-            ],
-            "x-enum-varnames": [
-                "ActiveEnabled",
-                "ActiveDisabled"
-            ]
         },
         "user.Provider": {
             "type": "string",

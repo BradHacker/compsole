@@ -231,8 +231,9 @@ func main() {
 		return
 	}
 
+	router.Use(api.UnauthenticatedMiddleware())
+
 	authGroup := router.Group("/auth")
-	authGroup.Use(api.UnauthenticatedMiddleware())
 	auth.RegisterAuthEndpoints(client, authGroup)
 
 	apiGroup := router.Group("/api")
@@ -245,7 +246,6 @@ func main() {
 	gqlApi.GET("/playground", playgroundHandler())
 
 	restApi := apiGroup.Group("/rest")
-	restApi.Use(api.ServiceMiddleware(client))
 	rest.RegisterRESTEndpoints(client, restApi)
 
 	// Swagger Docs

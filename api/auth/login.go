@@ -25,7 +25,6 @@ type UserLoginVals struct {
 
 // LocalLogin godoc
 //
-//	@Security		UserAuth
 //	@Summary		Login with a local account
 //	@Schemes		http https
 //	@Description	Login with a local account

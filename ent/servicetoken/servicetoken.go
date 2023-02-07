@@ -15,8 +15,8 @@ const (
 	FieldToken = "token"
 	// FieldRefreshToken holds the string denoting the refresh_token field in the database.
 	FieldRefreshToken = "refresh_token"
-	// FieldExpireAt holds the string denoting the expire_at field in the database.
-	FieldExpireAt = "expire_at"
+	// FieldIssuedAt holds the string denoting the issued_at field in the database.
+	FieldIssuedAt = "issued_at"
 	// EdgeTokenToServiceAccount holds the string denoting the tokentoserviceaccount edge name in mutations.
 	EdgeTokenToServiceAccount = "TokenToServiceAccount"
 	// ServiceAccountFieldID holds the string denoting the ID field of the ServiceAccount.
@@ -37,7 +37,7 @@ var Columns = []string{
 	FieldID,
 	FieldToken,
 	FieldRefreshToken,
-	FieldExpireAt,
+	FieldIssuedAt,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "service_tokens"

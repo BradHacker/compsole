@@ -159,11 +159,10 @@ definitions:
   ent.ServiceAccount:
     properties:
       active:
-        allOf:
-        - $ref: '#/definitions/serviceaccount.Active'
         description: |-
           Active holds the value of the "active" field.
-          Determines whether or not the service account is active or not
+          [REQUIRED] Determines whether or not the service account is active or not
+        type: boolean
       api_key:
         description: |-
           APIKey holds the value of the "api_key" field.
@@ -447,14 +446,6 @@ definitions:
     - name
     - vm_object_to_team
     type: object
-  serviceaccount.Active:
-    enum:
-    - enabled
-    - disabled
-    type: string
-    x-enum-varnames:
-    - ActiveEnabled
-    - ActiveDisabled
   user.Provider:
     enum:
     - LOCAL
@@ -523,8 +514,6 @@ paths:
               type: string
           schema:
             $ref: '#/definitions/ent.User'
-      security:
-      - UserAuth: []
       summary: Login with a local account
       tags:
       - Auth API
@@ -554,8 +543,6 @@ paths:
             $ref: '#/definitions/api.APIError'
         "500":
           description: Internal Server Error
-      security:
-      - ServiceAuth: []
       summary: Login with a service account
       tags:
       - Auth API

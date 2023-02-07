@@ -41,16 +41,16 @@ func (stu *ServiceTokenUpdate) SetRefreshToken(u uuid.UUID) *ServiceTokenUpdate 
 	return stu
 }
 
-// SetExpireAt sets the "expire_at" field.
-func (stu *ServiceTokenUpdate) SetExpireAt(i int64) *ServiceTokenUpdate {
-	stu.mutation.ResetExpireAt()
-	stu.mutation.SetExpireAt(i)
+// SetIssuedAt sets the "issued_at" field.
+func (stu *ServiceTokenUpdate) SetIssuedAt(i int64) *ServiceTokenUpdate {
+	stu.mutation.ResetIssuedAt()
+	stu.mutation.SetIssuedAt(i)
 	return stu
 }
 
-// AddExpireAt adds i to the "expire_at" field.
-func (stu *ServiceTokenUpdate) AddExpireAt(i int64) *ServiceTokenUpdate {
-	stu.mutation.AddExpireAt(i)
+// AddIssuedAt adds i to the "issued_at" field.
+func (stu *ServiceTokenUpdate) AddIssuedAt(i int64) *ServiceTokenUpdate {
+	stu.mutation.AddIssuedAt(i)
 	return stu
 }
 
@@ -176,18 +176,18 @@ func (stu *ServiceTokenUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: servicetoken.FieldRefreshToken,
 		})
 	}
-	if value, ok := stu.mutation.ExpireAt(); ok {
+	if value, ok := stu.mutation.IssuedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
-			Column: servicetoken.FieldExpireAt,
+			Column: servicetoken.FieldIssuedAt,
 		})
 	}
-	if value, ok := stu.mutation.AddedExpireAt(); ok {
+	if value, ok := stu.mutation.AddedIssuedAt(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
-			Column: servicetoken.FieldExpireAt,
+			Column: servicetoken.FieldIssuedAt,
 		})
 	}
 	if stu.mutation.TokenToServiceAccountCleared() {
@@ -256,16 +256,16 @@ func (stuo *ServiceTokenUpdateOne) SetRefreshToken(u uuid.UUID) *ServiceTokenUpd
 	return stuo
 }
 
-// SetExpireAt sets the "expire_at" field.
-func (stuo *ServiceTokenUpdateOne) SetExpireAt(i int64) *ServiceTokenUpdateOne {
-	stuo.mutation.ResetExpireAt()
-	stuo.mutation.SetExpireAt(i)
+// SetIssuedAt sets the "issued_at" field.
+func (stuo *ServiceTokenUpdateOne) SetIssuedAt(i int64) *ServiceTokenUpdateOne {
+	stuo.mutation.ResetIssuedAt()
+	stuo.mutation.SetIssuedAt(i)
 	return stuo
 }
 
-// AddExpireAt adds i to the "expire_at" field.
-func (stuo *ServiceTokenUpdateOne) AddExpireAt(i int64) *ServiceTokenUpdateOne {
-	stuo.mutation.AddExpireAt(i)
+// AddIssuedAt adds i to the "issued_at" field.
+func (stuo *ServiceTokenUpdateOne) AddIssuedAt(i int64) *ServiceTokenUpdateOne {
+	stuo.mutation.AddIssuedAt(i)
 	return stuo
 }
 
@@ -415,18 +415,18 @@ func (stuo *ServiceTokenUpdateOne) sqlSave(ctx context.Context) (_node *ServiceT
 			Column: servicetoken.FieldRefreshToken,
 		})
 	}
-	if value, ok := stuo.mutation.ExpireAt(); ok {
+	if value, ok := stuo.mutation.IssuedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
-			Column: servicetoken.FieldExpireAt,
+			Column: servicetoken.FieldIssuedAt,
 		})
 	}
-	if value, ok := stuo.mutation.AddedExpireAt(); ok {
+	if value, ok := stuo.mutation.AddedIssuedAt(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt64,
 			Value:  value,
-			Column: servicetoken.FieldExpireAt,
+			Column: servicetoken.FieldIssuedAt,
 		})
 	}
 	if stuo.mutation.TokenToServiceAccountCleared() {
