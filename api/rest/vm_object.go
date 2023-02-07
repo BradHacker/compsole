@@ -14,18 +14,18 @@ import (
 
 // GetVMObject godoc
 //
-//	@Security					ServiceAuth
-//	@Summary					Get VM Object
-//	@Schemes					http https
-//	@Description				Get VM Object
-//	@Tags						Service API
-//	@Param						id	path	string	true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-//	@Produce					json
-//	@Success					200	{object}	ent.VmObject
-//	@Failure					422	{object}	api.APIError
-//	@Failure					404	{object}	api.APIError
-//	@Failure					500	{object}	api.APIError
-//	@Router						/rest/vm-object/{id} [get]
+//	@Security		ServiceAuth
+//	@Summary		Get VM Object
+//	@Schemes		http https
+//	@Description	Get VM Object
+//	@Tags			Service API
+//	@Param			id	path	string	true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Produce		json
+//	@Success		200	{object}	ent.VmObject
+//	@Failure		422	{object}	api.APIError
+//	@Failure		404	{object}	api.APIError
+//	@Failure		500	{object}	api.APIError
+//	@Router			/rest/vm-object/{id} [get]
 func GetVMObject(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		vmObjectID := ctx.Param("identifier")

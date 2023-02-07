@@ -173,7 +173,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 
 // ServiceLogin godoc
 //
-//	@Security					ServiceAuth
+//	@Security		ServiceAuth
 //	@Summary		Refresh a service account session without re-authenticating
 //	@Schemes		http https
 //	@Description	Refresh a service account session without re-authenticating
@@ -190,6 +190,10 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		headers := &api.ServiceAccountHeader{}
+		if err := ctx.ShouldBindHeader(headers); err != nil {
+			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to request headers", err)
+			return
+		}
 
 		refresh_window := 60
 		if env_value, exists := os.LookupEnv("REFRESH_WINDOW"); exists {
@@ -208,7 +212,7 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 
 		authorizationParts := strings.Split(*headers.Authorization, "Bearer ")
 		if len(authorizationParts) < 2 {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Must provide authorization token"})
+			api.ReturnError(ctx, http.StatusBadRequest, "must provide authorization token", fmt.Errorf("must provide authorization token"))
 			return
 		}
 		jwtToken := authorizationParts[1]
@@ -219,20 +223,20 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 		v, _ := err.(*jwt.ValidationError)
 		// We care about validity, but we can ignore the expiration validation errors (we know it's expired)
 		if err != nil && v.Errors != jwt.ValidationErrorExpired {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			api.ReturnError(ctx, http.StatusUnauthorized, "invalid token", err)
 			return
 		}
 
 		claims, ok := authToken.Claims.(*api.CompsoleJWTClaims)
 		if !ok {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse JWT claims", err)
 			return
 		}
 
 		apiKey := claims.StandardClaims.Subject
 		apiKeyUUID, err := uuid.Parse(apiKey)
 		if err != nil {
-			ctx.AbortWithStatus(http.StatusInternalServerError)
+			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to refresh values", err)
 			return
 		}
 
