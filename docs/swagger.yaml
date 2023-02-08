@@ -222,7 +222,7 @@ definitions:
       refresh_token:
         description: |-
           RefreshToken holds the value of the "refresh_token" field.
-          [REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.
+          [REQUIRED] The refresh token used to renew an expired service account session. These are valid for `REFRESH_WINDOW` hours.
         type: string
       token:
         description: |-
@@ -422,13 +422,6 @@ definitions:
     - api_key
     - api_secret
     type: object
-  rest.ServiceRefreshVals:
-    properties:
-      refresh_token:
-        type: string
-    required:
-    - refresh_token
-    type: object
   rest.UpdateVMObject.VmObjectInput:
     properties:
       identifier:
@@ -557,17 +550,13 @@ paths:
       - Auth API
   /rest/token/refresh:
     post:
-      consumes:
-      - application/json
-      - multipart/form-data
       description: Refresh a service account session without re-authenticating
       parameters:
-      - description: Service account refresh token
-        in: body
-        name: login
-        required: true
-        schema:
-          $ref: '#/definitions/rest.ServiceRefreshVals'
+      - default: refresh-token=xxx
+        description: refresh-token
+        in: header
+        name: Cookie
+        type: string
       produces:
       - application/json
       responses:
@@ -583,8 +572,6 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.APIError'
-      security:
-      - ServiceAuth: []
       summary: Refresh a service account session without re-authenticating
       tags:
       - Auth API

@@ -112,16 +112,7 @@ const docTemplate = `{
         },
         "/rest/token/refresh": {
             "post": {
-                "security": [
-                    {
-                        "ServiceAuth": []
-                    }
-                ],
                 "description": "Refresh a service account session without re-authenticating",
-                "consumes": [
-                    "application/json",
-                    "multipart/form-data"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -131,13 +122,11 @@ const docTemplate = `{
                 "summary": "Refresh a service account session without re-authenticating",
                 "parameters": [
                     {
-                        "description": "Service account refresh token",
-                        "name": "login",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/rest.ServiceRefreshVals"
-                        }
+                        "type": "string",
+                        "default": "refresh-token=xxx",
+                        "description": "refresh-token",
+                        "name": "Cookie",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -554,7 +543,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "refresh_token": {
-                    "description": "RefreshToken holds the value of the \"refresh_token\" field.\n[REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.",
+                    "description": "RefreshToken holds the value of the \"refresh_token\" field.\n[REQUIRED] The refresh token used to renew an expired service account session. These are valid for ` + "`" + `REFRESH_WINDOW` + "`" + ` hours.",
                     "type": "string"
                 },
                 "token": {
@@ -812,17 +801,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "api_secret": {
-                    "type": "string"
-                }
-            }
-        },
-        "rest.ServiceRefreshVals": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
                     "type": "string"
                 }
             }

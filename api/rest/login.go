@@ -215,16 +215,16 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 
 // ServiceTokenRefresh godoc
 //
-//		@Summary		Refresh a service account session without re-authenticating
-//		@Schemes		http https
-//		@Description	Refresh a service account session without re-authenticating
-//		@Tags			Auth API
-//	 @Param 		 Cookie header string  false "refresh-token"     default(refresh-token=xxx)
-//		@Produce		json
-//		@Success		200	{object}	ServiceLoginResult
-//		@Failure		401	{object}	api.APIError
-//		@Failure		500	{object}	api.APIError
-//		@Router			/rest/token/refresh [post]
+//	@Summary		Refresh a service account session without re-authenticating
+//	@Schemes		http https
+//	@Description	Refresh a service account session without re-authenticating
+//	@Tags			Auth API
+//	@Param			Cookie	header	string	false	"refresh-token"	default(refresh-token=xxx)
+//	@Produce		json
+//	@Success		200	{object}	ServiceLoginResult
+//	@Failure		401	{object}	api.APIError
+//	@Failure		500	{object}	api.APIError
+//	@Router			/rest/token/refresh [post]
 //
 // ServiceTokenRefresh handles refreshing sessions automatically
 func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
