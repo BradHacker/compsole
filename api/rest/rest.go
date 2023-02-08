@@ -13,6 +13,8 @@ func RegisterRESTEndpoints(client *ent.Client, r *gin.RouterGroup) {
 
 	r.Use(api.ServiceMiddleware(client))
 	// VM Objects
-	r.GET("/vm-object/:identifier", GetVMObject(client))
-	r.PUT("/vm-object/:identifier", UpdateVMObject(client))
+	r.POST("/vm-object", CreateVMObject(client))
+	r.GET("/vm-object/:id", GetVMObject(client))
+	r.PUT("/vm-object/:id", UpdateVMObject(client))
+	r.DELETE("/vm-object/:id", DeleteVMObject(client))
 }
