@@ -55,6 +55,7 @@ func GetProvider(client *ent.Client) gin.HandlerFunc {
 		providerUuid, err := uuid.Parse(providerID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			return
 		}
 
 		entProvider, err := client.Provider.Query().
@@ -152,6 +153,7 @@ func UpdateProvider(client *ent.Client) gin.HandlerFunc {
 		providerUuid, err := uuid.Parse(providerID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			return
 		}
 
 		entProvider, err := client.Provider.Query().
@@ -215,6 +217,7 @@ func DeleteProvider(client *ent.Client) gin.HandlerFunc {
 		providerUuid, err := uuid.Parse(providerID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			return
 		}
 
 		err = client.Provider.DeleteOneID(providerUuid).Exec(ctx)

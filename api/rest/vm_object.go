@@ -55,6 +55,7 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 		vmObjectUuid, err := uuid.Parse(vmObjectID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse vm object uuid", err)
+			return
 		}
 
 		entVmObject, err := client.VmObject.Query().
@@ -166,6 +167,7 @@ func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
 		vmObjectUuid, err := uuid.Parse(vmObjectID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse vm object uuid", err)
+			return
 		}
 
 		entVmObject, err := client.VmObject.Query().
@@ -241,6 +243,7 @@ func DeleteVMObject(client *ent.Client) gin.HandlerFunc {
 		vmObjectUuid, err := uuid.Parse(vmObjectID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse vm object uuid", err)
+			return
 		}
 
 		err = client.VmObject.DeleteOneID(vmObjectUuid).Exec(ctx)

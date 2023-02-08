@@ -55,6 +55,7 @@ func GetTeam(client *ent.Client) gin.HandlerFunc {
 		teamUuid, err := uuid.Parse(teamID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+			return
 		}
 
 		entTeam, err := client.Team.Query().
@@ -163,6 +164,7 @@ func UpdateTeam(client *ent.Client) gin.HandlerFunc {
 		teamUuid, err := uuid.Parse(teamID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+			return
 		}
 
 		entTeam, err := client.Team.Query().
@@ -237,6 +239,7 @@ func DeleteTeam(client *ent.Client) gin.HandlerFunc {
 		teamUuid, err := uuid.Parse(teamID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+			return
 		}
 
 		err = client.Team.DeleteOneID(teamUuid).Exec(ctx)

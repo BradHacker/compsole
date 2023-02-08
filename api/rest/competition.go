@@ -55,6 +55,7 @@ func GetCompetition(client *ent.Client) gin.HandlerFunc {
 		competitionUuid, err := uuid.Parse(competitionID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			return
 		}
 
 		entCompetition, err := client.Competition.Query().
@@ -160,6 +161,7 @@ func UpdateCompetition(client *ent.Client) gin.HandlerFunc {
 		competitionUuid, err := uuid.Parse(competitionID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			return
 		}
 
 		entCompetition, err := client.Competition.Query().
@@ -233,6 +235,7 @@ func DeleteCompetition(client *ent.Client) gin.HandlerFunc {
 		competitionUuid, err := uuid.Parse(competitionID)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			return
 		}
 
 		err = client.Competition.DeleteOneID(competitionUuid).Exec(ctx)
