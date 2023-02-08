@@ -504,8 +504,12 @@ info:
     API Key Authentication is more complicated.
 
     1. You must retreive your `api_key` and `api_secret` from the Compsole UI after creating a service account.
-    2. Use the [`/rest/login`](#operations-Auth_API-post_rest_login) endpoint to retrieve an API Token to use in requests
+    2. Use the [`/rest/token`](#operations-Auth_API-post_rest_login) endpoint to retrieve an API Token to use in requests
     3. Place the API Token into the `Authorization` header like so: `Authorization: Bearer <api token here...>`
+
+    ##### Refresh Tokens
+
+    Refresh tokens can be used to renew a session without re-authenticating. The refresh token should be set in the `refresh-token` cookie already, so you can simply make a `POST` request to `/rest/token/refresh` and receive a new API token from this endpoint.
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
