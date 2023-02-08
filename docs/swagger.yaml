@@ -403,7 +403,7 @@ definitions:
         - $ref: '#/definitions/ent.Team'
         description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
     type: object
-  rest.CreatVMObject.VmObjectInput:
+  rest.CreateVMObject.VmObjectInput:
     properties:
       identifier:
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -608,7 +608,7 @@ paths:
         name: vm_object
         required: true
         schema:
-          $ref: '#/definitions/rest.CreatVMObject.VmObjectInput'
+          $ref: '#/definitions/rest.CreateVMObject.VmObjectInput'
       produces:
       - application/json
       responses:
@@ -634,6 +634,38 @@ paths:
       tags:
       - Service API
   /rest/vm-object/{id}:
+    delete:
+      description: Delete a VM Object.
+      parameters:
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a VM Object
+      tags:
+      - Service API
     get:
       description: Get VM Object
       parameters:

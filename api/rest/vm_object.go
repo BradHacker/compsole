@@ -61,7 +61,7 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Create a VM Object.
 //	@Tags			Service API
-//	@Param			vm_object	body	rest.CreatVMObject.VmObjectInput	true	"The vm object to create"
+//	@Param			vm_object	body	rest.CreateVMObject.VmObjectInput	true	"The vm object to create"
 //	@Produce		json
 //	@Success		201	{object}	ent.VmObject
 //	@Failure		422	{object}	api.APIError
@@ -205,7 +205,7 @@ func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Delete a VM Object.
 //	@Tags			Service API
-//	@Param			id			path	string								true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			id	path	string	true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
 //	@Success		204
 //	@Failure		422	{object}	api.APIError

@@ -173,7 +173,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreatVMObject.VmObjectInput"
+                            "$ref": "#/definitions/rest.CreateVMObject.VmObjectInput"
                         }
                     }
                 ],
@@ -298,6 +298,55 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/ent.VmObject"
                         }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Delete a VM Object.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Delete a VM Object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the vm object",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     },
                     "404": {
                         "description": "Not Found",
@@ -830,7 +879,7 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.CreatVMObject.VmObjectInput": {
+        "rest.CreateVMObject.VmObjectInput": {
             "type": "object",
             "required": [
                 "identifier",
