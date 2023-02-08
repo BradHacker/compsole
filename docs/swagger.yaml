@@ -1,0 +1,1571 @@
+basePath: /api
+definitions:
+  action.Type:
+    enum:
+    - SIGN_IN
+    - FAILED_SIGN_IN
+    - SIGN_OUT
+    - API_CALL
+    - CONSOLE_ACCESS
+    - REBOOT
+    - SHUTDOWN
+    - POWER_ON
+    - POWER_OFF
+    - CHANGE_SELF_PASSWORD
+    - CHANGE_PASSWORD
+    - CREATE_OBJECT
+    - UPDATE_OBJECT
+    - DELETE_OBJECT
+    - UPDATE_LOCKOUT
+    type: string
+    x-enum-varnames:
+    - TypeSIGN_IN
+    - TypeFAILED_SIGN_IN
+    - TypeSIGN_OUT
+    - TypeAPI_CALL
+    - TypeCONSOLE_ACCESS
+    - TypeREBOOT
+    - TypeSHUTDOWN
+    - TypePOWER_ON
+    - TypePOWER_OFF
+    - TypeCHANGE_SELF_PASSWORD
+    - TypeCHANGE_PASSWORD
+    - TypeCREATE_OBJECT
+    - TypeUPDATE_OBJECT
+    - TypeDELETE_OBJECT
+    - TypeUPDATE_LOCKOUT
+  api.APIError:
+    properties:
+      error: {}
+      message:
+        type: string
+    type: object
+  auth.UserLoginVals:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  ent.Action:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ActionEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ActionQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      ip_address:
+        description: IPAddress holds the value of the "ip_address" field.
+        type: string
+      message:
+        description: Message holds the value of the "message" field.
+        type: string
+      performed_at:
+        description: PerformedAt holds the value of the "performed_at" field.
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/action.Type'
+        description: Type holds the value of the "type" field.
+    type: object
+  ent.ActionEdges:
+    properties:
+      ActionToServiceAccount:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceAccount'
+        description: ActionToServiceAccount holds the value of the ActionToServiceAccount
+          edge.
+      ActionToUser:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: ActionToUser holds the value of the ActionToUser edge.
+    type: object
+  ent.Competition:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.CompetitionEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the CompetitionQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [REQUIRED] The unique name (aka. slug) for the competition.
+        type: string
+    type: object
+  ent.CompetitionEdges:
+    properties:
+      CompetitionToProvider:
+        allOf:
+        - $ref: '#/definitions/ent.Provider'
+        description: CompetitionToProvider holds the value of the CompetitionToProvider
+          edge.
+      CompetitionToTeams:
+        description: CompetitionToTeams holds the value of the CompetitionToTeams
+          edge.
+        items:
+          $ref: '#/definitions/ent.Team'
+        type: array
+    type: object
+  ent.Provider:
+    properties:
+      config:
+        description: |-
+          Config holds the value of the "config" field.
+          [REQUIRED] This is the JSON configuration for the provider.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ProviderEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ProviderQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [REQUIRED] The unique name (aka. slug) for the provider.
+        type: string
+      type:
+        description: |-
+          Type holds the value of the "type" field.
+          [REQUIRED] The unique name (aka. slug) for the provider.
+        type: string
+    type: object
+  ent.ProviderEdges:
+    properties:
+      ProviderToCompetition:
+        description: ProviderToCompetition holds the value of the ProviderToCompetition
+          edge.
+        items:
+          $ref: '#/definitions/ent.Competition'
+        type: array
+    type: object
+  ent.ServiceAccount:
+    properties:
+      active:
+        description: |-
+          Active holds the value of the "active" field.
+          [REQUIRED] Determines whether or not the service account is active or not
+        type: boolean
+      api_key:
+        description: |-
+          APIKey holds the value of the "api_key" field.
+          [REQUIRED] The API key for the service account. Equivalent to a username.
+        type: string
+      api_secret:
+        description: |-
+          APISecret holds the value of the "api_secret" field.
+          [REQUIRED] The API secret for the service account. This value MUST be protected.
+        type: string
+      display_name:
+        description: |-
+          DisplayName holds the value of the "display_name" field.
+          [REQUIRED] The display/common name for the service account.
+        type: string
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceAccountEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ServiceAccountQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+    type: object
+  ent.ServiceAccountEdges:
+    properties:
+      ServiceAccountToActions:
+        description: ServiceAccountToActions holds the value of the ServiceAccountToActions
+          edge.
+        items:
+          $ref: '#/definitions/ent.Action'
+        type: array
+      ServiceAccountToToken:
+        description: ServiceAccountToToken holds the value of the ServiceAccountToToken
+          edge.
+        items:
+          $ref: '#/definitions/ent.ServiceToken'
+        type: array
+    type: object
+  ent.ServiceToken:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceTokenEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the ServiceTokenQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      issued_at:
+        description: |-
+          IssuedAt holds the value of the "issued_at" field.
+          [REQUIRED] The time the token was issued
+        type: integer
+      refresh_token:
+        description: |-
+          RefreshToken holds the value of the "refresh_token" field.
+          [REQUIRED] The refresh token used to renew an expired service account session. These are valid for `REFRESH_WINDOW` hours.
+        type: string
+      token:
+        description: |-
+          Token holds the value of the "token" field.
+          [REQUIRED] The API token for a service account session.
+        type: string
+    type: object
+  ent.ServiceTokenEdges:
+    properties:
+      TokenToServiceAccount:
+        allOf:
+        - $ref: '#/definitions/ent.ServiceAccount'
+        description: TokenToServiceAccount holds the value of the TokenToServiceAccount
+          edge.
+    type: object
+  ent.Team:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.TeamEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the TeamQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [OPTIONAL] The display name for the team.
+        type: string
+      team_number:
+        description: |-
+          TeamNumber holds the value of the "team_number" field.
+          [REQUIRED] The team number.
+        type: integer
+    type: object
+  ent.TeamEdges:
+    properties:
+      TeamToCompetition:
+        allOf:
+        - $ref: '#/definitions/ent.Competition'
+        description: TeamToCompetition holds the value of the TeamToCompetition edge.
+      TeamToUsers:
+        description: TeamToUsers holds the value of the TeamToUsers edge.
+        items:
+          $ref: '#/definitions/ent.User'
+        type: array
+      TeamToVmObjects:
+        description: TeamToVmObjects holds the value of the TeamToVmObjects edge.
+        items:
+          $ref: '#/definitions/ent.VmObject'
+        type: array
+    type: object
+  ent.Token:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.TokenEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the TokenQuery when eager-loading is set.
+      expire_at:
+        description: |-
+          ExpireAt holds the value of the "expire_at" field.
+          [REQUIRED] The time the token should expire.
+        type: integer
+      id:
+        description: ID of the ent.
+        type: string
+      token:
+        description: |-
+          Token holds the value of the "token" field.
+          [REQUIRED] The auth-token cookie value for the user session.
+        type: string
+    type: object
+  ent.TokenEdges:
+    properties:
+      TokenToUser:
+        allOf:
+        - $ref: '#/definitions/ent.User'
+        description: TokenToUser holds the value of the TokenToUser edge.
+    type: object
+  ent.User:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.UserEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the UserQuery when eager-loading is set.
+      first_name:
+        description: |-
+          FirstName holds the value of the "first_name" field.
+          [OPTIONAL] The display first name for the user.
+        type: string
+      id:
+        description: ID of the ent.
+        type: string
+      last_name:
+        description: |-
+          LastName holds the value of the "last_name" field.
+          [OPTIONAL] The display last name for the user
+        type: string
+      provider:
+        allOf:
+        - $ref: '#/definitions/user.Provider'
+        description: |-
+          Provider holds the value of the "provider" field.
+          [REQUIRED] The type of login the user will be using.
+      role:
+        allOf:
+        - $ref: '#/definitions/user.Role'
+        description: |-
+          Role holds the value of the "role" field.
+          [REQUIRED] The role of the user. Admins have full access.
+      username:
+        description: |-
+          Username holds the value of the "username" field.
+          [REQUIRED] The username for the user.
+        type: string
+    type: object
+  ent.UserEdges:
+    properties:
+      UserToActions:
+        description: UserToActions holds the value of the UserToActions edge.
+        items:
+          $ref: '#/definitions/ent.Action'
+        type: array
+      UserToTeam:
+        allOf:
+        - $ref: '#/definitions/ent.Team'
+        description: UserToTeam holds the value of the UserToTeam edge.
+      UserToToken:
+        description: UserToToken holds the value of the UserToToken edge.
+        items:
+          $ref: '#/definitions/ent.Token'
+        type: array
+    type: object
+  ent.VmObject:
+    properties:
+      edges:
+        allOf:
+        - $ref: '#/definitions/ent.VmObjectEdges'
+        description: |-
+          Edges holds the relations/edges for other nodes in the graph.
+          The values are being populated by the VmObjectQuery when eager-loading is set.
+      id:
+        description: ID of the ent.
+        type: string
+      identifier:
+        description: |-
+          Identifier holds the value of the "identifier" field.
+          [REQUIRED] The identifier of the VM. This will be provider-specific.
+        type: string
+      ip_addresses:
+        description: |-
+          IPAddresses holds the value of the "ip_addresses" field.
+          [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
+        items:
+          type: string
+        type: array
+      locked:
+        description: |-
+          Locked holds the value of the "locked" field.
+          [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
+        type: boolean
+      name:
+        description: |-
+          Name holds the value of the "name" field.
+          [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
+        type: string
+    type: object
+  ent.VmObjectEdges:
+    properties:
+      VmObjectToTeam:
+        allOf:
+        - $ref: '#/definitions/ent.Team'
+        description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
+    type: object
+  rest.CreateCompetition.CompetitionInput:
+    properties:
+      competition_to_provider:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        example: ISTS 'XX
+        type: string
+    required:
+    - competition_to_provider
+    - name
+    type: object
+  rest.CreateProvider.ProviderInput:
+    properties:
+      config:
+        description: See https://github.com/BradHacker/compsole/tree/main/configs
+          for examples
+        example: See https://github.com/BradHacker/compsole/tree/main/configs for
+          examples
+        type: string
+      name:
+        example: RITSEC Openstack
+        type: string
+      type:
+        enum:
+        - OPENSTACK
+        example: OPENSTACK
+        type: string
+    required:
+    - config
+    - name
+    - type
+    type: object
+  rest.CreateTeam.TeamInput:
+    properties:
+      name:
+        example: ISTS 'XX
+        type: string
+      team_number:
+        example: 1
+        type: integer
+      team_to_competition:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - name
+    - team_number
+    - team_to_competition
+    type: object
+  rest.CreateUser.UserInput:
+    properties:
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      role:
+        enum:
+        - USER
+        - ADMIN
+        example: USER
+        type: string
+      user_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      username:
+        example: compsole
+        type: string
+    required:
+    - first_name
+    - last_name
+    - role
+    - username
+    type: object
+  rest.CreateVMObject.VmObjectInput:
+    properties:
+      identifier:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      name:
+        example: team01.dc.comp.co
+        type: string
+      vm_object_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - identifier
+    - ip_addresses
+    - name
+    - vm_object_to_team
+    type: object
+  rest.ServiceLoginResult:
+    properties:
+      token:
+        type: string
+      token_expires_at:
+        type: integer
+    type: object
+  rest.ServiceLoginVals:
+    properties:
+      api_key:
+        type: string
+      api_secret:
+        type: string
+    required:
+    - api_key
+    - api_secret
+    type: object
+  rest.UpdateCompetition.CompetitionInput:
+    properties:
+      competition_to_provider:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        example: ISTS 'XX
+        type: string
+    required:
+    - competition_to_provider
+    - name
+    type: object
+  rest.UpdateProvider.ProviderInput:
+    properties:
+      config:
+        description: See https://github.com/BradHacker/compsole/tree/main/configs
+          for examples
+        type: string
+      name:
+        example: RITSEC Openstack
+        type: string
+      type:
+        enum:
+        - OPENSTACK
+        type: string
+    required:
+    - config
+    - name
+    - type
+    type: object
+  rest.UpdateTeam.TeamInput:
+    properties:
+      name:
+        example: ISTS 'XX
+        type: string
+      team_number:
+        example: 1
+        type: integer
+      team_to_competition:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - name
+    - team_number
+    - team_to_competition
+    type: object
+  rest.UpdateUser.UserInput:
+    properties:
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      role:
+        enum:
+        - USER
+        - ADMIN
+        example: USER
+        type: string
+      user_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      username:
+        example: compsole
+        type: string
+    required:
+    - first_name
+    - last_name
+    - role
+    - username
+    type: object
+  rest.UpdateVMObject.VmObjectInput:
+    properties:
+      identifier:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      name:
+        example: team01.dc.comp.co
+        type: string
+      vm_object_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - identifier
+    - ip_addresses
+    - name
+    - vm_object_to_team
+    type: object
+  user.Provider:
+    enum:
+    - LOCAL
+    - GITLAB
+    type: string
+    x-enum-varnames:
+    - ProviderLOCAL
+    - ProviderGITLAB
+  user.Role:
+    enum:
+    - USER
+    - ADMIN
+    type: string
+    x-enum-varnames:
+    - RoleUSER
+    - RoleADMIN
+info:
+  contact:
+    name: BradHacker
+    url: http://github.com/BradHacker/compsole/issues
+  description: |
+    This is the Compsole API documentation.
+
+    ### Authenticating
+
+    There are two methods of authenticating to the Compsole API. **Basic Auth** is used solely for the purpose of the Compsole UI. **Api Key Auth** is used for service accounts to authenticate prior to accessing the REST endpoints.
+
+    #### Basic Auth
+
+    Use the [`/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.
+
+    #### Api Key Auth
+
+    API Key Authentication is more complicated.
+
+    1. You must retreive your `api_key` and `api_secret` from the Compsole UI after creating a service account.
+    2. Use the [`/rest/token`](#operations-Auth_API-post_rest_login) endpoint to retrieve an API Token to use in requests
+    3. Place the API Token into the `Authorization` header like so: `Authorization: Bearer <api token here...>`
+
+    ##### Refresh Tokens
+
+    Refresh tokens can be used to renew a session without re-authenticating. The refresh token should be set in the `refresh-token` cookie already, so you can simply make a `POST` request to `/rest/token/refresh` and receive a new API token from this endpoint.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Compsole API
+  version: "1.0"
+paths:
+  /auth/local/login:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Login with a local account
+      parameters:
+      - description: User account details
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.UserLoginVals'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Cookie:
+              description: '`auth-cookie` contains the session token'
+              type: string
+          schema:
+            $ref: '#/definitions/ent.User'
+      summary: Login with a local account
+      tags:
+      - Auth API
+  /rest/competition:
+    get:
+      description: List all Competitions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.Competition'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all Competitions
+      tags:
+      - Service API
+    post:
+      description: Create a Competition
+      parameters:
+      - description: The competition to create
+        in: body
+        name: competition
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateCompetition.CompetitionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Competition'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a Competition
+      tags:
+      - Service API
+  /rest/competition/{id}:
+    delete:
+      description: Delete a Competition
+      parameters:
+      - description: The id of the competition
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a Competition
+      tags:
+      - Service API
+    get:
+      description: Get a Competition
+      parameters:
+      - description: The id of the competition
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Competition'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a Competition
+      tags:
+      - Service API
+    put:
+      description: Update a Competition
+      parameters:
+      - description: The id of the competition
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated competition
+        in: body
+        name: competition
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateCompetition.CompetitionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Competition'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a Competition
+      tags:
+      - Service API
+  /rest/provider:
+    get:
+      description: List all Providers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.Provider'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all Providers
+      tags:
+      - Service API
+    post:
+      description: Create a Provider
+      parameters:
+      - description: The provider to create
+        in: body
+        name: provider
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateProvider.ProviderInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Provider'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a Provider
+      tags:
+      - Service API
+  /rest/provider/{id}:
+    delete:
+      description: Delete a Provider
+      parameters:
+      - description: The id of the provider
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a Provider
+      tags:
+      - Service API
+    get:
+      description: Get a provider
+      parameters:
+      - description: The id of the provider
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Provider'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a provider
+      tags:
+      - Service API
+    put:
+      description: Update a Provider
+      parameters:
+      - description: The id of the provider
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated provider
+        in: body
+        name: provider
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateProvider.ProviderInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Provider'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a Provider
+      tags:
+      - Service API
+  /rest/team:
+    get:
+      description: List all Teams
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.Team'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all Teams
+      tags:
+      - Service API
+    post:
+      description: Create a Team
+      parameters:
+      - description: The team to create
+        in: body
+        name: team
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateTeam.TeamInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a Team
+      tags:
+      - Service API
+  /rest/team/{id}:
+    delete:
+      description: Delete a Team
+      parameters:
+      - description: The id of the team
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a Team
+      tags:
+      - Service API
+    get:
+      description: Get a Team
+      parameters:
+      - description: The id of the team
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a Team
+      tags:
+      - Service API
+    put:
+      description: Update a Team
+      parameters:
+      - description: The id of the team
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated team
+        in: body
+        name: team
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateTeam.TeamInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a Team
+      tags:
+      - Service API
+  /rest/token:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Login with a service account and get a session token. The refresh
+        token is set as a cookie in the response and can be used to refresh a session
+        without re-authenticating.
+      parameters:
+      - description: Service account details
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/rest.ServiceLoginVals'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.ServiceLoginResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Login with a service account and get a session token
+      tags:
+      - Auth API
+  /rest/token/refresh:
+    post:
+      description: Refresh a service account session without re-authenticating
+      parameters:
+      - default: refresh-token=xxx
+        description: refresh-token
+        in: header
+        name: Cookie
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.ServiceLoginResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Refresh a service account session without re-authenticating
+      tags:
+      - Auth API
+  /rest/user:
+    get:
+      description: List all Users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all Users
+      tags:
+      - Service API
+    post:
+      description: Create a User
+      parameters:
+      - description: The user to create
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateUser.UserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a User
+      tags:
+      - Service API
+  /rest/user/{id}:
+    delete:
+      description: Delete a User
+      parameters:
+      - description: The id of the user
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a User
+      tags:
+      - Service API
+    get:
+      description: Get a User
+      parameters:
+      - description: The id of the user
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a User
+      tags:
+      - Service API
+    put:
+      description: Update a User
+      parameters:
+      - description: The id of the user
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateUser.UserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a User
+      tags:
+      - Service API
+  /rest/vm-object:
+    get:
+      description: List all VM Objects
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.VmObject'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all VM Objects
+      tags:
+      - Service API
+    post:
+      description: Create a VM Object
+      parameters:
+      - description: The vm object to create
+        in: body
+        name: vm_object
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateVMObject.VmObjectInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.VmObject'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a VM Object
+      tags:
+      - Service API
+  /rest/vm-object/{id}:
+    delete:
+      description: Delete a VM Object
+      parameters:
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a VM Object
+      tags:
+      - Service API
+    get:
+      description: Get a VM Object
+      parameters:
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.VmObject'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a VM Object
+      tags:
+      - Service API
+    put:
+      description: Update a VM Object
+      parameters:
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated vm object
+        in: body
+        name: vm_object
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateVMObject.VmObjectInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.VmObject'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a VM Object
+      tags:
+      - Service API
+securityDefinitions:
+  ServiceAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  UserAuth:
+    type: basic
+swagger: "2.0"
+tags:
+- description: These endpoints are used purely for authentication purposes only
+  name: Auth API
+- description: These endpoints are only usable after authenticating with a service
+    account. They are used for 3rd-party applications to interact with Compsole.
+  name: Service API

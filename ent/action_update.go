@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/predicate"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/google/uuid"
 )
@@ -76,9 +77,36 @@ func (au *ActionUpdate) SetActionToUserID(id uuid.UUID) *ActionUpdate {
 	return au
 }
 
+// SetNillableActionToUserID sets the "ActionToUser" edge to the User entity by ID if the given value is not nil.
+func (au *ActionUpdate) SetNillableActionToUserID(id *uuid.UUID) *ActionUpdate {
+	if id != nil {
+		au = au.SetActionToUserID(*id)
+	}
+	return au
+}
+
 // SetActionToUser sets the "ActionToUser" edge to the User entity.
 func (au *ActionUpdate) SetActionToUser(u *User) *ActionUpdate {
 	return au.SetActionToUserID(u.ID)
+}
+
+// SetActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by ID.
+func (au *ActionUpdate) SetActionToServiceAccountID(id uuid.UUID) *ActionUpdate {
+	au.mutation.SetActionToServiceAccountID(id)
+	return au
+}
+
+// SetNillableActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by ID if the given value is not nil.
+func (au *ActionUpdate) SetNillableActionToServiceAccountID(id *uuid.UUID) *ActionUpdate {
+	if id != nil {
+		au = au.SetActionToServiceAccountID(*id)
+	}
+	return au
+}
+
+// SetActionToServiceAccount sets the "ActionToServiceAccount" edge to the ServiceAccount entity.
+func (au *ActionUpdate) SetActionToServiceAccount(s *ServiceAccount) *ActionUpdate {
+	return au.SetActionToServiceAccountID(s.ID)
 }
 
 // Mutation returns the ActionMutation object of the builder.
@@ -89,6 +117,12 @@ func (au *ActionUpdate) Mutation() *ActionMutation {
 // ClearActionToUser clears the "ActionToUser" edge to the User entity.
 func (au *ActionUpdate) ClearActionToUser() *ActionUpdate {
 	au.mutation.ClearActionToUser()
+	return au
+}
+
+// ClearActionToServiceAccount clears the "ActionToServiceAccount" edge to the ServiceAccount entity.
+func (au *ActionUpdate) ClearActionToServiceAccount() *ActionUpdate {
+	au.mutation.ClearActionToServiceAccount()
 	return au
 }
 
@@ -158,9 +192,6 @@ func (au *ActionUpdate) check() error {
 		if err := action.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Action.type": %w`, err)}
 		}
-	}
-	if _, ok := au.mutation.ActionToUserID(); au.mutation.ActionToUserCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Action.ActionToUser"`)
 	}
 	return nil
 }
@@ -246,6 +277,41 @@ func (au *ActionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if au.mutation.ActionToServiceAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   action.ActionToServiceAccountTable,
+			Columns: []string{action.ActionToServiceAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: serviceaccount.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.ActionToServiceAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   action.ActionToServiceAccountTable,
+			Columns: []string{action.ActionToServiceAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: serviceaccount.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{action.Label}
@@ -311,9 +377,36 @@ func (auo *ActionUpdateOne) SetActionToUserID(id uuid.UUID) *ActionUpdateOne {
 	return auo
 }
 
+// SetNillableActionToUserID sets the "ActionToUser" edge to the User entity by ID if the given value is not nil.
+func (auo *ActionUpdateOne) SetNillableActionToUserID(id *uuid.UUID) *ActionUpdateOne {
+	if id != nil {
+		auo = auo.SetActionToUserID(*id)
+	}
+	return auo
+}
+
 // SetActionToUser sets the "ActionToUser" edge to the User entity.
 func (auo *ActionUpdateOne) SetActionToUser(u *User) *ActionUpdateOne {
 	return auo.SetActionToUserID(u.ID)
+}
+
+// SetActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by ID.
+func (auo *ActionUpdateOne) SetActionToServiceAccountID(id uuid.UUID) *ActionUpdateOne {
+	auo.mutation.SetActionToServiceAccountID(id)
+	return auo
+}
+
+// SetNillableActionToServiceAccountID sets the "ActionToServiceAccount" edge to the ServiceAccount entity by ID if the given value is not nil.
+func (auo *ActionUpdateOne) SetNillableActionToServiceAccountID(id *uuid.UUID) *ActionUpdateOne {
+	if id != nil {
+		auo = auo.SetActionToServiceAccountID(*id)
+	}
+	return auo
+}
+
+// SetActionToServiceAccount sets the "ActionToServiceAccount" edge to the ServiceAccount entity.
+func (auo *ActionUpdateOne) SetActionToServiceAccount(s *ServiceAccount) *ActionUpdateOne {
+	return auo.SetActionToServiceAccountID(s.ID)
 }
 
 // Mutation returns the ActionMutation object of the builder.
@@ -324,6 +417,12 @@ func (auo *ActionUpdateOne) Mutation() *ActionMutation {
 // ClearActionToUser clears the "ActionToUser" edge to the User entity.
 func (auo *ActionUpdateOne) ClearActionToUser() *ActionUpdateOne {
 	auo.mutation.ClearActionToUser()
+	return auo
+}
+
+// ClearActionToServiceAccount clears the "ActionToServiceAccount" edge to the ServiceAccount entity.
+func (auo *ActionUpdateOne) ClearActionToServiceAccount() *ActionUpdateOne {
+	auo.mutation.ClearActionToServiceAccount()
 	return auo
 }
 
@@ -400,9 +499,6 @@ func (auo *ActionUpdateOne) check() error {
 		if err := action.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "Action.type": %w`, err)}
 		}
-	}
-	if _, ok := auo.mutation.ActionToUserID(); auo.mutation.ActionToUserCleared() && !ok {
-		return errors.New(`ent: clearing a required unique edge "Action.ActionToUser"`)
 	}
 	return nil
 }
@@ -497,6 +593,41 @@ func (auo *ActionUpdateOne) sqlSave(ctx context.Context) (_node *Action, err err
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if auo.mutation.ActionToServiceAccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   action.ActionToServiceAccountTable,
+			Columns: []string{action.ActionToServiceAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: serviceaccount.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.ActionToServiceAccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   action.ActionToServiceAccountTable,
+			Columns: []string{action.ActionToServiceAccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: serviceaccount.FieldID,
 				},
 			},
 		}

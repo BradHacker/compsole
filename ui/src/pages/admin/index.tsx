@@ -9,6 +9,7 @@ import {
   ImportExport,
   Factory,
   Lock,
+  Engineering,
 } from "@mui/icons-material";
 import {
   Box,
@@ -39,6 +40,7 @@ import { VmObjectList } from "../../components/vm-object-list/index";
 import { ProviderList } from "../../components/provider-list";
 import { GenerateUsers } from "../../components/generate-users";
 import { LockoutForm } from "../../components/lockout-form";
+import { ServiceAccountList } from "../../components/service-account-list";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -185,6 +187,9 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
       case 4:
         navigate("/admin/provider/new");
         break;
+      case 5:
+        navigate("/admin/service-account/new");
+        break;
       default:
         navigate("/admin");
         break;
@@ -275,13 +280,24 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
                 <ListItemText primary="Providers" />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => handleTabChange(5)}
+                selected={selectedTab === 5}
+              >
+                <ListItemIcon>
+                  <Engineering />
+                </ListItemIcon>
+                <ListItemText primary="Service Accounts" />
+              </ListItemButton>
+            </ListItem>
           </List>
           <Divider />
           <List>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => handleTabChange(5)}
-                selected={selectedTab === 5}
+                onClick={() => handleTabChange(6)}
+                selected={selectedTab === 6}
               >
                 <ListItemIcon>
                   <ImportExport />
@@ -291,8 +307,8 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => handleTabChange(6)}
-                selected={selectedTab === 6}
+                onClick={() => handleTabChange(7)}
+                selected={selectedTab === 7}
               >
                 <ListItemIcon>
                   <Factory />
@@ -302,8 +318,8 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
             </ListItem>
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => handleTabChange(7)}
-                selected={selectedTab === 7}
+                onClick={() => handleTabChange(8)}
+                selected={selectedTab === 8}
               >
                 <ListItemIcon>
                   <Lock />
@@ -346,15 +362,21 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           />
         </TabPanel>
         <TabPanel value={selectedTab} index={5}>
-          <IngestVMs />
+          <ServiceAccountList
+            setDeleteModalData={setDeleteModalData}
+            resetDeleteModal={resetDeleteModal}
+          />
         </TabPanel>
         <TabPanel value={selectedTab} index={6}>
-          <GenerateUsers />
+          <IngestVMs />
         </TabPanel>
         <TabPanel value={selectedTab} index={7}>
+          <GenerateUsers />
+        </TabPanel>
+        <TabPanel value={selectedTab} index={8}>
           <LockoutForm />
         </TabPanel>
-        {selectedTab < 5 && (
+        {selectedTab < 6 && (
           <Fab
             sx={{
               position: "fixed",

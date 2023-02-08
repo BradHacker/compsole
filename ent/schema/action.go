@@ -30,6 +30,7 @@ func (Action) Fields() []ent.Field {
 // Edges of the Action.
 func (Action) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("ActionToUser", User.Type).Ref("UserToActions").Unique().Required(),
+		edge.From("ActionToUser", User.Type).Ref("UserToActions").Unique(),
+		edge.From("ActionToServiceAccount", ServiceAccount.Type).Ref("ServiceAccountToActions").Unique(),
 	}
 }

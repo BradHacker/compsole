@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/predicate"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/google/uuid"
 )
@@ -27,8 +28,9 @@ type ActionQuery struct {
 	fields     []string
 	predicates []predicate.Action
 	// eager-loading edges.
-	withActionToUser *UserQuery
-	withFKs          bool
+	withActionToUser           *UserQuery
+	withActionToServiceAccount *ServiceAccountQuery
+	withFKs                    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -80,6 +82,28 @@ func (aq *ActionQuery) QueryActionToUser() *UserQuery {
 			sqlgraph.From(action.Table, action.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, action.ActionToUserTable, action.ActionToUserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryActionToServiceAccount chains the current query on the "ActionToServiceAccount" edge.
+func (aq *ActionQuery) QueryActionToServiceAccount() *ServiceAccountQuery {
+	query := &ServiceAccountQuery{config: aq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := aq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := aq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(action.Table, action.FieldID, selector),
+			sqlgraph.To(serviceaccount.Table, serviceaccount.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, action.ActionToServiceAccountTable, action.ActionToServiceAccountColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(aq.driver.Dialect(), step)
 		return fromU, nil
@@ -263,12 +287,13 @@ func (aq *ActionQuery) Clone() *ActionQuery {
 		return nil
 	}
 	return &ActionQuery{
-		config:           aq.config,
-		limit:            aq.limit,
-		offset:           aq.offset,
-		order:            append([]OrderFunc{}, aq.order...),
-		predicates:       append([]predicate.Action{}, aq.predicates...),
-		withActionToUser: aq.withActionToUser.Clone(),
+		config:                     aq.config,
+		limit:                      aq.limit,
+		offset:                     aq.offset,
+		order:                      append([]OrderFunc{}, aq.order...),
+		predicates:                 append([]predicate.Action{}, aq.predicates...),
+		withActionToUser:           aq.withActionToUser.Clone(),
+		withActionToServiceAccount: aq.withActionToServiceAccount.Clone(),
 		// clone intermediate query.
 		sql:    aq.sql.Clone(),
 		path:   aq.path,
@@ -284,6 +309,17 @@ func (aq *ActionQuery) WithActionToUser(opts ...func(*UserQuery)) *ActionQuery {
 		opt(query)
 	}
 	aq.withActionToUser = query
+	return aq
+}
+
+// WithActionToServiceAccount tells the query-builder to eager-load the nodes that are connected to
+// the "ActionToServiceAccount" edge. The optional arguments are used to configure the query builder of the edge.
+func (aq *ActionQuery) WithActionToServiceAccount(opts ...func(*ServiceAccountQuery)) *ActionQuery {
+	query := &ServiceAccountQuery{config: aq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	aq.withActionToServiceAccount = query
 	return aq
 }
 
@@ -351,11 +387,12 @@ func (aq *ActionQuery) sqlAll(ctx context.Context) ([]*Action, error) {
 		nodes       = []*Action{}
 		withFKs     = aq.withFKs
 		_spec       = aq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			aq.withActionToUser != nil,
+			aq.withActionToServiceAccount != nil,
 		}
 	)
-	if aq.withActionToUser != nil {
+	if aq.withActionToUser != nil || aq.withActionToServiceAccount != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -406,6 +443,35 @@ func (aq *ActionQuery) sqlAll(ctx context.Context) ([]*Action, error) {
 			}
 			for i := range nodes {
 				nodes[i].Edges.ActionToUser = n
+			}
+		}
+	}
+
+	if query := aq.withActionToServiceAccount; query != nil {
+		ids := make([]uuid.UUID, 0, len(nodes))
+		nodeids := make(map[uuid.UUID][]*Action)
+		for i := range nodes {
+			if nodes[i].service_account_service_account_to_actions == nil {
+				continue
+			}
+			fk := *nodes[i].service_account_service_account_to_actions
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(serviceaccount.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "service_account_service_account_to_actions" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.ActionToServiceAccount = n
 			}
 		}
 	}

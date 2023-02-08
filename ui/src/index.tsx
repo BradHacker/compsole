@@ -27,6 +27,7 @@ import { VmObjectForm } from "./pages/admin/vm-object-form";
 import { TeamForm } from "./pages/admin/team-form";
 import { Account } from "./pages/account/index";
 import { Logs } from "./pages/logs";
+import { ServiceAccountForm } from "./pages/admin/service-account-form";
 
 const LinkBehavior = React.forwardRef<
   HTMLAnchorElement,
@@ -109,6 +110,14 @@ root.render(
                   <Route path="vm-object/:id" element={<VmObjectForm />} />
                   <Route path="team/new" element={<TeamForm />} />
                   <Route path="team/:id" element={<TeamForm />} />
+                  <Route
+                    path="service-account/new"
+                    element={<ServiceAccountForm />}
+                  />
+                  <Route
+                    path="service-account/:id"
+                    element={<ServiceAccountForm />}
+                  />
                   <Route path="logs" element={<Logs />} />
                 </Route>
               </Route>

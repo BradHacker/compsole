@@ -15,7 +15,8 @@ var (
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"SIGN_IN", "FAILED_SIGN_IN", "SIGN_OUT", "API_CALL", "CONSOLE_ACCESS", "REBOOT", "SHUTDOWN", "POWER_ON", "POWER_OFF", "CHANGE_SELF_PASSWORD", "CHANGE_PASSWORD", "CREATE_OBJECT", "UPDATE_OBJECT", "DELETE_OBJECT", "UPDATE_LOCKOUT"}},
 		{Name: "message", Type: field.TypeString},
 		{Name: "performed_at", Type: field.TypeTime},
-		{Name: "user_user_to_actions", Type: field.TypeUUID},
+		{Name: "service_account_service_account_to_actions", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_user_to_actions", Type: field.TypeUUID, Nullable: true},
 	}
 	// ActionsTable holds the schema information for the "actions" table.
 	ActionsTable = &schema.Table{
@@ -24,8 +25,14 @@ var (
 		PrimaryKey: []*schema.Column{ActionsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "actions_users_UserToActions",
+				Symbol:     "actions_service_accounts_ServiceAccountToActions",
 				Columns:    []*schema.Column{ActionsColumns[5]},
+				RefColumns: []*schema.Column{ServiceAccountsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "actions_users_UserToActions",
+				Columns:    []*schema.Column{ActionsColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -63,6 +70,42 @@ var (
 		Name:       "providers",
 		Columns:    ProvidersColumns,
 		PrimaryKey: []*schema.Column{ProvidersColumns[0]},
+	}
+	// ServiceAccountsColumns holds the columns for the "service_accounts" table.
+	ServiceAccountsColumns = []*schema.Column{
+		{Name: "oid", Type: field.TypeUUID},
+		{Name: "display_name", Type: field.TypeString},
+		{Name: "api_key", Type: field.TypeUUID},
+		{Name: "api_secret", Type: field.TypeUUID},
+		{Name: "active", Type: field.TypeBool},
+	}
+	// ServiceAccountsTable holds the schema information for the "service_accounts" table.
+	ServiceAccountsTable = &schema.Table{
+		Name:       "service_accounts",
+		Columns:    ServiceAccountsColumns,
+		PrimaryKey: []*schema.Column{ServiceAccountsColumns[0]},
+	}
+	// ServiceTokensColumns holds the columns for the "service_tokens" table.
+	ServiceTokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "token", Type: field.TypeString},
+		{Name: "refresh_token", Type: field.TypeString},
+		{Name: "issued_at", Type: field.TypeInt64},
+		{Name: "service_account_service_account_to_token", Type: field.TypeUUID},
+	}
+	// ServiceTokensTable holds the schema information for the "service_tokens" table.
+	ServiceTokensTable = &schema.Table{
+		Name:       "service_tokens",
+		Columns:    ServiceTokensColumns,
+		PrimaryKey: []*schema.Column{ServiceTokensColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "service_tokens_service_accounts_ServiceAccountToToken",
+				Columns:    []*schema.Column{ServiceTokensColumns[4]},
+				RefColumns: []*schema.Column{ServiceAccountsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
 	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
@@ -159,6 +202,8 @@ var (
 		ActionsTable,
 		CompetitionsTable,
 		ProvidersTable,
+		ServiceAccountsTable,
+		ServiceTokensTable,
 		TeamsTable,
 		TokensTable,
 		UsersTable,
@@ -167,8 +212,10 @@ var (
 )
 
 func init() {
-	ActionsTable.ForeignKeys[0].RefTable = UsersTable
+	ActionsTable.ForeignKeys[0].RefTable = ServiceAccountsTable
+	ActionsTable.ForeignKeys[1].RefTable = UsersTable
 	CompetitionsTable.ForeignKeys[0].RefTable = ProvidersTable
+	ServiceTokensTable.ForeignKeys[0].RefTable = ServiceAccountsTable
 	TeamsTable.ForeignKeys[0].RefTable = CompetitionsTable
 	TokensTable.ForeignKeys[0].RefTable = UsersTable
 	UsersTable.ForeignKeys[0].RefTable = TeamsTable

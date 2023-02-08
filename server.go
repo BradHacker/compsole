@@ -13,8 +13,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/BradHacker/compsole/auth"
+	"github.com/BradHacker/compsole/api"
+	"github.com/BradHacker/compsole/api/auth"
+	"github.com/BradHacker/compsole/api/rest"
 	"github.com/BradHacker/compsole/compsole/utils"
+	_ "github.com/BradHacker/compsole/docs"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/graph"
@@ -23,14 +26,41 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/crypto/bcrypt"
 )
+
+//	@title			Compsole API
+//	@version		1.0
+//	@description.markdown
+
+//	@contact.name	BradHacker
+//	@contact.url	http://github.com/BradHacker/compsole/issues
+
+//	@license.name	MIT
+//	@license.url	https://opensource.org/licenses/MIT
+
+//	@BasePath	/api
+
+//	@securityDefinitions.apiKey	ServiceAuth
+//	@in							header
+//	@name						Authorization
+//	@tokenUrl					https://localhost:8080/api/rest/login
+
+// @securityDefinitions.basic  UserAuth
+
+// @tag.name Auth API
+// @tag.description These endpoints are used purely for authentication purposes only
+
+// @tag.name Service API
+// @tag.description These endpoints are only usable after authenticating with a service account. They are used for 3rd-party applications to interact with Compsole.
 
 const defaultPort = "8080"
 
 // Defining the Playground handler
 func playgroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL", "/api/query")
+	h := playground.Handler("GraphQL", "/api/graphql/query")
 
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -171,8 +201,6 @@ func main() {
 		}
 	}()
 
-	auth.InitGoth()
-
 	router := gin.Default()
 
 	cors_urls := []string{"http://localhost", "http://localhost:3000"}
@@ -197,21 +225,33 @@ func main() {
 
 	gqlHandler := graphqlHandler(client, rdb)
 
+	_, exists := os.LookupEnv("JWT_SECRET")
+	if !exists {
+		logrus.Error("env var JWT_SECRET not set for authentication")
+		return
+	}
+
+	router.Use(api.UnauthenticatedMiddleware())
+
 	authGroup := router.Group("/auth")
-	authGroup.GET("/login", func(c *gin.Context) {
-		c.Redirect(301, "/ui/")
-	})
-	authGroup.POST("/local/login", auth.LocalLogin(client))
-	authGroup.GET("/:provider/login", auth.GothicBeginAuth())
-	authGroup.GET("/:provider/callback", auth.GothicCallbackHandler(client))
-	authGroup.GET("/logout", auth.Logout(client))
+	auth.RegisterAuthEndpoints(client, authGroup)
 
-	api := router.Group("/api")
-	api.Use(auth.Middleware(client))
+	apiGroup := router.Group("/api")
 
-	api.POST("/query", gqlHandler)
-	api.GET("/query", gqlHandler)
-	api.GET("/playground", playgroundHandler())
+	gqlApi := apiGroup.Group("/graphql")
+	gqlApi.Use(api.Middleware(client))
+	gqlApi.Use(graph.GinContextToContextMiddleware())
+	gqlApi.POST("/query", gqlHandler)
+	gqlApi.GET("/query", gqlHandler)
+	gqlApi.GET("/playground", playgroundHandler())
+
+	restApi := apiGroup.Group("/rest")
+	rest.RegisterRESTEndpoints(client, restApi)
+
+	// Swagger Docs
+	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	// router.GET("/swagger/rest/*any", ginSwagger.WrapHandler(swaggerfiles.NewHandler(), ginSwagger.InstanceName("rest")))
+	// router.GET("/swagger/auth/*any", ginSwagger.WrapHandler(swaggerfiles.NewHandler(), ginSwagger.InstanceName("auth")))
 
 	logrus.Infof("Starting Compsole Server on port " + port)
 

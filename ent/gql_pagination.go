@@ -17,6 +17,8 @@ import (
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/token"
 	"github.com/BradHacker/compsole/ent/user"
@@ -917,6 +919,460 @@ func (pr *Provider) ToEdge(order *ProviderOrder) *ProviderEdge {
 	return &ProviderEdge{
 		Node:   pr,
 		Cursor: order.Field.toCursor(pr),
+	}
+}
+
+// ServiceAccountEdge is the edge representation of ServiceAccount.
+type ServiceAccountEdge struct {
+	Node   *ServiceAccount `json:"node"`
+	Cursor Cursor          `json:"cursor"`
+}
+
+// ServiceAccountConnection is the connection containing edges to ServiceAccount.
+type ServiceAccountConnection struct {
+	Edges      []*ServiceAccountEdge `json:"edges"`
+	PageInfo   PageInfo              `json:"pageInfo"`
+	TotalCount int                   `json:"totalCount"`
+}
+
+// ServiceAccountPaginateOption enables pagination customization.
+type ServiceAccountPaginateOption func(*serviceAccountPager) error
+
+// WithServiceAccountOrder configures pagination ordering.
+func WithServiceAccountOrder(order *ServiceAccountOrder) ServiceAccountPaginateOption {
+	if order == nil {
+		order = DefaultServiceAccountOrder
+	}
+	o := *order
+	return func(pager *serviceAccountPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultServiceAccountOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithServiceAccountFilter configures pagination filter.
+func WithServiceAccountFilter(filter func(*ServiceAccountQuery) (*ServiceAccountQuery, error)) ServiceAccountPaginateOption {
+	return func(pager *serviceAccountPager) error {
+		if filter == nil {
+			return errors.New("ServiceAccountQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type serviceAccountPager struct {
+	order  *ServiceAccountOrder
+	filter func(*ServiceAccountQuery) (*ServiceAccountQuery, error)
+}
+
+func newServiceAccountPager(opts []ServiceAccountPaginateOption) (*serviceAccountPager, error) {
+	pager := &serviceAccountPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultServiceAccountOrder
+	}
+	return pager, nil
+}
+
+func (p *serviceAccountPager) applyFilter(query *ServiceAccountQuery) (*ServiceAccountQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *serviceAccountPager) toCursor(sa *ServiceAccount) Cursor {
+	return p.order.Field.toCursor(sa)
+}
+
+func (p *serviceAccountPager) applyCursors(query *ServiceAccountQuery, after, before *Cursor) *ServiceAccountQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultServiceAccountOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *serviceAccountPager) applyOrder(query *ServiceAccountQuery, reverse bool) *ServiceAccountQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultServiceAccountOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultServiceAccountOrder.Field.field))
+	}
+	return query
+}
+
+// Paginate executes the query and returns a relay based cursor connection to ServiceAccount.
+func (sa *ServiceAccountQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ServiceAccountPaginateOption,
+) (*ServiceAccountConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newServiceAccountPager(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if sa, err = pager.applyFilter(sa); err != nil {
+		return nil, err
+	}
+
+	conn := &ServiceAccountConnection{Edges: []*ServiceAccountEdge{}}
+	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
+		if hasCollectedField(ctx, totalCountField) ||
+			hasCollectedField(ctx, pageInfoField) {
+			count, err := sa.Count(ctx)
+			if err != nil {
+				return nil, err
+			}
+			conn.TotalCount = count
+			conn.PageInfo.HasNextPage = first != nil && count > 0
+			conn.PageInfo.HasPreviousPage = last != nil && count > 0
+		}
+		return conn, nil
+	}
+
+	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
+		count, err := sa.Clone().Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn.TotalCount = count
+	}
+
+	sa = pager.applyCursors(sa, after, before)
+	sa = pager.applyOrder(sa, last != nil)
+	var limit int
+	if first != nil {
+		limit = *first + 1
+	} else if last != nil {
+		limit = *last + 1
+	}
+	if limit > 0 {
+		sa = sa.Limit(limit)
+	}
+
+	if field := getCollectedField(ctx, edgesField, nodeField); field != nil {
+		sa = sa.collectField(graphql.GetOperationContext(ctx), *field)
+	}
+
+	nodes, err := sa.All(ctx)
+	if err != nil || len(nodes) == 0 {
+		return conn, err
+	}
+
+	if len(nodes) == limit {
+		conn.PageInfo.HasNextPage = first != nil
+		conn.PageInfo.HasPreviousPage = last != nil
+		nodes = nodes[:len(nodes)-1]
+	}
+
+	var nodeAt func(int) *ServiceAccount
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *ServiceAccount {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *ServiceAccount {
+			return nodes[i]
+		}
+	}
+
+	conn.Edges = make([]*ServiceAccountEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		conn.Edges[i] = &ServiceAccountEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+
+	conn.PageInfo.StartCursor = &conn.Edges[0].Cursor
+	conn.PageInfo.EndCursor = &conn.Edges[len(conn.Edges)-1].Cursor
+	if conn.TotalCount == 0 {
+		conn.TotalCount = len(nodes)
+	}
+
+	return conn, nil
+}
+
+// ServiceAccountOrderField defines the ordering field of ServiceAccount.
+type ServiceAccountOrderField struct {
+	field    string
+	toCursor func(*ServiceAccount) Cursor
+}
+
+// ServiceAccountOrder defines the ordering of ServiceAccount.
+type ServiceAccountOrder struct {
+	Direction OrderDirection            `json:"direction"`
+	Field     *ServiceAccountOrderField `json:"field"`
+}
+
+// DefaultServiceAccountOrder is the default ordering of ServiceAccount.
+var DefaultServiceAccountOrder = &ServiceAccountOrder{
+	Direction: OrderDirectionAsc,
+	Field: &ServiceAccountOrderField{
+		field: serviceaccount.FieldID,
+		toCursor: func(sa *ServiceAccount) Cursor {
+			return Cursor{ID: sa.ID}
+		},
+	},
+}
+
+// ToEdge converts ServiceAccount into ServiceAccountEdge.
+func (sa *ServiceAccount) ToEdge(order *ServiceAccountOrder) *ServiceAccountEdge {
+	if order == nil {
+		order = DefaultServiceAccountOrder
+	}
+	return &ServiceAccountEdge{
+		Node:   sa,
+		Cursor: order.Field.toCursor(sa),
+	}
+}
+
+// ServiceTokenEdge is the edge representation of ServiceToken.
+type ServiceTokenEdge struct {
+	Node   *ServiceToken `json:"node"`
+	Cursor Cursor        `json:"cursor"`
+}
+
+// ServiceTokenConnection is the connection containing edges to ServiceToken.
+type ServiceTokenConnection struct {
+	Edges      []*ServiceTokenEdge `json:"edges"`
+	PageInfo   PageInfo            `json:"pageInfo"`
+	TotalCount int                 `json:"totalCount"`
+}
+
+// ServiceTokenPaginateOption enables pagination customization.
+type ServiceTokenPaginateOption func(*serviceTokenPager) error
+
+// WithServiceTokenOrder configures pagination ordering.
+func WithServiceTokenOrder(order *ServiceTokenOrder) ServiceTokenPaginateOption {
+	if order == nil {
+		order = DefaultServiceTokenOrder
+	}
+	o := *order
+	return func(pager *serviceTokenPager) error {
+		if err := o.Direction.Validate(); err != nil {
+			return err
+		}
+		if o.Field == nil {
+			o.Field = DefaultServiceTokenOrder.Field
+		}
+		pager.order = &o
+		return nil
+	}
+}
+
+// WithServiceTokenFilter configures pagination filter.
+func WithServiceTokenFilter(filter func(*ServiceTokenQuery) (*ServiceTokenQuery, error)) ServiceTokenPaginateOption {
+	return func(pager *serviceTokenPager) error {
+		if filter == nil {
+			return errors.New("ServiceTokenQuery filter cannot be nil")
+		}
+		pager.filter = filter
+		return nil
+	}
+}
+
+type serviceTokenPager struct {
+	order  *ServiceTokenOrder
+	filter func(*ServiceTokenQuery) (*ServiceTokenQuery, error)
+}
+
+func newServiceTokenPager(opts []ServiceTokenPaginateOption) (*serviceTokenPager, error) {
+	pager := &serviceTokenPager{}
+	for _, opt := range opts {
+		if err := opt(pager); err != nil {
+			return nil, err
+		}
+	}
+	if pager.order == nil {
+		pager.order = DefaultServiceTokenOrder
+	}
+	return pager, nil
+}
+
+func (p *serviceTokenPager) applyFilter(query *ServiceTokenQuery) (*ServiceTokenQuery, error) {
+	if p.filter != nil {
+		return p.filter(query)
+	}
+	return query, nil
+}
+
+func (p *serviceTokenPager) toCursor(st *ServiceToken) Cursor {
+	return p.order.Field.toCursor(st)
+}
+
+func (p *serviceTokenPager) applyCursors(query *ServiceTokenQuery, after, before *Cursor) *ServiceTokenQuery {
+	for _, predicate := range cursorsToPredicates(
+		p.order.Direction, after, before,
+		p.order.Field.field, DefaultServiceTokenOrder.Field.field,
+	) {
+		query = query.Where(predicate)
+	}
+	return query
+}
+
+func (p *serviceTokenPager) applyOrder(query *ServiceTokenQuery, reverse bool) *ServiceTokenQuery {
+	direction := p.order.Direction
+	if reverse {
+		direction = direction.reverse()
+	}
+	query = query.Order(direction.orderFunc(p.order.Field.field))
+	if p.order.Field != DefaultServiceTokenOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultServiceTokenOrder.Field.field))
+	}
+	return query
+}
+
+// Paginate executes the query and returns a relay based cursor connection to ServiceToken.
+func (st *ServiceTokenQuery) Paginate(
+	ctx context.Context, after *Cursor, first *int,
+	before *Cursor, last *int, opts ...ServiceTokenPaginateOption,
+) (*ServiceTokenConnection, error) {
+	if err := validateFirstLast(first, last); err != nil {
+		return nil, err
+	}
+	pager, err := newServiceTokenPager(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if st, err = pager.applyFilter(st); err != nil {
+		return nil, err
+	}
+
+	conn := &ServiceTokenConnection{Edges: []*ServiceTokenEdge{}}
+	if !hasCollectedField(ctx, edgesField) || first != nil && *first == 0 || last != nil && *last == 0 {
+		if hasCollectedField(ctx, totalCountField) ||
+			hasCollectedField(ctx, pageInfoField) {
+			count, err := st.Count(ctx)
+			if err != nil {
+				return nil, err
+			}
+			conn.TotalCount = count
+			conn.PageInfo.HasNextPage = first != nil && count > 0
+			conn.PageInfo.HasPreviousPage = last != nil && count > 0
+		}
+		return conn, nil
+	}
+
+	if (after != nil || first != nil || before != nil || last != nil) && hasCollectedField(ctx, totalCountField) {
+		count, err := st.Clone().Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn.TotalCount = count
+	}
+
+	st = pager.applyCursors(st, after, before)
+	st = pager.applyOrder(st, last != nil)
+	var limit int
+	if first != nil {
+		limit = *first + 1
+	} else if last != nil {
+		limit = *last + 1
+	}
+	if limit > 0 {
+		st = st.Limit(limit)
+	}
+
+	if field := getCollectedField(ctx, edgesField, nodeField); field != nil {
+		st = st.collectField(graphql.GetOperationContext(ctx), *field)
+	}
+
+	nodes, err := st.All(ctx)
+	if err != nil || len(nodes) == 0 {
+		return conn, err
+	}
+
+	if len(nodes) == limit {
+		conn.PageInfo.HasNextPage = first != nil
+		conn.PageInfo.HasPreviousPage = last != nil
+		nodes = nodes[:len(nodes)-1]
+	}
+
+	var nodeAt func(int) *ServiceToken
+	if last != nil {
+		n := len(nodes) - 1
+		nodeAt = func(i int) *ServiceToken {
+			return nodes[n-i]
+		}
+	} else {
+		nodeAt = func(i int) *ServiceToken {
+			return nodes[i]
+		}
+	}
+
+	conn.Edges = make([]*ServiceTokenEdge, len(nodes))
+	for i := range nodes {
+		node := nodeAt(i)
+		conn.Edges[i] = &ServiceTokenEdge{
+			Node:   node,
+			Cursor: pager.toCursor(node),
+		}
+	}
+
+	conn.PageInfo.StartCursor = &conn.Edges[0].Cursor
+	conn.PageInfo.EndCursor = &conn.Edges[len(conn.Edges)-1].Cursor
+	if conn.TotalCount == 0 {
+		conn.TotalCount = len(nodes)
+	}
+
+	return conn, nil
+}
+
+// ServiceTokenOrderField defines the ordering field of ServiceToken.
+type ServiceTokenOrderField struct {
+	field    string
+	toCursor func(*ServiceToken) Cursor
+}
+
+// ServiceTokenOrder defines the ordering of ServiceToken.
+type ServiceTokenOrder struct {
+	Direction OrderDirection          `json:"direction"`
+	Field     *ServiceTokenOrderField `json:"field"`
+}
+
+// DefaultServiceTokenOrder is the default ordering of ServiceToken.
+var DefaultServiceTokenOrder = &ServiceTokenOrder{
+	Direction: OrderDirectionAsc,
+	Field: &ServiceTokenOrderField{
+		field: servicetoken.FieldID,
+		toCursor: func(st *ServiceToken) Cursor {
+			return Cursor{ID: st.ID}
+		},
+	},
+}
+
+// ToEdge converts ServiceToken into ServiceTokenEdge.
+func (st *ServiceToken) ToEdge(order *ServiceTokenOrder) *ServiceTokenEdge {
+	if order == nil {
+		order = DefaultServiceTokenOrder
+	}
+	return &ServiceTokenEdge{
+		Node:   st,
+		Cursor: order.Field.toCursor(st),
 	}
 }
 

@@ -1,4 +1,4 @@
-package auth
+package api
 
 import (
 	"context"
@@ -6,37 +6,67 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/BradHacker/compsole/ent"
-	"github.com/BradHacker/compsole/ent/action"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
+	"github.com/BradHacker/compsole/ent/servicetoken"
 	"github.com/BradHacker/compsole/ent/token"
-	"github.com/BradHacker/compsole/ent/user"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
+
+//go:generate swag fmt -g ../server.go
+//go:generate swag i -g ../server.go --o ../docs --pd --md ../docs
+
+type APIError struct {
+	Message string `json:"message"`
+	Error   error  `json:"error"`
+}
 
 // A private key for context that only this package can access. This is important
 // to prevent collisions between different context uses
 var userCtxKey = &contextKey{"user"}
 var ipCtxKey = &contextKey{"ip"}
-var jwtKey = []byte("JHGDKAHSK*&Y@U(*&@U#I(UYG@HJWIS(*&YTGJQKI")
 
 type contextKey struct {
 	name string
 }
 
-// Claims Create a struct that will be encoded to a JWT.
-type Claims struct {
+// CompsoleJWTClaims Create a struct that will be encoded to a JWT.
+type CompsoleJWTClaims struct {
+	ApiKey   string
 	IssuedAt int64
 	jwt.StandardClaims
+}
+
+type ServiceAccountHeader struct {
+	Authorization *string `header:"Authorization" binding:"required"`
+}
+
+func UnauthenticatedMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIp := ""
+		if exists {
+			clientIp = clientIpValues[0]
+		} else {
+			clientIp = ctx.RemoteIP()
+		}
+		// put it in context
+		c := context.WithValue(ctx, ipCtxKey, clientIp)
+		ctx.Request = ctx.Request.WithContext(c)
+
+		ctx.Next()
+	}
 }
 
 // Middleware decodes the share session cookie and packs the session into context
 func Middleware(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
 		if !ok {
 			hostname = "localhost"
@@ -62,14 +92,25 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 		tknStr := authCookie
 
 		// Initialize a new instance of `Claims`
-		claims := &Claims{}
+		claims := &CompsoleJWTClaims{}
+
+		jwtKey, exists := os.LookupEnv("JWT_SECRET")
+		if !exists {
+			if secure_cookie {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+			} else {
+				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+			}
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
 
 		// Parse the JWT string and store the result in `claims`.
 		// Note that we are passing the key in this method as well. This method will return an error
 		// if the token is invalid (if it has expired according to the expiry time we set on sign in),
 		// or if the signature does not match
 		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return []byte(jwtKey), nil
 		})
 
 		if err != nil {
@@ -134,80 +175,79 @@ func Middleware(client *ent.Client) gin.HandlerFunc {
 	}
 }
 
-// Logout decodes the share session cookie and packs the session into context
-func Logout(client *ent.Client) gin.HandlerFunc {
+func ServiceMiddleware(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
-		if !ok {
-			hostname = "localhost"
-		}
-		secure_cookie := false
-		if env_value, exists := os.LookupEnv("HTTPS_ENABLED"); exists {
-			if env_value == "true" {
-				secure_cookie = true
-			}
-		}
+		headers := &ServiceAccountHeader{}
 
-		authCookie, err := ctx.Cookie("auth-cookie")
-
-		// Allow unauthenticated users in
-		if err != nil || authCookie == "" {
-			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
+		if err := ctx.ShouldBindHeader(headers); err != nil {
+			ctx.AbortWithStatusJSON(400, gin.H{"error": err})
 			return
 		}
 
-		// Get the JWT string from the cookie
-		tknStr := authCookie
+		jwtKey, exists := os.LookupEnv("JWT_SECRET")
+		if !exists {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			logrus.Errorf("failed to lookup env var JWT_SECRET")
+			return
+		}
 
-		// Initialize a new instance of `Claims`
-		claims := &Claims{}
+		authorizationParts := strings.Split(*headers.Authorization, "Bearer ")
+		if len(authorizationParts) < 2 {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Must provide authorization token"})
+			return
+		}
+		jwtToken := authorizationParts[1]
 
-		// Parse the JWT string and store the result in `claims`.
-		// Note that we are passing the key in this method as well. This method will return an error
-		// if the token is invalid (if it has expired according to the expiry time we set on sign in),
-		// or if the signature does not match
-		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+		authToken, err := jwt.ParseWithClaims(jwtToken, &CompsoleJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtKey), nil
 		})
-
-		if err != nil {
-			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
-			if err == jwt.ErrSignatureInvalid {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-				return
-			}
-			ctx.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-		if !tkn.Valid {
-			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
+		if err != nil || !authToken.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		// Get the user and log a sign out event
-		entUser, err := client.User.Query().Where(user.HasUserToTokenWith(token.TokenEQ(authCookie))).Only(ctx)
-		if err != nil {
-			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+		claims, ok := authToken.Claims.(*CompsoleJWTClaims)
+		if !ok {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
+		apiKey := claims.ApiKey
+		apiKeyUUID, err := uuid.Parse(apiKey)
+		if err != nil {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			logrus.Errorf("failed to parse api key uuid")
+			return
+		}
+
+		entServiceToken, err := client.ServiceToken.Query().Where(
+			servicetoken.And(
+				servicetoken.HasTokenToServiceAccountWith(
+					serviceaccount.And(
+						serviceaccount.APIKeyEQ(apiKeyUUID),
+						serviceaccount.ActiveEQ(true),
+					),
+				),
+				servicetoken.TokenEQ(jwtToken),
+			),
+		).Only(ctx)
+		if ent.IsNotFound(err) {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		} else if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+
+		entServiceAccount, err := entServiceToken.TokenToServiceAccount(ctx)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+
+		// put it in context
+		c := context.WithValue(ctx.Request.Context(), userCtxKey, entServiceAccount)
+
 		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
 		clientIp := ""
 		if exists {
@@ -215,42 +255,9 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 		} else {
 			clientIp = ctx.RemoteIP()
 		}
-		err = client.Action.Create().
-			SetIPAddress(clientIp).
-			SetType(action.TypeSIGN_OUT).
-			SetMessage(fmt.Sprintf("user \"%s\" has signed out", entUser.Username)).
-			SetActionToUser(entUser).
-			Exec(ctx)
-		if err != nil {
-			logrus.Warn("failed to create SIGN_OUT action: %v", err)
-		}
-
-		_, err = client.Token.Delete().Where(token.TokenEQ(authCookie)).Exec(ctx)
-		if err != nil {
-			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
-			return
-		}
-
-		if err != nil {
-			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
-			return
-		}
-
-		if secure_cookie {
-			ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-		} else {
-			ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-		}
+		// put it in context
+		c = context.WithValue(c, ipCtxKey, clientIp)
+		ctx.Request = ctx.Request.WithContext(c)
 
 		ctx.Next()
 	}
@@ -265,8 +272,8 @@ func ForContext(ctx context.Context) (*ent.User, error) {
 	return nil, errors.New("unable to get user from context")
 }
 
-func ForContextIp(ctx context.Context) (string, error) {
-	if ip, ok := ctx.Value(ipCtxKey).(string); ok {
+func ForContextIp(ctx *gin.Context) (string, error) {
+	if ip, ok := ctx.Request.Context().Value(ipCtxKey).(string); ok {
 		return ip, nil
 	}
 	return "", fmt.Errorf("unable to get ip from context")
@@ -275,4 +282,11 @@ func ForContextIp(ctx context.Context) (string, error) {
 // ClearTokens Clears Old tokens from DB
 func ClearTokens(client *ent.Client, ctx context.Context) {
 	client.Token.Delete().Where(token.ExpireAtLT(time.Now().Unix())).Exec(ctx)
+}
+
+func ReturnError(ctx *gin.Context, code int, message string, err error) {
+	ctx.AbortWithStatusJSON(code, APIError{
+		Message: message,
+		Error:   err,
+	})
 }

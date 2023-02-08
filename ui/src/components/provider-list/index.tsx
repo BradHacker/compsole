@@ -87,7 +87,7 @@ export const ProviderList: React.FC<{
         autoHideDuration: 2500,
       });
     else if (deleteProviderData?.deleteProvider) {
-      enqueueSnackbar("Successfully deleted user!", {
+      enqueueSnackbar("Successfully deleted provider!", {
         variant: "success",
       });
       refetchProviders();

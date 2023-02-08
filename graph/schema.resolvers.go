@@ -9,13 +9,14 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/BradHacker/compsole/auth"
+	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/compsole/providers"
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/competition"
 	"github.com/BradHacker/compsole/ent/provider"
+	"github.com/BradHacker/compsole/ent/serviceaccount"
 	"github.com/BradHacker/compsole/ent/team"
 	"github.com/BradHacker/compsole/ent/user"
 	"github.com/BradHacker/compsole/ent/vmobject"
@@ -44,11 +45,15 @@ func (r *competitionResolver) ID(ctx context.Context, obj *ent.Competition) (str
 
 // Reboot is the resolver for the reboot field.
 func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, rebootType model.RebootType) (bool, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -110,11 +115,15 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 
 // PowerOn is the resolver for the powerOn field.
 func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -176,11 +185,15 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 
 // PowerOff is the resolver for the powerOff field.
 func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (bool, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -242,11 +255,15 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 
 // UpdateAccount is the resolver for the updateAccount field.
 func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.AccountInput) (*ent.User, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -277,11 +294,15 @@ func (r *mutationResolver) UpdateAccount(ctx context.Context, input model.Accoun
 
 // ChangeSelfPassword is the resolver for the changeSelfPassword field.
 func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password string) (bool, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -312,11 +333,15 @@ func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password stri
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -376,11 +401,15 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput) (*ent.User, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -445,11 +474,15 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UserInput
 
 // DeleteUser is the resolver for the deleteUser field.
 func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -466,10 +499,15 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
 	}
-	// Must maintain at least one admin user in the database
-	if userCount, err := r.client.User.Query().Where(user.RoleEQ(user.RoleADMIN)).Count(ctx); err != nil {
+	// Must maintain at least one admin user in the database (count all admin users who's ID's don't match the one we're deleting)
+	if userCount, err := r.client.User.Query().Where(
+		user.And(
+			user.IDNEQ(userUuid),
+			user.RoleEQ(user.RoleADMIN),
+		),
+	).Count(ctx); err != nil {
 		return false, fmt.Errorf("failed to count users: %v", err)
-	} else if userCount <= 1 {
+	} else if userCount <= 0 {
 		return false, fmt.Errorf("at least one admin user must exist")
 	}
 	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
@@ -490,11 +528,15 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, id string, password string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -539,11 +581,15 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, id string, passwo
 
 // GenerateCompetitionUsers is the resolver for the generateCompetitionUsers field.
 func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competitionID string, usersPerTeam int) ([]*model.CompetitionUser, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -608,11 +654,15 @@ func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competi
 
 // CreateTeam is the resolver for the createTeam field.
 func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -658,11 +708,15 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, input model.TeamInput
 
 // BatchCreateTeams is the resolver for the batchCreateTeams field.
 func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.TeamInput) ([]*ent.Team, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -728,11 +782,15 @@ func (r *mutationResolver) BatchCreateTeams(ctx context.Context, input []*model.
 
 // UpdateTeam is the resolver for the updateTeam field.
 func (r *mutationResolver) UpdateTeam(ctx context.Context, input model.TeamInput) (*ent.Team, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -782,11 +840,15 @@ func (r *mutationResolver) UpdateTeam(ctx context.Context, input model.TeamInput
 
 // DeleteTeam is the resolver for the deleteTeam field.
 func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -821,11 +883,15 @@ func (r *mutationResolver) DeleteTeam(ctx context.Context, id string) (bool, err
 
 // CreateCompetition is the resolver for the createCompetition field.
 func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -864,11 +930,15 @@ func (r *mutationResolver) CreateCompetition(ctx context.Context, input model.Co
 
 // UpdateCompetition is the resolver for the updateCompetition field.
 func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.CompetitionInput) (*ent.Competition, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -918,11 +988,15 @@ func (r *mutationResolver) UpdateCompetition(ctx context.Context, input model.Co
 
 // DeleteCompetition is the resolver for the deleteCompetition field.
 func (r *mutationResolver) DeleteCompetition(ctx context.Context, id string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -957,11 +1031,15 @@ func (r *mutationResolver) DeleteCompetition(ctx context.Context, id string) (bo
 
 // CreateVMObject is the resolver for the createVmObject field.
 func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1008,11 +1086,15 @@ func (r *mutationResolver) CreateVMObject(ctx context.Context, input model.VMObj
 
 // BatchCreateVMObjects is the resolver for the batchCreateVmObjects field.
 func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*model.VMObjectInput) ([]*ent.VmObject, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1078,11 +1160,15 @@ func (r *mutationResolver) BatchCreateVMObjects(ctx context.Context, input []*mo
 
 // UpdateVMObject is the resolver for the updateVmObject field.
 func (r *mutationResolver) UpdateVMObject(ctx context.Context, input model.VMObjectInput) (*ent.VmObject, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1137,11 +1223,15 @@ func (r *mutationResolver) UpdateVMObject(ctx context.Context, input model.VMObj
 
 // DeleteVMObject is the resolver for the deleteVmObject field.
 func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1176,11 +1266,15 @@ func (r *mutationResolver) DeleteVMObject(ctx context.Context, id string) (bool,
 
 // CreateProvider is the resolver for the createProvider field.
 func (r *mutationResolver) CreateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1211,11 +1305,15 @@ func (r *mutationResolver) CreateProvider(ctx context.Context, input model.Provi
 
 // UpdateProvider is the resolver for the updateProvider field.
 func (r *mutationResolver) UpdateProvider(ctx context.Context, input model.ProviderInput) (*ent.Provider, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1261,11 +1359,15 @@ func (r *mutationResolver) UpdateProvider(ctx context.Context, input model.Provi
 
 // DeleteProvider is the resolver for the deleteProvider field.
 func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1303,13 +1405,169 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 	return true, nil
 }
 
-// LockoutVM is the resolver for the lockoutVm field.
-func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+// CreateServiceAccount is the resolver for the createServiceAccount field.
+func (r *mutationResolver) CreateServiceAccount(ctx context.Context, input model.ServiceAccountInput) (*model.ServiceAccountDetails, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"CreateServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	entServiceAccount, err := r.client.ServiceAccount.Create().
+		SetDisplayName(input.DisplayName).
+		SetActive(input.Active).
+		SetAPIKey(uuid.New()).
+		SetAPISecret(uuid.New()).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service account: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeCREATE_OBJECT).
+		SetMessage(fmt.Sprintf("created service account %s", entServiceAccount.DisplayName)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log CREATE_OBJECT: %v", err)
+	}
+	return &model.ServiceAccountDetails{
+		ID:          entServiceAccount.ID.String(),
+		DisplayName: entServiceAccount.DisplayName,
+		APIKey:      entServiceAccount.APIKey.String(),
+		APISecret:   entServiceAccount.APISecret.String(),
+		Active:      entServiceAccount.Active,
+	}, nil
+}
+
+// UpdateServiceAccount is the resolver for the updateServiceAccount field.
+func (r *mutationResolver) UpdateServiceAccount(ctx context.Context, input model.ServiceAccountInput) (*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"UpdateServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	if input.ID == nil {
+		return nil, fmt.Errorf("failed to query service account: ID must not be nil")
+	}
+	serviceAccountUuid, err := uuid.Parse(*input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service account UUID: %v", err)
+	}
+	entServiceAccount, err := r.client.ServiceAccount.Query().
+		Where(
+			serviceaccount.IDEQ(serviceAccountUuid),
+		).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query service account: %v", err)
+	}
+	entServiceAccount, err = entServiceAccount.Update().
+		SetDisplayName(input.DisplayName).
+		SetActive(input.Active).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update service account: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeUPDATE_OBJECT).
+		SetMessage(fmt.Sprintf("updated service account %s", entServiceAccount.DisplayName)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log UPDATE_OBJECT: %v", err)
+	}
+	return entServiceAccount, nil
+}
+
+// DeleteServiceAccount is the resolver for the deleteServiceAccount field.
+func (r *mutationResolver) DeleteServiceAccount(ctx context.Context, id string) (bool, error) {
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"DeleteServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+	serviceAccountUuid, err := uuid.Parse(id)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse UUID: %v", err)
+	}
+	_, err = r.client.ServiceAccount.Delete().
+		Where(
+			serviceaccount.IDEQ(serviceAccountUuid),
+		).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to delete service account: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeDELETE_OBJECT).
+		SetMessage(fmt.Sprintf("deleted service account %s", id)).
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log DELETE_OBJECT: %v", err)
+	}
+	return true, nil
+}
+
+// LockoutVM is the resolver for the lockoutVm field.
+func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool) (bool, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1345,11 +1603,15 @@ func (r *mutationResolver) LockoutVM(ctx context.Context, id string, locked bool
 
 // BatchLockout is the resolver for the batchLockout field.
 func (r *mutationResolver) BatchLockout(ctx context.Context, vmObjects []string, locked bool) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1390,11 +1652,15 @@ func (r *mutationResolver) BatchLockout(ctx context.Context, vmObjects []string,
 
 // LockoutCompetition is the resolver for the lockoutCompetition field.
 func (r *mutationResolver) LockoutCompetition(ctx context.Context, id string, locked bool) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1455,11 +1721,15 @@ func (r *providerResolver) ID(ctx context.Context, obj *ent.Provider) (string, e
 
 // Console is the resolver for the console field.
 func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1522,11 +1792,15 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*ent.User, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1544,11 +1818,15 @@ func (r *queryResolver) Me(ctx context.Context) (*ent.User, error) {
 
 // VMObject is the resolver for the vmObject field.
 func (r *queryResolver) VMObject(ctx context.Context, vmObjectID string) (*ent.VmObject, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1583,11 +1861,15 @@ func (r *queryResolver) VMObject(ctx context.Context, vmObjectID string) (*ent.V
 
 // MyVMObjects is the resolver for the myVmObjects field.
 func (r *queryResolver) MyVMObjects(ctx context.Context) ([]*ent.VmObject, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1609,11 +1891,15 @@ func (r *queryResolver) MyVMObjects(ctx context.Context) ([]*ent.VmObject, error
 
 // MyTeam is the resolver for the myTeam field.
 func (r *queryResolver) MyTeam(ctx context.Context) (*ent.Team, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1635,11 +1921,15 @@ func (r *queryResolver) MyTeam(ctx context.Context) (*ent.Team, error) {
 
 // MyCompetition is the resolver for the myCompetition field.
 func (r *queryResolver) MyCompetition(ctx context.Context) (*ent.Competition, error) {
-	entUser, err := auth.ForContext(ctx)
+	entUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1661,11 +1951,15 @@ func (r *queryResolver) MyCompetition(ctx context.Context) (*ent.Competition, er
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*ent.User, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1687,11 +1981,15 @@ func (r *queryResolver) Users(ctx context.Context) ([]*ent.User, error) {
 
 // GetUser is the resolver for the getUser field.
 func (r *queryResolver) GetUser(ctx context.Context, id string) (*ent.User, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1717,11 +2015,15 @@ func (r *queryResolver) GetUser(ctx context.Context, id string) (*ent.User, erro
 
 // VMObjects is the resolver for the vmObjects field.
 func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1743,11 +2045,15 @@ func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) 
 
 // GetVMObject is the resolver for the getVmObject field.
 func (r *queryResolver) GetVMObject(ctx context.Context, id string) (*ent.VmObject, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1773,11 +2079,15 @@ func (r *queryResolver) GetVMObject(ctx context.Context, id string) (*ent.VmObje
 
 // Teams is the resolver for the teams field.
 func (r *queryResolver) Teams(ctx context.Context) ([]*ent.Team, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1799,11 +2109,15 @@ func (r *queryResolver) Teams(ctx context.Context) ([]*ent.Team, error) {
 
 // GetTeam is the resolver for the getTeam field.
 func (r *queryResolver) GetTeam(ctx context.Context, id string) (*ent.Team, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1829,11 +2143,15 @@ func (r *queryResolver) GetTeam(ctx context.Context, id string) (*ent.Team, erro
 
 // Competitions is the resolver for the competitions field.
 func (r *queryResolver) Competitions(ctx context.Context) ([]*ent.Competition, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1855,11 +2173,15 @@ func (r *queryResolver) Competitions(ctx context.Context) ([]*ent.Competition, e
 
 // GetCompetition is the resolver for the getCompetition field.
 func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Competition, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1885,11 +2207,15 @@ func (r *queryResolver) GetCompetition(ctx context.Context, id string) (*ent.Com
 
 // Providers is the resolver for the providers field.
 func (r *queryResolver) Providers(ctx context.Context) ([]*ent.Provider, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1911,11 +2237,15 @@ func (r *queryResolver) Providers(ctx context.Context) ([]*ent.Provider, error) 
 
 // GetProvider is the resolver for the getProvider field.
 func (r *queryResolver) GetProvider(ctx context.Context, id string) (*ent.Provider, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1941,11 +2271,15 @@ func (r *queryResolver) GetProvider(ctx context.Context, id string) (*ent.Provid
 
 // ValidateConfig is the resolver for the validateConfig field.
 func (r *queryResolver) ValidateConfig(ctx context.Context, typeArg string, config string) (bool, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -1967,11 +2301,15 @@ func (r *queryResolver) ValidateConfig(ctx context.Context, typeArg string, conf
 
 // ListProviderVms is the resolver for the listProviderVms field.
 func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*model.SkeletonVMObject, error) {
-	authUser, err := auth.ForContext(ctx)
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -2011,13 +2349,86 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 	return skeletonVmObjects, nil
 }
 
-// Actions is the resolver for the actions field.
-func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error) {
-	authUser, err := auth.ForContext(ctx)
+// ServiceAccounts is the resolver for the serviceAccounts field.
+func (r *queryResolver) ServiceAccounts(ctx context.Context) ([]*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from context: %v", err)
 	}
-	clientIp, err := auth.ForContextIp(ctx)
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"ServiceAccounts\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+
+	entServiceAccounts, err := r.client.ServiceAccount.Query().All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query service accounts: %v", err)
+	}
+	return entServiceAccounts, nil
+}
+
+// GetServiceAccount is the resolver for the getServiceAccount field.
+func (r *queryResolver) GetServiceAccount(ctx context.Context, id string) (*ent.ServiceAccount, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"GetServiceAccount\" endpoint").
+		SetActionToUser(authUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+
+	serviceAccountUuid, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service account UUID: %v", err)
+	}
+	entServiceAccounts, err := r.client.ServiceAccount.Query().
+		Where(
+			serviceaccount.IDEQ(serviceAccountUuid),
+		).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query service account: %v", err)
+	}
+	return entServiceAccounts, nil
+}
+
+// Actions is the resolver for the actions field.
+func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error) {
+	authUser, err := api.ForContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
 	if err != nil {
 		logrus.Warnf("unable to get ip from context: %v", err)
 	}
@@ -2056,6 +2467,16 @@ func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, type
 		TotalResults: totalActions,
 		Types:        types,
 	}, nil
+}
+
+// ID is the resolver for the ID field.
+func (r *serviceAccountResolver) ID(ctx context.Context, obj *ent.ServiceAccount) (string, error) {
+	return obj.ID.String(), nil
+}
+
+// APIKey is the resolver for the ApiKey field.
+func (r *serviceAccountResolver) APIKey(ctx context.Context, obj *ent.ServiceAccount) (string, error) {
+	return obj.APIKey.String(), nil
 }
 
 // Lockout is the resolver for the lockout field.
@@ -2136,6 +2557,11 @@ func (r *Resolver) Provider() generated.ProviderResolver { return &providerResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// ServiceAccount returns generated.ServiceAccountResolver implementation.
+func (r *Resolver) ServiceAccount() generated.ServiceAccountResolver {
+	return &serviceAccountResolver{r}
+}
+
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
@@ -2153,6 +2579,7 @@ type competitionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type providerResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type serviceAccountResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

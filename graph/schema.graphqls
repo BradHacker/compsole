@@ -85,6 +85,21 @@ type ActionsResult {
   types: [ActionType!]!
 }
 
+type ServiceAccount {
+  ID: ID!
+  DisplayName: String!
+  ApiKey: String!
+  Active: Boolean!
+}
+
+type ServiceAccountDetails {
+  ID: ID!
+  DisplayName: String!
+  ApiKey: String!
+  ApiSecret: String!
+  Active: Boolean!
+}
+
 enum ActionType {
   SIGN_IN
   FAILED_SIGN_IN
@@ -142,6 +157,9 @@ type Query {
   getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
   validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
   listProviderVms(id: ID!): [SkeletonVmObject!]! @hasRole(roles: [ADMIN])
+  #   Service Accounts
+  serviceAccounts: [ServiceAccount!]! @hasRole(roles: [ADMIN])
+  getServiceAccount(id: ID!): ServiceAccount! @hasRole(roles: [ADMIN])
   # Logging
   actions(offset: Int!, limit: Int!, types: [ActionType!]!): ActionsResult! @hasRole(roles: [ADMIN])
 }
@@ -195,6 +213,12 @@ input ProviderInput {
   Config: String!
 }
 
+input ServiceAccountInput {
+  ID: ID
+  DisplayName: String!
+  Active: Boolean!
+}
+
 type Mutation {
   # Shared actions
   reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
@@ -227,6 +251,10 @@ type Mutation {
   createProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   updateProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  #   Service Accounts
+  createServiceAccount(input: ServiceAccountInput!): ServiceAccountDetails! @hasRole(roles: [ADMIN])
+  updateServiceAccount(input: ServiceAccountInput!): ServiceAccount! @hasRole(roles: [ADMIN])
+  deleteServiceAccount(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   # Lockout
   lockoutVm(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
   batchLockout(vmObjects: [ID!]!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])

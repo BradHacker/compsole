@@ -26,6 +26,8 @@ const (
 	FieldPerformedAt = "performed_at"
 	// EdgeActionToUser holds the string denoting the actiontouser edge name in mutations.
 	EdgeActionToUser = "ActionToUser"
+	// EdgeActionToServiceAccount holds the string denoting the actiontoserviceaccount edge name in mutations.
+	EdgeActionToServiceAccount = "ActionToServiceAccount"
 	// Table holds the table name of the action in the database.
 	Table = "actions"
 	// ActionToUserTable is the table that holds the ActionToUser relation/edge.
@@ -35,6 +37,13 @@ const (
 	ActionToUserInverseTable = "users"
 	// ActionToUserColumn is the table column denoting the ActionToUser relation/edge.
 	ActionToUserColumn = "user_user_to_actions"
+	// ActionToServiceAccountTable is the table that holds the ActionToServiceAccount relation/edge.
+	ActionToServiceAccountTable = "actions"
+	// ActionToServiceAccountInverseTable is the table name for the ServiceAccount entity.
+	// It exists in this package in order to avoid circular dependency with the "serviceaccount" package.
+	ActionToServiceAccountInverseTable = "service_accounts"
+	// ActionToServiceAccountColumn is the table column denoting the ActionToServiceAccount relation/edge.
+	ActionToServiceAccountColumn = "service_account_service_account_to_actions"
 )
 
 // Columns holds all SQL columns for action fields.
@@ -49,6 +58,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "actions"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
+	"service_account_service_account_to_actions",
 	"user_user_to_actions",
 }
 

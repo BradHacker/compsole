@@ -45,6 +45,20 @@ type ProviderInput struct {
 	Config string  `json:"Config"`
 }
 
+type ServiceAccountDetails struct {
+	ID          string `json:"ID"`
+	DisplayName string `json:"DisplayName"`
+	APIKey      string `json:"ApiKey"`
+	APISecret   string `json:"ApiSecret"`
+	Active      bool   `json:"Active"`
+}
+
+type ServiceAccountInput struct {
+	ID          *string `json:"ID"`
+	DisplayName string  `json:"DisplayName"`
+	Active      bool    `json:"Active"`
+}
+
 type SkeletonVMObject struct {
 	Name        string   `json:"Name"`
 	Identifier  string   `json:"Identifier"`
