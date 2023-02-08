@@ -276,10 +276,8 @@ func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebo
 	switch rebootType {
 	case utils.SoftReboot:
 		rebootMethod = servers.SoftReboot
-		break
 	case utils.HardReboot:
 		rebootMethod = servers.HardReboot
-		break
 	default:
 		rebootMethod = servers.SoftReboot
 	}
