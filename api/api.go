@@ -16,6 +16,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 //go:generate swag fmt -g ../server.go
@@ -186,6 +187,7 @@ func ServiceMiddleware(client *ent.Client) gin.HandlerFunc {
 		jwtKey, exists := os.LookupEnv("JWT_SECRET")
 		if !exists {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
+			logrus.Errorf("failed to lookup env var JWT_SECRET")
 			return
 		}
 
@@ -210,10 +212,11 @@ func ServiceMiddleware(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		apiKey := claims.StandardClaims.Subject
+		apiKey := claims.ApiKey
 		apiKeyUUID, err := uuid.Parse(apiKey)
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
+			logrus.Errorf("failed to parse api key uuid")
 			return
 		}
 
