@@ -2300,7 +2300,7 @@ type ServiceTokenMutation struct {
 	typ                           string
 	id                            *uuid.UUID
 	token                         *string
-	refresh_token                 *uuid.UUID
+	refresh_token                 *string
 	issued_at                     *int64
 	addissued_at                  *int64
 	clearedFields                 map[string]struct{}
@@ -2452,12 +2452,12 @@ func (m *ServiceTokenMutation) ResetToken() {
 }
 
 // SetRefreshToken sets the "refresh_token" field.
-func (m *ServiceTokenMutation) SetRefreshToken(u uuid.UUID) {
-	m.refresh_token = &u
+func (m *ServiceTokenMutation) SetRefreshToken(s string) {
+	m.refresh_token = &s
 }
 
 // RefreshToken returns the value of the "refresh_token" field in the mutation.
-func (m *ServiceTokenMutation) RefreshToken() (r uuid.UUID, exists bool) {
+func (m *ServiceTokenMutation) RefreshToken() (r string, exists bool) {
 	v := m.refresh_token
 	if v == nil {
 		return
@@ -2468,7 +2468,7 @@ func (m *ServiceTokenMutation) RefreshToken() (r uuid.UUID, exists bool) {
 // OldRefreshToken returns the old "refresh_token" field's value of the ServiceToken entity.
 // If the ServiceToken object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ServiceTokenMutation) OldRefreshToken(ctx context.Context) (v uuid.UUID, err error) {
+func (m *ServiceTokenMutation) OldRefreshToken(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRefreshToken is only allowed on UpdateOne operations")
 	}
@@ -2657,7 +2657,7 @@ func (m *ServiceTokenMutation) SetField(name string, value ent.Value) error {
 		m.SetToken(v)
 		return nil
 	case servicetoken.FieldRefreshToken:
-		v, ok := value.(uuid.UUID)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}

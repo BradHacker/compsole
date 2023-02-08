@@ -21,8 +21,8 @@ type ServiceToken struct {
 	// [REQUIRED] The API token for a service account session.
 	Token string `json:"token,omitempty"`
 	// RefreshToken holds the value of the "refresh_token" field.
-	// [REQUIRED] The refresh token used to renew an expired service account session. These are only valid for 1 hour after the associated token expires.
-	RefreshToken uuid.UUID `json:"refresh_token,omitempty"`
+	// [REQUIRED] The refresh token used to renew an expired service account session. These are valid for `REFRESH_WINDOW` hours.
+	RefreshToken string `json:"refresh_token,omitempty"`
 	// IssuedAt holds the value of the "issued_at" field.
 	// [REQUIRED] The time the token was issued
 	IssuedAt int64 `json:"issued_at,omitempty"`
@@ -62,9 +62,9 @@ func (*ServiceToken) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case servicetoken.FieldIssuedAt:
 			values[i] = new(sql.NullInt64)
-		case servicetoken.FieldToken:
+		case servicetoken.FieldToken, servicetoken.FieldRefreshToken:
 			values[i] = new(sql.NullString)
-		case servicetoken.FieldID, servicetoken.FieldRefreshToken:
+		case servicetoken.FieldID:
 			values[i] = new(uuid.UUID)
 		case servicetoken.ForeignKeys[0]: // service_account_service_account_to_token
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
@@ -96,10 +96,10 @@ func (st *ServiceToken) assignValues(columns []string, values []interface{}) err
 				st.Token = value.String
 			}
 		case servicetoken.FieldRefreshToken:
-			if value, ok := values[i].(*uuid.UUID); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field refresh_token", values[i])
-			} else if value != nil {
-				st.RefreshToken = *value
+			} else if value.Valid {
+				st.RefreshToken = value.String
 			}
 		case servicetoken.FieldIssuedAt:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -150,7 +150,7 @@ func (st *ServiceToken) String() string {
 	builder.WriteString(", token=")
 	builder.WriteString(st.Token)
 	builder.WriteString(", refresh_token=")
-	builder.WriteString(fmt.Sprintf("%v", st.RefreshToken))
+	builder.WriteString(st.RefreshToken)
 	builder.WriteString(", issued_at=")
 	builder.WriteString(fmt.Sprintf("%v", st.IssuedAt))
 	builder.WriteByte(')')

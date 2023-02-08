@@ -36,8 +36,8 @@ func (stu *ServiceTokenUpdate) SetToken(s string) *ServiceTokenUpdate {
 }
 
 // SetRefreshToken sets the "refresh_token" field.
-func (stu *ServiceTokenUpdate) SetRefreshToken(u uuid.UUID) *ServiceTokenUpdate {
-	stu.mutation.SetRefreshToken(u)
+func (stu *ServiceTokenUpdate) SetRefreshToken(s string) *ServiceTokenUpdate {
+	stu.mutation.SetRefreshToken(s)
 	return stu
 }
 
@@ -171,7 +171,7 @@ func (stu *ServiceTokenUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := stu.mutation.RefreshToken(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeUUID,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: servicetoken.FieldRefreshToken,
 		})
@@ -251,8 +251,8 @@ func (stuo *ServiceTokenUpdateOne) SetToken(s string) *ServiceTokenUpdateOne {
 }
 
 // SetRefreshToken sets the "refresh_token" field.
-func (stuo *ServiceTokenUpdateOne) SetRefreshToken(u uuid.UUID) *ServiceTokenUpdateOne {
-	stuo.mutation.SetRefreshToken(u)
+func (stuo *ServiceTokenUpdateOne) SetRefreshToken(s string) *ServiceTokenUpdateOne {
+	stuo.mutation.SetRefreshToken(s)
 	return stuo
 }
 
@@ -410,7 +410,7 @@ func (stuo *ServiceTokenUpdateOne) sqlSave(ctx context.Context) (_node *ServiceT
 	}
 	if value, ok := stuo.mutation.RefreshToken(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeUUID,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: servicetoken.FieldRefreshToken,
 		})

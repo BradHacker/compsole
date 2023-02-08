@@ -279,7 +279,7 @@ func (st *ServiceToken) Node(ctx context.Context) (node *Node, err error) {
 		return nil, err
 	}
 	node.Fields[1] = &Field{
-		Type:  "uuid.UUID",
+		Type:  "string",
 		Name:  "refresh_token",
 		Value: string(buf),
 	}

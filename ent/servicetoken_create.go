@@ -28,8 +28,8 @@ func (stc *ServiceTokenCreate) SetToken(s string) *ServiceTokenCreate {
 }
 
 // SetRefreshToken sets the "refresh_token" field.
-func (stc *ServiceTokenCreate) SetRefreshToken(u uuid.UUID) *ServiceTokenCreate {
-	stc.mutation.SetRefreshToken(u)
+func (stc *ServiceTokenCreate) SetRefreshToken(s string) *ServiceTokenCreate {
+	stc.mutation.SetRefreshToken(s)
 	return stc
 }
 
@@ -201,7 +201,7 @@ func (stc *ServiceTokenCreate) createSpec() (*ServiceToken, *sqlgraph.CreateSpec
 	}
 	if value, ok := stc.mutation.RefreshToken(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeUUID,
+			Type:   field.TypeString,
 			Value:  value,
 			Column: servicetoken.FieldRefreshToken,
 		})
