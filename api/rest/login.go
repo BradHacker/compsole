@@ -25,14 +25,9 @@ type ServiceLoginVals struct {
 	ApiSecret string `form:"api_secret" json:"api_secret" binding:"required"`
 }
 
-type ServiceRefreshVals struct {
-	RefreshToken string `form:"refresh_token" json:"refresh_token" binding:"required"`
-}
-
 type ServiceLoginResult struct {
-	SessionToken string `json:"session_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresAt    int64  `json:"expires_at"`
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"token_expires_at"`
 }
 
 func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServiceAccount *ent.ServiceAccount, existingRefreshToken *string) {
@@ -141,8 +136,8 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 	}
 
 	ctx.JSON(http.StatusOK, ServiceLoginResult{
-		SessionToken: tokenString,
-		ExpiresAt:    tokenExpiresAt,
+		Token:     tokenString,
+		ExpiresAt: tokenExpiresAt,
 	})
 }
 

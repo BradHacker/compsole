@@ -779,14 +779,11 @@ const docTemplate = `{
         "rest.ServiceLoginResult": {
             "type": "object",
             "properties": {
-                "expires_at": {
+                "token": {
+                    "type": "string"
+                },
+                "token_expires_at": {
                     "type": "integer"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "session_token": {
-                    "type": "string"
                 }
             }
         },

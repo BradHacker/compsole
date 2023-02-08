@@ -405,12 +405,10 @@ definitions:
     type: object
   rest.ServiceLoginResult:
     properties:
-      expires_at:
+      token:
+        type: string
+      token_expires_at:
         type: integer
-      refresh_token:
-        type: string
-      session_token:
-        type: string
     type: object
   rest.ServiceLoginVals:
     properties:
