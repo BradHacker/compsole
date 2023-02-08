@@ -19,6 +19,7 @@ import (
 )
 
 const REFRESH_TOKEN_COOKIE = "refresh-token"
+const REFRESH_TOKEN_PATH = "/api/rest/token/refresh"
 
 type ServiceLoginVals struct {
 	ApiKey    string `form:"api_key" json:"api_key" binding:"required"`
@@ -130,9 +131,9 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 	}
 
 	if secureCookie {
-		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), "/rest/token/refresh", hostname, true, true)
+		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), REFRESH_TOKEN_PATH, hostname, true, true)
 	} else {
-		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), "/rest/token/refresh", hostname, false, false)
+		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), REFRESH_TOKEN_PATH, hostname, false, false)
 	}
 
 	ctx.JSON(http.StatusOK, ServiceLoginResult{
