@@ -11,6 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// ListVmObjects godoc
+//
+//	@Security		ServiceAuth
+//	@Summary		List all VM Objects
+//	@Schemes		http https
+//	@Description	List all VM Objects
+//	@Tags			Service API
+//	@Produce		json
+//	@Success		200	{array}		ent.VmObject
+//	@Failure		500	{object}	api.APIError
+//	@Router			/rest/vm-object [get]
+func ListVmObjects(client *ent.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		entVmObjects, err := client.VmObject.Query().All(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for vm objects", err)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, entVmObjects)
+		ctx.Next()
+	}
+}
+
 // GetVMObject godoc
 //
 //	@Security		ServiceAuth
@@ -110,6 +134,7 @@ func CreateVMObject(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entVmObject)
+		ctx.Next()
 	}
 }
 
@@ -192,6 +217,7 @@ func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entUpdatedVmObject)
+		ctx.Next()
 	}
 }
 
@@ -228,5 +254,6 @@ func DeleteVMObject(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.Status(http.StatusNoContent)
+		ctx.Next()
 	}
 }

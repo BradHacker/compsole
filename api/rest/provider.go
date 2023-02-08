@@ -11,6 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// ListProviders godoc
+//
+//	@Security		ServiceAuth
+//	@Summary		List all Providers
+//	@Schemes		http https
+//	@Description	List all Providers
+//	@Tags			Service API
+//	@Produce		json
+//	@Success		200	{array}		ent.Provider
+//	@Failure		500	{object}	api.APIError
+//	@Router			/rest/provider [get]
+func ListProviders(client *ent.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		entProviders, err := client.Provider.Query().All(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for providers", err)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, entProviders)
+		ctx.Next()
+	}
+}
+
 // GetProvider godoc
 //
 //	@Security		ServiceAuth
@@ -97,6 +121,7 @@ func CreateProvider(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entProvider)
+		ctx.Next()
 	}
 }
 
@@ -166,6 +191,7 @@ func UpdateProvider(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entUpdatedProvider)
+		ctx.Next()
 	}
 }
 
@@ -202,5 +228,6 @@ func DeleteProvider(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.Status(http.StatusNoContent)
+		ctx.Next()
 	}
 }

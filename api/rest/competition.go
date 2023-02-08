@@ -11,6 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// ListCompetitions godoc
+//
+//	@Security		ServiceAuth
+//	@Summary		List all Competitions
+//	@Schemes		http https
+//	@Description	List all Competitions
+//	@Tags			Service API
+//	@Produce		json
+//	@Success		200	{array}		ent.Competition
+//	@Failure		500	{object}	api.APIError
+//	@Router			/rest/competition [get]
+func ListCompetitions(client *ent.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		entCompetitions, err := client.Competition.Query().All(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competitions", err)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, entCompetitions)
+		ctx.Next()
+	}
+}
+
 // GetCompetition godoc
 //
 //	@Security		ServiceAuth
@@ -106,6 +130,7 @@ func CreateCompetition(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entCompetition)
+		ctx.Next()
 	}
 }
 
@@ -184,6 +209,7 @@ func UpdateCompetition(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entUpdatedCompetition)
+		ctx.Next()
 	}
 }
 
@@ -220,5 +246,6 @@ func DeleteCompetition(client *ent.Client) gin.HandlerFunc {
 		}
 
 		ctx.Status(http.StatusNoContent)
+		ctx.Next()
 	}
 }

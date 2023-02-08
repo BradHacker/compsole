@@ -64,6 +64,38 @@ const docTemplate = `{
             }
         },
         "/rest/competition": {
+            "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "List all Competitions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "List all Competitions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.Competition"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -282,6 +314,38 @@ const docTemplate = `{
             }
         },
         "/rest/provider": {
+            "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "List all Providers",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "List all Providers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.Provider"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -588,6 +652,38 @@ const docTemplate = `{
             }
         },
         "/rest/vm-object": {
+            "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "List all VM Objects",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "List all VM Objects",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.VmObject"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
