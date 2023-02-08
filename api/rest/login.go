@@ -145,7 +145,7 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 //
 //	@Summary		Login with a service account and get a session token
 //	@Schemes		http https
-//	@Description	Login with a service account and get a session token
+//	@Description	Login with a service account and get a session token. The refresh token is set as a cookie in the response and can be used to refresh a session without re-authenticating.
 //	@Tags			Auth API
 //	@Accept			json,mpfd
 //	@Param			login	body	ServiceLoginVals	true	"Service account details"

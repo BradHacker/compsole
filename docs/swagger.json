@@ -58,7 +58,7 @@
         },
         "/rest/token": {
             "post": {
-                "description": "Login with a service account and get a session token",
+                "description": "Login with a service account and get a session token. The refresh token is set as a cookie in the response and can be used to refresh a session without re-authenticating.",
                 "consumes": [
                     "application/json",
                     "multipart/form-data"
@@ -131,6 +131,60 @@
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/rest/vm-object": {
+            "post": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Create a VM Object.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Create a VM Object",
+                "parameters": [
+                    {
+                        "description": "The vm object to create",
+                        "name": "vm_object",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.CreatVMObject.VmObjectInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.VmObject"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/api.APIError"
                         }
@@ -766,6 +820,39 @@
                             "$ref": "#/definitions/ent.Team"
                         }
                     ]
+                }
+            }
+        },
+        "rest.CreatVMObject.VmObjectInput": {
+            "type": "object",
+            "required": [
+                "identifier",
+                "ip_addresses",
+                "name",
+                "vm_object_to_team"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "ip_addresses": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "10.0.0.1",
+                        "100.64.0.1"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "example": "team01.dc.comp.co"
+                },
+                "vm_object_to_team": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 }
             }
         },

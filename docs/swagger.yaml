@@ -403,6 +403,30 @@ definitions:
         - $ref: '#/definitions/ent.Team'
         description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
     type: object
+  rest.CreatVMObject.VmObjectInput:
+    properties:
+      identifier:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      name:
+        example: team01.dc.comp.co
+        type: string
+      vm_object_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - identifier
+    - ip_addresses
+    - name
+    - vm_object_to_team
+    type: object
   rest.ServiceLoginResult:
     properties:
       token:
@@ -520,7 +544,9 @@ paths:
       consumes:
       - application/json
       - multipart/form-data
-      description: Login with a service account and get a session token
+      description: Login with a service account and get a session token. The refresh
+        token is set as a cookie in the response and can be used to refresh a session
+        without re-authenticating.
       parameters:
       - description: Service account details
         in: body
@@ -573,6 +599,40 @@ paths:
       summary: Refresh a service account session without re-authenticating
       tags:
       - Auth API
+  /rest/vm-object:
+    post:
+      description: Create a VM Object.
+      parameters:
+      - description: The vm object to create
+        in: body
+        name: vm_object
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreatVMObject.VmObjectInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.VmObject'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a VM Object
+      tags:
+      - Service API
   /rest/vm-object/{id}:
     get:
       description: Get VM Object
