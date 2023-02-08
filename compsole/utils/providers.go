@@ -10,9 +10,20 @@ type ConsoleType string
 
 type RebootType string
 
+type PowerState string
+
 const (
 	SoftReboot RebootType = "SOFT"
 	HardReboot RebootType = "HARD"
+)
+
+const (
+	PoweredOn    PowerState = "POWERED_ON"
+	PoweredOff   PowerState = "POWERED_OFF"
+	Rebooting    PowerState = "REBOOTING"
+	ShuttingDown PowerState = "SHUTTING_DOWN"
+	Suspended    PowerState = "SUSPENDED"
+	Unknown      PowerState = "UNKNOWN"
 )
 
 // LoadProviderConfig is a helper function which loads the config file into a provider
