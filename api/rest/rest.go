@@ -36,4 +36,10 @@ func RegisterRESTEndpoints(client *ent.Client, r *gin.RouterGroup) {
 	r.GET("/team/:id", GetTeam(client))
 	r.PUT("/team/:id", UpdateTeam(client))
 	r.DELETE("/team/:id", DeleteTeam(client))
+	// Users
+	r.GET("/user", ListUsers(client))
+	r.POST("/user", CreateUser(client))
+	r.GET("/user/:id", GetUser(client))
+	r.PUT("/user/:id", UpdateUser(client))
+	r.DELETE("/user/:id", DeleteUser(client))
 }
