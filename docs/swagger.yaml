@@ -436,6 +436,22 @@ definitions:
     - name
     - type
     type: object
+  rest.CreateTeam.TeamInput:
+    properties:
+      name:
+        example: ISTS 'XX
+        type: string
+      team_number:
+        example: 1
+        type: integer
+      team_to_competition:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - name
+    - team_number
+    - team_to_competition
+    type: object
   rest.CreateVMObject.VmObjectInput:
     properties:
       identifier:
@@ -506,6 +522,22 @@ definitions:
     - config
     - name
     - type
+    type: object
+  rest.UpdateTeam.TeamInput:
+    properties:
+      name:
+        example: ISTS 'XX
+        type: string
+      team_number:
+        example: 1
+        type: integer
+      team_to_competition:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - name
+    - team_number
+    - team_to_competition
     type: object
   rest.UpdateVMObject.VmObjectInput:
     properties:
@@ -926,6 +958,167 @@ paths:
       security:
       - ServiceAuth: []
       summary: Update a Provider
+      tags:
+      - Service API
+  /rest/team:
+    get:
+      description: List all Teams
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.Team'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all Teams
+      tags:
+      - Service API
+    post:
+      description: Create a Team
+      parameters:
+      - description: The team to create
+        in: body
+        name: team
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateTeam.TeamInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a Team
+      tags:
+      - Service API
+  /rest/team/{id}:
+    delete:
+      description: Delete a Team
+      parameters:
+      - description: The id of the team
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a Team
+      tags:
+      - Service API
+    get:
+      description: Get a Team
+      parameters:
+      - description: The id of the team
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a Team
+      tags:
+      - Service API
+    put:
+      description: Update a Team
+      parameters:
+      - description: The id of the team
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated team
+        in: body
+        name: team
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateTeam.TeamInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Team'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a Team
       tags:
       - Service API
   /rest/token:
