@@ -452,6 +452,32 @@ definitions:
     - team_number
     - team_to_competition
     type: object
+  rest.CreateUser.UserInput:
+    properties:
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      role:
+        enum:
+        - USER
+        - ADMIN
+        example: USER
+        type: string
+      user_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      username:
+        example: compsole
+        type: string
+    required:
+    - first_name
+    - last_name
+    - role
+    - username
+    type: object
   rest.CreateVMObject.VmObjectInput:
     properties:
       identifier:
@@ -538,6 +564,32 @@ definitions:
     - name
     - team_number
     - team_to_competition
+    type: object
+  rest.UpdateUser.UserInput:
+    properties:
+      first_name:
+        example: John
+        type: string
+      last_name:
+        example: Doe
+        type: string
+      role:
+        enum:
+        - USER
+        - ADMIN
+        example: USER
+        type: string
+      user_to_team:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      username:
+        example: compsole
+        type: string
+    required:
+    - first_name
+    - last_name
+    - role
+    - username
     type: object
   rest.UpdateVMObject.VmObjectInput:
     properties:
@@ -1181,6 +1233,167 @@ paths:
       summary: Refresh a service account session without re-authenticating
       tags:
       - Auth API
+  /rest/user:
+    get:
+      description: List all Users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ent.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: List all Users
+      tags:
+      - Service API
+    post:
+      description: Create a User
+      parameters:
+      - description: The user to create
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateUser.UserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a User
+      tags:
+      - Service API
+  /rest/user/{id}:
+    delete:
+      description: Delete a User
+      parameters:
+      - description: The id of the user
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a User
+      tags:
+      - Service API
+    get:
+      description: Get a User
+      parameters:
+      - description: The id of the user
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a User
+      tags:
+      - Service API
+    put:
+      description: Update a User
+      parameters:
+      - description: The id of the user
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated user
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateUser.UserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a User
+      tags:
+      - Service API
   /rest/vm-object:
     get:
       description: List all VM Objects

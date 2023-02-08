@@ -901,6 +901,256 @@ const docTemplate = `{
                 }
             }
         },
+        "/rest/user": {
+            "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "List all Users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "List all Users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.User"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Create a User",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Create a User",
+                "parameters": [
+                    {
+                        "description": "The user to create",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.CreateUser.UserInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/rest/user/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Get a User",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Get a User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the user",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Update a User",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Update a User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the user",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "The updated user",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.UpdateUser.UserInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Delete a User",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Delete a User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the user",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
         "/rest/vm-object": {
             "get": {
                 "security": [
@@ -1726,6 +1976,41 @@ const docTemplate = `{
                 }
             }
         },
+        "rest.CreateUser.UserInput": {
+            "type": "object",
+            "required": [
+                "first_name",
+                "last_name",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "first_name": {
+                    "type": "string",
+                    "example": "John"
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Doe"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "USER",
+                        "ADMIN"
+                    ],
+                    "example": "USER"
+                },
+                "user_to_team": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "compsole"
+                }
+            }
+        },
         "rest.CreateVMObject.VmObjectInput": {
             "type": "object",
             "required": [
@@ -1845,6 +2130,41 @@ const docTemplate = `{
                 "team_to_competition": {
                     "type": "string",
                     "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                }
+            }
+        },
+        "rest.UpdateUser.UserInput": {
+            "type": "object",
+            "required": [
+                "first_name",
+                "last_name",
+                "role",
+                "username"
+            ],
+            "properties": {
+                "first_name": {
+                    "type": "string",
+                    "example": "John"
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Doe"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "USER",
+                        "ADMIN"
+                    ],
+                    "example": "USER"
+                },
+                "user_to_team": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "compsole"
                 }
             }
         },
