@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/BradHacker/compsole/api"
@@ -18,6 +17,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
+
+const REFRESH_TOKEN_COOKIE = "refresh-token"
 
 type ServiceLoginVals struct {
 	ApiKey    string `form:"api_key" json:"api_key" binding:"required"`
@@ -34,11 +35,27 @@ type ServiceLoginResult struct {
 	ExpiresAt    int64  `json:"expires_at"`
 }
 
-func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServiceAccount *ent.ServiceAccount) {
-	session_timeout := 60
-	if env_value, exists := os.LookupEnv("COOKIE_TIMEOUT"); exists {
-		if atio_value, err := strconv.Atoi(env_value); err == nil {
-			session_timeout = atio_value
+func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServiceAccount *ent.ServiceAccount, existingRefreshToken *string) {
+	hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
+	if !ok {
+		hostname = "localhost"
+	}
+	sessionTimeout := 60
+	if envValue, exists := os.LookupEnv("COOKIE_TIMEOUT"); exists {
+		if atioValue, err := strconv.Atoi(envValue); err == nil {
+			sessionTimeout = atioValue
+		}
+	}
+	refreshWindow := 60
+	if envValue, exists := os.LookupEnv("REFRESH_WINDOW"); exists {
+		if atioValue, err := strconv.Atoi(envValue); err == nil {
+			refreshWindow = atioValue
+		}
+	}
+	secureCookie := false
+	if envValue, exists := os.LookupEnv("HTTPS_ENABLED"); exists {
+		if envValue == "true" {
+			secureCookie = true
 		}
 	}
 
@@ -51,29 +68,49 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 	}
 
 	issuedAt := time.Now()
-	expiresAt := issuedAt.Add(time.Minute * time.Duration(session_timeout)).Unix()
 
-	claims := &api.CompsoleJWTClaims{
+	tokenExpiresAt := issuedAt.Add(time.Minute * time.Duration(sessionTimeout)).Unix()
+	tokenClaims := &api.CompsoleJWTClaims{
+		ApiKey:   entServiceAccount.APIKey.String(),
 		IssuedAt: issuedAt.Unix(),
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expiresAt,
-			Subject:   entServiceAccount.APIKey.String(), // Set subject to the api_key being used
+			ExpiresAt: tokenExpiresAt,
 		},
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, tokenClaims)
 	tokenString, err := token.SignedString([]byte(jwtKey))
 	if err != nil {
 		api.ReturnError(ctx, http.StatusUnauthorized, "failed to sign api token", err)
 		return
 	}
 
-	refreshToken := uuid.New()
+	refreshTokenString := ""
+	if existingRefreshToken == nil {
+		// We don't already have a refresh token, generate one
+		refreshExpiresAt := issuedAt.Add(time.Hour * time.Duration(refreshWindow)).Unix()
+		refreshTokenClaims := &api.CompsoleJWTClaims{
+			ApiKey:   entServiceAccount.APIKey.String(),
+			IssuedAt: issuedAt.Unix(),
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: refreshExpiresAt,
+			},
+		}
+		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
+		refreshTokenString, err = refreshToken.SignedString([]byte(jwtKey))
+		if err != nil {
+			api.ReturnError(ctx, http.StatusUnauthorized, "failed to sign api refresh token", err)
+			return
+		}
+	} else {
+		// We already have a refresh token, wait for that to expire before regenerating it
+		refreshTokenString = *existingRefreshToken
+	}
+
 	_, err = client.ServiceToken.Create().
 		SetTokenToServiceAccount(entServiceAccount).
 		SetIssuedAt(issuedAt.Unix()).
 		SetToken(tokenString).
-		SetRefreshToken(refreshToken).
+		SetRefreshToken(refreshTokenString).
 		Save(ctx)
 	if err != nil {
 		api.ReturnError(ctx, http.StatusUnauthorized, "failed to update token", err)
@@ -97,10 +134,15 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 		logrus.Warn("failed to create SIGN_IN action: %v", err)
 	}
 
+	if secureCookie {
+		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), "/rest/token/refresh", hostname, true, true)
+	} else {
+		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), "/rest/token/refresh", hostname, false, false)
+	}
+
 	ctx.JSON(http.StatusOK, ServiceLoginResult{
 		SessionToken: tokenString,
-		RefreshToken: refreshToken.String(),
-		ExpiresAt:    expiresAt,
+		ExpiresAt:    tokenExpiresAt,
 	})
 }
 
@@ -167,39 +209,30 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		generateAndReturnServiceToken(ctx, client, entServiceAccount)
+		generateAndReturnServiceToken(ctx, client, entServiceAccount, nil)
 	}
 }
 
-// ServiceLogin godoc
+// ServiceTokenRefresh godoc
 //
-//	@Security		ServiceAuth
-//	@Summary		Refresh a service account session without re-authenticating
-//	@Schemes		http https
-//	@Description	Refresh a service account session without re-authenticating
-//	@Tags			Auth API
-//	@Accept			json,mpfd
-//	@Param			login	body	ServiceRefreshVals	true	"Service account refresh token"
-//	@Produce		json
-//	@Success		200	{object}	ServiceLoginResult
-//	@Failure		401	{object}	api.APIError
-//	@Failure		500	{object}	api.APIError
-//	@Router			/rest/token/refresh [post]
+//		@Summary		Refresh a service account session without re-authenticating
+//		@Schemes		http https
+//		@Description	Refresh a service account session without re-authenticating
+//		@Tags			Auth API
+//	 @Param 		 Cookie header string  false "refresh-token"     default(refresh-token=xxx)
+//		@Produce		json
+//		@Success		200	{object}	ServiceLoginResult
+//		@Failure		401	{object}	api.APIError
+//		@Failure		500	{object}	api.APIError
+//		@Router			/rest/token/refresh [post]
 //
-// ServiceLogin handles login of service accounts and packs the session into context
+// ServiceTokenRefresh handles refreshing sessions automatically
 func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		headers := &api.ServiceAccountHeader{}
-		if err := ctx.ShouldBindHeader(headers); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to request headers", err)
+		refreshTokenString, err := ctx.Cookie(REFRESH_TOKEN_COOKIE)
+		if err != nil || refreshTokenString == "" {
+			api.ReturnError(ctx, http.StatusBadRequest, fmt.Sprintf("must have `%s` cookie set", REFRESH_TOKEN_COOKIE), fmt.Errorf("must provide refresh token cookie"))
 			return
-		}
-
-		refresh_window := 60
-		if env_value, exists := os.LookupEnv("REFRESH_WINDOW"); exists {
-			if atio_value, err := strconv.Atoi(env_value); err == nil {
-				refresh_window = atio_value
-			}
 		}
 
 		jwtKey, exists := os.LookupEnv("JWT_SECRET")
@@ -210,39 +243,24 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		authorizationParts := strings.Split(*headers.Authorization, "Bearer ")
-		if len(authorizationParts) < 2 {
-			api.ReturnError(ctx, http.StatusBadRequest, "must provide authorization token", fmt.Errorf("must provide authorization token"))
-			return
-		}
-		jwtToken := authorizationParts[1]
-
-		authToken, err := jwt.ParseWithClaims(jwtToken, &api.CompsoleJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		refreshToken, err := jwt.ParseWithClaims(refreshTokenString, &api.CompsoleJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 			return []byte(jwtKey), nil
 		})
-		v, _ := err.(*jwt.ValidationError)
-		// We care about validity, but we can ignore the expiration validation errors (we know it's expired)
-		if err != nil && v.Errors != jwt.ValidationErrorExpired {
-			api.ReturnError(ctx, http.StatusUnauthorized, "invalid token", err)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusUnauthorized, "invalid or expired token", err)
 			return
 		}
 
-		claims, ok := authToken.Claims.(*api.CompsoleJWTClaims)
+		claims, ok := refreshToken.Claims.(*api.CompsoleJWTClaims)
 		if !ok {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse JWT claims", err)
 			return
 		}
 
-		apiKey := claims.StandardClaims.Subject
+		apiKey := claims.ApiKey
 		apiKeyUUID, err := uuid.Parse(apiKey)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to refresh values", err)
-			return
-		}
-
-		var refreshVals ServiceRefreshVals
-		if err := ctx.ShouldBind(&refreshVals); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to refresh values", err)
+			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to extract JWT claims", err)
 			return
 		}
 
@@ -252,21 +270,12 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
 
-		refreshTokenUuid, err := uuid.Parse(refreshVals.RefreshToken)
-		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "failed to parse refresh_token", err)
-			return
-		}
-
 		entServiceToken, err := client.ServiceToken.Query().Where(
 			servicetoken.HasTokenToServiceAccountWith(
 				serviceaccount.APIKeyEQ(apiKeyUUID),
 				serviceaccount.ActiveEQ(true),
 			),
-			servicetoken.RefreshTokenEQ(refreshTokenUuid),
-			servicetoken.IssuedAtGTE(
-				time.Now().Add(-time.Minute*time.Duration(refresh_window)).Unix(), // Subtract the refresh_window from current time
-			), // If the session started less than [refresh_window] minutes ago
+			servicetoken.RefreshTokenEQ(refreshTokenString),
 		).Only(ctx)
 		if ent.IsNotFound(err) {
 			err = client.Action.Create().
@@ -289,6 +298,6 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		generateAndReturnServiceToken(ctx, client, entServiceAccount)
+		generateAndReturnServiceToken(ctx, client, entServiceAccount, &refreshTokenString)
 	}
 }

@@ -37,6 +37,7 @@ type contextKey struct {
 
 // CompsoleJWTClaims Create a struct that will be encoded to a JWT.
 type CompsoleJWTClaims struct {
+	ApiKey   string
 	IssuedAt int64
 	jwt.StandardClaims
 }
