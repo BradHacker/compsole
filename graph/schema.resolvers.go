@@ -499,10 +499,15 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
 	}
-	// Must maintain at least one admin user in the database
-	if userCount, err := r.client.User.Query().Where(user.RoleEQ(user.RoleADMIN)).Count(ctx); err != nil {
+	// Must maintain at least one admin user in the database (count all admin users who's ID's don't match the one we're deleting)
+	if userCount, err := r.client.User.Query().Where(
+		user.And(
+			user.IDNEQ(userUuid),
+			user.RoleEQ(user.RoleADMIN),
+		),
+	).Count(ctx); err != nil {
 		return false, fmt.Errorf("failed to count users: %v", err)
-	} else if userCount <= 1 {
+	} else if userCount <= 0 {
 		return false, fmt.Errorf("at least one admin user must exist")
 	}
 	_, err = r.client.User.Delete().Where(user.IDEQ(userUuid)).Exec(ctx)
