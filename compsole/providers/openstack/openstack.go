@@ -11,6 +11,7 @@ import (
 	"github.com/BradHacker/compsole/ent"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/diagnostics"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -163,6 +164,43 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 		finalURL = finalURL + "&scale=true"
 	}
 	return finalURL, nil
+}
+
+func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) (utils.PowerState, error) {
+	// Create Openstack compute client
+	computeClient, err := provider.newComputeClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	}
+
+	// Create the remote console and return the URL
+	diagnosticsResult, err := diagnostics.Get(computeClient, vmObject.Identifier).Extract()
+	if err != nil {
+		return "", fmt.Errorf("failed to get Openstack vm diagnostics: %v", err)
+	}
+	vmState, ok := diagnosticsResult["state"]
+	if !ok {
+		return "", fmt.Errorf("failed to parse diagnostics results for vm state: %v", err)
+	}
+
+	var powerState utils.PowerState
+	switch vmState {
+	case "pending":
+		powerState = utils.Unknown
+	case "running":
+		powerState = utils.PoweredOn
+	case "paused":
+		powerState = utils.Suspended
+	case "shutdown":
+		powerState = utils.PoweredOff
+	case "suspended":
+		powerState = utils.Suspended
+	case "crashed":
+		powerState = utils.Unknown
+	default:
+		powerState = utils.Unknown
+	}
+	return powerState, nil
 }
 
 func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
