@@ -403,6 +403,18 @@ definitions:
         - $ref: '#/definitions/ent.Team'
         description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
     type: object
+  rest.CreateCompetition.CompetitionInput:
+    properties:
+      competition_to_provider:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        example: ISTS 'XX
+        type: string
+    required:
+    - competition_to_provider
+    - name
+    type: object
   rest.CreateVMObject.VmObjectInput:
     properties:
       identifier:
@@ -443,6 +455,18 @@ definitions:
     required:
     - api_key
     - api_secret
+    type: object
+  rest.UpdateCompetition.CompetitionInput:
+    properties:
+      competition_to_provider:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        example: ISTS 'XX
+        type: string
+    required:
+    - competition_to_provider
+    - name
     type: object
   rest.UpdateVMObject.VmObjectInput:
     properties:
@@ -543,6 +567,147 @@ paths:
       summary: Login with a local account
       tags:
       - Auth API
+  /rest/competition:
+    post:
+      description: Create a Competition
+      parameters:
+      - description: The competition to create
+        in: body
+        name: competition
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateCompetition.CompetitionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Competition'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a Competition
+      tags:
+      - Service API
+  /rest/competition/{id}:
+    delete:
+      description: Delete a Competition
+      parameters:
+      - description: The id of the competition
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a Competition
+      tags:
+      - Service API
+    get:
+      description: Get a Competition
+      parameters:
+      - description: The id of the competition
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Competition'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a Competition
+      tags:
+      - Service API
+    put:
+      description: Update a Competition
+      parameters:
+      - description: The id of the competition
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated competition
+        in: body
+        name: competition
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateCompetition.CompetitionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Competition'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a Competition
+      tags:
+      - Service API
   /rest/token:
     post:
       consumes:
@@ -605,7 +770,7 @@ paths:
       - Auth API
   /rest/vm-object:
     post:
-      description: Create a VM Object.
+      description: Create a VM Object
       parameters:
       - description: The vm object to create
         in: body
@@ -639,7 +804,7 @@ paths:
       - Service API
   /rest/vm-object/{id}:
     delete:
-      description: Delete a VM Object.
+      description: Delete a VM Object
       parameters:
       - description: The id of the vm object
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -671,7 +836,7 @@ paths:
       tags:
       - Service API
     get:
-      description: Get VM Object
+      description: Get a VM Object
       parameters:
       - description: The id of the vm object
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -701,11 +866,11 @@ paths:
             $ref: '#/definitions/api.APIError'
       security:
       - ServiceAuth: []
-      summary: Get VM Object
+      summary: Get a VM Object
       tags:
       - Service API
     put:
-      description: Update VM Object.
+      description: Update a VM Object
       parameters:
       - description: The id of the vm object
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -741,7 +906,7 @@ paths:
             $ref: '#/definitions/api.APIError'
       security:
       - ServiceAuth: []
-      summary: Update VM Object
+      summary: Update a VM Object
       tags:
       - Service API
 securityDefinitions:

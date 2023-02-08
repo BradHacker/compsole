@@ -63,6 +63,224 @@ const docTemplate = `{
                 }
             }
         },
+        "/rest/competition": {
+            "post": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Create a Competition",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Create a Competition",
+                "parameters": [
+                    {
+                        "description": "The competition to create",
+                        "name": "competition",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.CreateCompetition.CompetitionInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Competition"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/rest/competition/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Get a Competition",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Get a Competition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the competition",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Competition"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Update a Competition",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Update a Competition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the competition",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "The updated competition",
+                        "name": "competition",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.UpdateCompetition.CompetitionInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Competition"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Delete a Competition",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Delete a Competition",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the competition",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
         "/rest/token": {
             "post": {
                 "description": "Login with a service account and get a session token. The refresh token is set as a cookie in the response and can be used to refresh a session without re-authenticating.",
@@ -158,7 +376,7 @@ const docTemplate = `{
                         "ServiceAuth": []
                     }
                 ],
-                "description": "Create a VM Object.",
+                "description": "Create a VM Object",
                 "produces": [
                     "application/json"
                 ],
@@ -212,14 +430,14 @@ const docTemplate = `{
                         "ServiceAuth": []
                     }
                 ],
-                "description": "Get VM Object",
+                "description": "Get a VM Object",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Service API"
                 ],
-                "summary": "Get VM Object",
+                "summary": "Get a VM Object",
                 "parameters": [
                     {
                         "type": "string",
@@ -264,14 +482,14 @@ const docTemplate = `{
                         "ServiceAuth": []
                     }
                 ],
-                "description": "Update VM Object.",
+                "description": "Update a VM Object",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Service API"
                 ],
-                "summary": "Update VM Object",
+                "summary": "Update a VM Object",
                 "parameters": [
                     {
                         "type": "string",
@@ -325,7 +543,7 @@ const docTemplate = `{
                         "ServiceAuth": []
                     }
                 ],
-                "description": "Delete a VM Object.",
+                "description": "Delete a VM Object",
                 "produces": [
                     "application/json"
                 ],
@@ -879,6 +1097,23 @@ const docTemplate = `{
                 }
             }
         },
+        "rest.CreateCompetition.CompetitionInput": {
+            "type": "object",
+            "required": [
+                "competition_to_provider",
+                "name"
+            ],
+            "properties": {
+                "competition_to_provider": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "ISTS 'XX"
+                }
+            }
+        },
         "rest.CreateVMObject.VmObjectInput": {
             "type": "object",
             "required": [
@@ -935,6 +1170,23 @@ const docTemplate = `{
                 },
                 "api_secret": {
                     "type": "string"
+                }
+            }
+        },
+        "rest.UpdateCompetition.CompetitionInput": {
+            "type": "object",
+            "required": [
+                "competition_to_provider",
+                "name"
+            ],
+            "properties": {
+                "competition_to_provider": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "ISTS 'XX"
                 }
             }
         },

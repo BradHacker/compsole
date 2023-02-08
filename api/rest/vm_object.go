@@ -9,15 +9,14 @@ import (
 	"github.com/BradHacker/compsole/ent/vmobject"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // GetVMObject godoc
 //
 //	@Security		ServiceAuth
-//	@Summary		Get VM Object
+//	@Summary		Get a VM Object
 //	@Schemes		http https
-//	@Description	Get VM Object
+//	@Description	Get a VM Object
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
@@ -33,8 +32,6 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 		if err != nil {
 			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse vm object uuid", err)
 		}
-
-		logrus.Infof("querying for vm object: %s", vmObjectUuid.String())
 
 		entVmObject, err := client.VmObject.Query().
 			Where(
@@ -59,7 +56,7 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 //	@Security		ServiceAuth
 //	@Summary		Create a VM Object
 //	@Schemes		http https
-//	@Description	Create a VM Object.
+//	@Description	Create a VM Object
 //	@Tags			Service API
 //	@Param			vm_object	body	rest.CreateVMObject.VmObjectInput	true	"The vm object to create"
 //	@Produce		json
@@ -119,9 +116,9 @@ func CreateVMObject(client *ent.Client) gin.HandlerFunc {
 // UpdateVMObject godoc
 //
 //	@Security		ServiceAuth
-//	@Summary		Update VM Object
+//	@Summary		Update a VM Object
 //	@Schemes		http https
-//	@Description	Update VM Object.
+//	@Description	Update a VM Object
 //	@Tags			Service API
 //	@Param			id			path	string								true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Param			vm_object	body	rest.UpdateVMObject.VmObjectInput	true	"The updated vm object"
@@ -203,7 +200,7 @@ func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
 //	@Security		ServiceAuth
 //	@Summary		Delete a VM Object
 //	@Schemes		http https
-//	@Description	Delete a VM Object.
+//	@Description	Delete a VM Object
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
