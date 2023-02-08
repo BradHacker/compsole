@@ -415,6 +415,27 @@ definitions:
     - competition_to_provider
     - name
     type: object
+  rest.CreateProvider.ProviderInput:
+    properties:
+      config:
+        description: See https://github.com/BradHacker/compsole/tree/main/configs
+          for examples
+        example: See https://github.com/BradHacker/compsole/tree/main/configs for
+          examples
+        type: string
+      name:
+        example: RITSEC Openstack
+        type: string
+      type:
+        enum:
+        - OPENSTACK
+        example: OPENSTACK
+        type: string
+    required:
+    - config
+    - name
+    - type
+    type: object
   rest.CreateVMObject.VmObjectInput:
     properties:
       identifier:
@@ -467,6 +488,24 @@ definitions:
     required:
     - competition_to_provider
     - name
+    type: object
+  rest.UpdateProvider.ProviderInput:
+    properties:
+      config:
+        description: See https://github.com/BradHacker/compsole/tree/main/configs
+          for examples
+        type: string
+      name:
+        example: RITSEC Openstack
+        type: string
+      type:
+        enum:
+        - OPENSTACK
+        type: string
+    required:
+    - config
+    - name
+    - type
     type: object
   rest.UpdateVMObject.VmObjectInput:
     properties:
@@ -706,6 +745,147 @@ paths:
       security:
       - ServiceAuth: []
       summary: Update a Competition
+      tags:
+      - Service API
+  /rest/provider:
+    post:
+      description: Create a Provider
+      parameters:
+      - description: The provider to create
+        in: body
+        name: provider
+        required: true
+        schema:
+          $ref: '#/definitions/rest.CreateProvider.ProviderInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Provider'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Create a Provider
+      tags:
+      - Service API
+  /rest/provider/{id}:
+    delete:
+      description: Delete a Provider
+      parameters:
+      - description: The id of the provider
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Delete a Provider
+      tags:
+      - Service API
+    get:
+      description: Get a provider
+      parameters:
+      - description: The id of the provider
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ent.Provider'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Get a provider
+      tags:
+      - Service API
+    put:
+      description: Update a Provider
+      parameters:
+      - description: The id of the provider
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated provider
+        in: body
+        name: provider
+        required: true
+        schema:
+          $ref: '#/definitions/rest.UpdateProvider.ProviderInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/ent.Provider'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update a Provider
       tags:
       - Service API
   /rest/token:

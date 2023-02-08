@@ -22,4 +22,9 @@ func RegisterRESTEndpoints(client *ent.Client, r *gin.RouterGroup) {
 	r.GET("/competition/:id", GetCompetition(client))
 	r.PUT("/competition/:id", UpdateCompetition(client))
 	r.DELETE("/competition/:id", DeleteCompetition(client))
+	// Providers
+	r.POST("/provider", CreateProvider(client))
+	r.GET("/provider/:id", GetProvider(client))
+	r.PUT("/provider/:id", UpdateProvider(client))
+	r.DELETE("/provider/:id", DeleteProvider(client))
 }
