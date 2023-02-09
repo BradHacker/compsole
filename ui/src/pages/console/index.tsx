@@ -2,6 +2,7 @@ import {
   ArrowDropDown,
   Autorenew,
   BatteryUnknownTwoTone,
+  FiberManualRecord,
   HotelTwoTone,
   HourglassBottomTwoTone,
   LockTwoTone,
@@ -257,6 +258,35 @@ export const Console: React.FC = (): React.ReactElement => {
     }
   };
 
+  const getPowerStateColor = (
+    powerState: PowerState | undefined
+  ):
+    | "error"
+    | "success"
+    | "warning"
+    | "info"
+    | "disabled"
+    | "action"
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | undefined => {
+    switch (powerState) {
+      case PowerState.PoweredOff:
+        return "disabled";
+      case PowerState.PoweredOn:
+        return "success";
+      case PowerState.Rebooting:
+        return "info";
+      case PowerState.ShuttingDown:
+        return "warning";
+      case PowerState.Suspended:
+        return "disabled";
+      default:
+        return undefined;
+    }
+  };
+
   const shouldShowConsole = (): boolean => {
     // If the vm is locked
     if (getVmObjectData?.vmObject.Locked || lockoutData?.lockout.Locked)
@@ -405,7 +435,18 @@ export const Console: React.FC = (): React.ReactElement => {
         }}
       >
         <Grid item xs={4}>
-          <Typography variant="h5">
+          <Typography
+            variant="h5"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <FiberManualRecord
+              sx={{ height: "1rem", width: "1rem", mr: 1 }}
+              color={getPowerStateColor(powerState)}
+              titleAccess={getPowerStateString(powerState)}
+            />
             {getVmObjectLoading || !getVmObjectData ? (
               <Skeleton />
             ) : (
