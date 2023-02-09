@@ -4,9 +4,11 @@ services:
   ui:
     build:
       context: ./ui
-      dockerfile: ./Dockerfile
+      # Use "./Dockerfile" instead for no SSL
+      dockerfile: ./Dockerfile.ssl
     ports:
       - 80:80
+      - 443:443
     restart: unless-stopped
     networks:
       - compsole-backend
@@ -14,6 +16,11 @@ services:
       - backend
     volumes:
       - /app/node_modules/
+      - ./ui/docker_files/caddyfile:/etc/caddy/Caddyfile
+      - ./.caddy/data:/data
+      - ./.caddy/config:/config
+    environment:
+      - DOMAIN=compsole.example.com
   backend:
     build:
       context: .
@@ -30,19 +37,19 @@ services:
       - GRAPHQL_HOSTNAME=localhost
       - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000
       - PORT=:8080
-      # - HTTPS_ENABLED=true
+      # Disable this for no SSL
+      - HTTPS_ENABLED=true
       - DEFAULT_ADMIN_USERNAME=compsole
       - DEFAULT_ADMIN_PASSWORD=compsole
       - GIN_MODE=release # set to 'debug' for development
       # Timeout in minutes
       - COOKIE_TIMEOUT=180
-      # OAuth
-      # - GITLAB_KEY=
-      # - GITLAB_SECRET=
+      # Window is in hours (time after invalid session to refresh REST tokens)
+      - REFRESH_WINDOW=8
+      # Change this to a randomly generated value (>= 64 bytes encouraged)
+      - JWT_SECRET=secret
       # Database
       - PG_URI=postgresql://compsole:compsole@db/compsole
-      # - PG_CONN_LIMIT=
-      # - PG_IDLE_LIMIT=
       # Redis
       - REDIS_URI=redis:6379
       - REDIS_PASSWORD=
