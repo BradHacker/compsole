@@ -27,6 +27,7 @@ import {
   Paper,
   Popper,
   Skeleton,
+  Theme,
   Typography,
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
@@ -47,7 +48,24 @@ import {
   useRebootVmMutation,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
-import { Box } from "@mui/system";
+import { Box, SxProps } from "@mui/system";
+
+const VmButtonStyles: SxProps<Theme> = {
+  ".MuiButton-startIcon": {
+    display: {
+      xs: "none",
+      md: "inherit",
+    },
+  },
+  fontSize: {
+    xs: "0.65rem",
+    md: "0.8125rem",
+  },
+  flexShrink: {
+    xs: "0",
+    md: "1",
+  },
+};
 
 export const Console: React.FC = (): React.ReactElement => {
   let { user } = useContext(UserContext);
@@ -399,7 +417,7 @@ export const Console: React.FC = (): React.ReactElement => {
           mb: 1,
         }}
       >
-        <Grid item xs={4}>
+        <Grid item md={4} xs={12}>
           <Typography
             variant="h5"
             sx={{
@@ -431,11 +449,15 @@ export const Console: React.FC = (): React.ReactElement => {
         </Grid>
         <Grid
           item
-          xs={8}
+          md={8}
+          xs={12}
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "flex-end",
+            justifyContent: {
+              sm: "flex-start",
+              md: "flex-end",
+            },
           }}
         >
           <ButtonGroup variant="contained">
@@ -444,6 +466,7 @@ export const Console: React.FC = (): React.ReactElement => {
               startIcon={<TerminalTwoTone />}
               onClick={() => setFullscreenConsole(!fullscreenConsole)}
               color="secondary"
+              sx={VmButtonStyles}
             >
               Fullscreen
             </Button>
@@ -466,6 +489,7 @@ export const Console: React.FC = (): React.ReactElement => {
                   getVmObjectData?.vmObject.Locked ||
                   false)
               }
+              sx={VmButtonStyles}
             >
               Refresh Console
             </LoadingButton>
@@ -483,6 +507,7 @@ export const Console: React.FC = (): React.ReactElement => {
                   getVmObjectData?.vmObject.Locked ||
                   false)
               }
+              sx={VmButtonStyles}
             >
               Shutdown
             </LoadingButton>
@@ -500,6 +525,7 @@ export const Console: React.FC = (): React.ReactElement => {
                   getVmObjectData?.vmObject.Locked ||
                   false)
               }
+              sx={VmButtonStyles}
             >
               Power On
             </LoadingButton>
@@ -518,6 +544,7 @@ export const Console: React.FC = (): React.ReactElement => {
                   getVmObjectData?.vmObject.Locked ||
                   false)
               }
+              sx={VmButtonStyles}
             >
               {options[selectedRebootType].title}
             </LoadingButton>
@@ -590,7 +617,7 @@ export const Console: React.FC = (): React.ReactElement => {
             src={consoleUrl}
             style={{
               width: "100%",
-              height: "800px",
+              height: "calc(100vh - 10rem)",
             }}
           />
         ) : (
@@ -601,7 +628,7 @@ export const Console: React.FC = (): React.ReactElement => {
           elevation={2}
           sx={{
             width: "100%",
-            height: "800px",
+            height: "calc(100vh - 10rem)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -654,261 +681,295 @@ export const Console: React.FC = (): React.ReactElement => {
           sx={{
             width: "100%",
             height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
+            padding: 1,
           }}
         >
-          <Box
+          <Grid
+            container
+            spacing={1}
+            direction="column"
             sx={{
-              height: "3rem",
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingX: 1,
+              height: "100%",
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignContent: "center",
-              }}
+            {/* VM Metadata */}
+            <Grid
+              item
+              container
+              spacing={2}
+              md={"auto"}
+              xs={4}
+              sx={{ width: "100%" }}
             >
-              <Typography
-                variant="h5"
+              {/* VM Name/IP */}
+              <Grid
+                item
+                md={4}
+                xs={12}
                 sx={{
+                  padding: 1,
+                  boxSizing: "border-box",
                   display: "flex",
                   alignItems: "center",
-                  mr: 2,
                 }}
               >
-                <FiberManualRecord
-                  sx={{ height: "1rem", width: "1rem", mr: 1 }}
-                  color={getPowerStateColor(powerStateData?.powerState.State)}
-                  titleAccess={getPowerStateString(
-                    powerStateData?.powerState.State
+                <Typography
+                  variant="h5"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mr: 2,
+                  }}
+                >
+                  <FiberManualRecord
+                    sx={{ height: "1rem", width: "1rem", mr: 1 }}
+                    color={getPowerStateColor(powerStateData?.powerState.State)}
+                    titleAccess={getPowerStateString(
+                      powerStateData?.powerState.State
+                    )}
+                  />
+                  {getVmObjectLoading || !getVmObjectData ? (
+                    <Skeleton />
+                  ) : (
+                    getVmObjectData.vmObject.Name
                   )}
-                />
+                </Typography>
                 {getVmObjectLoading || !getVmObjectData ? (
                   <Skeleton />
                 ) : (
-                  getVmObjectData.vmObject.Name
+                  <Typography
+                    variant="caption"
+                    component="code"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      flexShrink: 1,
+                    }}
+                  >
+                    {getVmObjectData.vmObject.IPAddresses?.join(", ") ??
+                      "No IP Addresses Found"}
+                  </Typography>
                 )}
-              </Typography>
-              {getVmObjectLoading || !getVmObjectData ? (
-                <Skeleton />
-              ) : (
-                <Typography
-                  variant="caption"
-                  component="code"
-                  sx={{ display: "flex", alignItems: "center" }}
-                >
-                  {getVmObjectData.vmObject.IPAddresses?.join(", ") ??
-                    "No IP Addresses Found"}
-                </Typography>
-              )}
-            </Box>
-            <ButtonGroup variant="contained">
-              <Button
-                size="small"
-                startIcon={<TerminalTwoTone />}
-                onClick={() => setFullscreenConsole(!fullscreenConsole)}
-                color="secondary"
-              >
-                Exit
-              </Button>
-              <LoadingButton
-                color="primary"
-                size="small"
-                variant="contained"
-                startIcon={<Autorenew />}
-                loading={
-                  getVmConsoleLoading ||
-                  rebootVmLoading ||
-                  powerOnVmLoading ||
-                  powerOffVmLoading
-                }
-                loadingPosition="start"
-                onClick={handleRefreshConsoleClick}
-                disabled={
-                  !(user.Role === Role.Admin) &&
-                  (lockoutData?.lockout.Locked ||
-                    getVmObjectData?.vmObject.Locked ||
-                    false)
-                }
-              >
-                Refresh Console
-              </LoadingButton>
-              <LoadingButton
-                color="error"
-                size="small"
-                variant="contained"
-                startIcon={<PowerOff />}
-                loading={
-                  rebootVmLoading || powerOnVmLoading || powerOffVmLoading
-                }
-                loadingPosition="start"
-                onClick={handlePowerOffClick}
-                disabled={
-                  !(user.Role === Role.Admin) &&
-                  (lockoutData?.lockout.Locked ||
-                    getVmObjectData?.vmObject.Locked ||
-                    false)
-                }
-              >
-                Shutdown
-              </LoadingButton>
-              <LoadingButton
-                color="success"
-                size="small"
-                variant="contained"
-                startIcon={<PowerSettingsNew />}
-                loading={
-                  rebootVmLoading || powerOnVmLoading || powerOffVmLoading
-                }
-                loadingPosition="start"
-                onClick={handlePowerOnClick}
-                disabled={
-                  !(user.Role === Role.Admin) &&
-                  (lockoutData?.lockout.Locked ||
-                    getVmObjectData?.vmObject.Locked ||
-                    false)
-                }
-              >
-                Power On
-              </LoadingButton>
-              <LoadingButton
-                color="warning"
-                size="small"
-                variant="contained"
-                startIcon={<RestartAlt />}
-                loading={
-                  rebootVmLoading || powerOnVmLoading || powerOffVmLoading
-                }
-                loadingPosition="start"
-                onClick={handleRebootClick}
-                ref={rebootTypeMenuAnchorRef}
-                disabled={
-                  !(user.Role === Role.Admin) &&
-                  (lockoutData?.lockout.Locked ||
-                    getVmObjectData?.vmObject.Locked ||
-                    false)
-                }
-              >
-                {options[selectedRebootType].title}
-              </LoadingButton>
-              <Button
-                color="warning"
-                size="small"
-                aria-controls={
-                  rebootTypeMenuOpen ? "split-button-menu" : undefined
-                }
-                aria-expanded={rebootTypeMenuOpen ? "true" : undefined}
-                aria-label="select merge strategy"
-                aria-haspopup="menu"
-                onClick={handleToggleRebootTypeMenu}
-                disabled={
-                  !(user.Role === Role.Admin) &&
-                  (lockoutData?.lockout.Locked ||
-                    getVmObjectData?.vmObject.Locked ||
-                    false)
-                }
-              >
-                <ArrowDropDown />
-              </Button>
-            </ButtonGroup>
-            <Popper
-              open={rebootTypeMenuOpen}
-              anchorEl={rebootTypeMenuAnchorRef.current}
-              role={undefined}
-              transition
-              disablePortal
-              nonce={1}
-              onResize
-              onResizeCapture
-            >
-              {({ TransitionProps, placement }) => (
-                <Grow
-                  {...TransitionProps}
-                  style={{
-                    transformOrigin:
-                      placement === "bottom" ? "center top" : "center bottom",
-                  }}
-                >
-                  <Paper>
-                    <ClickAwayListener onClickAway={handleRebootTypeMenuClose}>
-                      <MenuList id="split-button-menu" autoFocusItem>
-                        {options.map((option, index) => (
-                          <MenuItem
-                            key={option.value}
-                            disabled={index === 2}
-                            selected={index === selectedRebootType}
-                            onClick={(event) =>
-                              handleRebootTypeClick(event, index)
-                            }
-                          >
-                            {option.title}
-                          </MenuItem>
-                        ))}
-                      </MenuList>
-                    </ClickAwayListener>
-                  </Paper>
-                </Grow>
-              )}
-            </Popper>
-          </Box>
-          <Box
-            sx={{
-              height: "calc(100% - 3rem)",
-              width: "100%",
-            }}
-          >
-            {shouldShowConsole() ? (
-              fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
-                <iframe
-                  id="console"
-                  title="console"
-                  src={consoleUrl}
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              ) : (
-                <Skeleton width="100%" height="100%" />
-              )
-            ) : (
-              <Paper
-                elevation={6}
+              </Grid>
+              {/* VM Controls */}
+              <Grid
+                item
+                md={8}
+                xs={12}
                 sx={{
-                  width: "100%",
-                  height: "100%",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  flexShrink: 0,
+                  flexGrow: 0,
                 }}
               >
-                {lockoutData?.lockout.Locked ||
-                getVmObjectData?.vmObject.Locked ? (
-                  <>
-                    <LockTwoTone />
-                    <Typography variant="subtitle1">VM is Locked</Typography>
-                  </>
+                <ButtonGroup variant="contained">
+                  <Button
+                    size="small"
+                    startIcon={<TerminalTwoTone />}
+                    onClick={() => setFullscreenConsole(!fullscreenConsole)}
+                    color="secondary"
+                    sx={VmButtonStyles}
+                  >
+                    Exit
+                  </Button>
+                  <LoadingButton
+                    color="primary"
+                    size="small"
+                    variant="contained"
+                    startIcon={<Autorenew />}
+                    loading={
+                      getVmConsoleLoading ||
+                      rebootVmLoading ||
+                      powerOnVmLoading ||
+                      powerOffVmLoading
+                    }
+                    loadingPosition="start"
+                    onClick={handleRefreshConsoleClick}
+                    disabled={
+                      !(user.Role === Role.Admin) &&
+                      (lockoutData?.lockout.Locked ||
+                        getVmObjectData?.vmObject.Locked ||
+                        false)
+                    }
+                    sx={VmButtonStyles}
+                  >
+                    Refresh Console
+                  </LoadingButton>
+                  <LoadingButton
+                    color="error"
+                    size="small"
+                    variant="contained"
+                    startIcon={<PowerOff />}
+                    loading={
+                      rebootVmLoading || powerOnVmLoading || powerOffVmLoading
+                    }
+                    loadingPosition="start"
+                    onClick={handlePowerOffClick}
+                    disabled={
+                      !(user.Role === Role.Admin) &&
+                      (lockoutData?.lockout.Locked ||
+                        getVmObjectData?.vmObject.Locked ||
+                        false)
+                    }
+                    sx={VmButtonStyles}
+                  >
+                    Shutdown
+                  </LoadingButton>
+                  <LoadingButton
+                    color="success"
+                    size="small"
+                    variant="contained"
+                    startIcon={<PowerSettingsNew />}
+                    loading={
+                      rebootVmLoading || powerOnVmLoading || powerOffVmLoading
+                    }
+                    loadingPosition="start"
+                    onClick={handlePowerOnClick}
+                    disabled={
+                      !(user.Role === Role.Admin) &&
+                      (lockoutData?.lockout.Locked ||
+                        getVmObjectData?.vmObject.Locked ||
+                        false)
+                    }
+                    sx={VmButtonStyles}
+                  >
+                    Power On
+                  </LoadingButton>
+                  <LoadingButton
+                    color="warning"
+                    size="small"
+                    variant="contained"
+                    startIcon={<RestartAlt />}
+                    loading={
+                      rebootVmLoading || powerOnVmLoading || powerOffVmLoading
+                    }
+                    loadingPosition="start"
+                    onClick={handleRebootClick}
+                    ref={rebootTypeMenuAnchorRef}
+                    disabled={
+                      !(user.Role === Role.Admin) &&
+                      (lockoutData?.lockout.Locked ||
+                        getVmObjectData?.vmObject.Locked ||
+                        false)
+                    }
+                    sx={VmButtonStyles}
+                  >
+                    {options[selectedRebootType].title}
+                  </LoadingButton>
+                  <Button
+                    color="warning"
+                    size="small"
+                    aria-controls={
+                      rebootTypeMenuOpen ? "split-button-menu" : undefined
+                    }
+                    aria-expanded={rebootTypeMenuOpen ? "true" : undefined}
+                    aria-label="select merge strategy"
+                    aria-haspopup="menu"
+                    onClick={handleToggleRebootTypeMenu}
+                    disabled={
+                      !(user.Role === Role.Admin) &&
+                      (lockoutData?.lockout.Locked ||
+                        getVmObjectData?.vmObject.Locked ||
+                        false)
+                    }
+                  >
+                    <ArrowDropDown />
+                  </Button>
+                </ButtonGroup>
+                <Popper
+                  open={rebootTypeMenuOpen}
+                  anchorEl={rebootTypeMenuAnchorRef.current}
+                  role={undefined}
+                  transition
+                  disablePortal
+                  nonce={1}
+                  onResize
+                  onResizeCapture
+                >
+                  {({ TransitionProps, placement }) => (
+                    <Grow
+                      {...TransitionProps}
+                      style={{
+                        transformOrigin:
+                          placement === "bottom"
+                            ? "center top"
+                            : "center bottom",
+                      }}
+                    >
+                      <Paper>
+                        <ClickAwayListener
+                          onClickAway={handleRebootTypeMenuClose}
+                        >
+                          <MenuList id="split-button-menu" autoFocusItem>
+                            {options.map((option, index) => (
+                              <MenuItem
+                                key={option.value}
+                                disabled={index === 2}
+                                selected={index === selectedRebootType}
+                                onClick={(event) =>
+                                  handleRebootTypeClick(event, index)
+                                }
+                              >
+                                {option.title}
+                              </MenuItem>
+                            ))}
+                          </MenuList>
+                        </ClickAwayListener>
+                      </Paper>
+                    </Grow>
+                  )}
+                </Popper>
+              </Grid>
+            </Grid>
+            {/* VM Console */}
+            <Grid item md={true} xs={8} sx={{ width: "100%", padding: 0 }}>
+              {shouldShowConsole() ? (
+                fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
+                  <iframe
+                    id="console"
+                    title="console"
+                    src={consoleUrl}
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  />
                 ) : (
-                  <>
-                    {getPowerStateIcon(powerStateData?.powerState.State)}
-                    <Typography variant="subtitle1">
-                      {getPowerStateString(powerStateData?.powerState.State)}
-                    </Typography>
-                  </>
-                )}
-              </Paper>
-            )}
-          </Box>
+                  <Skeleton width="100%" height="100%" />
+                )
+              ) : (
+                <Paper
+                  elevation={6}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                  }}
+                >
+                  {lockoutData?.lockout.Locked ||
+                  getVmObjectData?.vmObject.Locked ? (
+                    <>
+                      <LockTwoTone />
+                      <Typography variant="subtitle1">VM is Locked</Typography>
+                    </>
+                  ) : (
+                    <>
+                      {getPowerStateIcon(powerStateData?.powerState.State)}
+                      <Typography variant="subtitle1">
+                        {getPowerStateString(powerStateData?.powerState.State)}
+                      </Typography>
+                    </>
+                  )}
+                </Paper>
+              )}
+            </Grid>
+          </Grid>
         </Paper>
       </Box>
     </Container>
