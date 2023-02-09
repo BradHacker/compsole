@@ -1785,7 +1785,7 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 		SetActionToUser(entUser).
 		Exec(ctx)
 	if err != nil {
-		logrus.Warnf("failed to log UPDATE_LOCKOUT: %v", err)
+		logrus.Warnf("failed to log CONSOLE_ACCESS: %v", err)
 	}
 	return provider.GetConsoleUrl(entVmObject, utils.ConsoleType(consoleType))
 }
@@ -1857,6 +1857,81 @@ func (r *queryResolver) VMObject(ctx context.Context, vmObjectID string) (*ent.V
 		return nil, fmt.Errorf("user does not have permission to access this vm")
 	}
 	return entVmObject, nil
+}
+
+// PowerState is the resolver for the powerState field.
+func (r *queryResolver) PowerState(ctx context.Context, vmObjectID string) (model.PowerState, error) {
+	entUser, err := api.ForContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get user from context: %v", err)
+	}
+	gCtx, err := GinContextFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get gin context from resolver context")
+	}
+	clientIp, err := api.ForContextIp(gCtx)
+	if err != nil {
+		logrus.Warnf("unable to get ip from context: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypeAPI_CALL).
+		SetMessage("called \"PowerState\" endpoint").
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log API_CALL: %v", err)
+	}
+
+	vmObjectUuid, err := uuid.Parse(vmObjectID)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse valid uuid from input vmObjectId: %v", err)
+	}
+
+	// Get VM DB object
+	entVmObject, err := r.client.VmObject.Get(ctx, vmObjectUuid)
+	if err != nil {
+		return "", fmt.Errorf("failed to query vm object: %v", err)
+	}
+	// Check if user has access to VM
+	canAccessVm, err := utils.UserCanAccessVM(ctx, entVmObject, entUser)
+	if err != nil {
+		return "", fmt.Errorf("failed to check access to vm: %v", err)
+	}
+	if !canAccessVm {
+		return "", fmt.Errorf("user does not have permission to access this vm")
+	}
+	if entUser.Role != user.RoleADMIN && entVmObject.Locked {
+		return "", fmt.Errorf("VM is currently locked out")
+	}
+	// Get DB objects
+	entCompetition, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().Only(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to query competition from vm object: %v", err)
+	}
+	entProvider, err := entCompetition.QueryCompetitionToProvider().Only(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to query provider from competition: %v", err)
+	}
+	// Generate the provider
+	provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
+	if err != nil {
+		return "", fmt.Errorf("failed to create provider from config: %v", err)
+	}
+	err = r.client.Action.Create().
+		SetIPAddress(clientIp).
+		SetType(action.TypePOWER_STATE).
+		SetMessage(fmt.Sprintf("get power state for vm %s", entVmObject.Name)).
+		SetActionToUser(entUser).
+		Exec(ctx)
+	if err != nil {
+		logrus.Warnf("failed to log POWER_STATE: %v", err)
+	}
+	vmPowerState, err := provider.GetPowerState(entVmObject)
+	if err != nil {
+		return model.PowerStateUnknown, fmt.Errorf("failed to get vm object power state")
+	}
+	return model.PowerState(vmPowerState), nil
 }
 
 // MyVMObjects is the resolver for the myVmObjects field.

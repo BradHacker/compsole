@@ -250,6 +250,55 @@ func (e ConsoleType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type PowerState string
+
+const (
+	PowerStatePoweredOn    PowerState = "POWERED_ON"
+	PowerStatePoweredOff   PowerState = "POWERED_OFF"
+	PowerStateRebooting    PowerState = "REBOOTING"
+	PowerStateShuttingDown PowerState = "SHUTTING_DOWN"
+	PowerStateSuspended    PowerState = "SUSPENDED"
+	PowerStateUnknown      PowerState = "UNKNOWN"
+)
+
+var AllPowerState = []PowerState{
+	PowerStatePoweredOn,
+	PowerStatePoweredOff,
+	PowerStateRebooting,
+	PowerStateShuttingDown,
+	PowerStateSuspended,
+	PowerStateUnknown,
+}
+
+func (e PowerState) IsValid() bool {
+	switch e {
+	case PowerStatePoweredOn, PowerStatePoweredOff, PowerStateRebooting, PowerStateShuttingDown, PowerStateSuspended, PowerStateUnknown:
+		return true
+	}
+	return false
+}
+
+func (e PowerState) String() string {
+	return string(e)
+}
+
+func (e *PowerState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PowerState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PowerState", str)
+	}
+	return nil
+}
+
+func (e PowerState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type RebootType string
 
 const (
