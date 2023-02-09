@@ -11,6 +11,7 @@ import (
 	"github.com/BradHacker/compsole/ent"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/extendedstatus"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -165,6 +166,50 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 	return finalURL, nil
 }
 
+func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) (utils.PowerState, error) {
+	type ServerWithExt struct {
+		servers.Server
+		extendedstatus.ServerExtendedStatusExt
+	}
+
+	// Create Openstack compute client
+	computeClient, err := provider.newComputeClient()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	}
+
+	var serverResult ServerWithExt
+	err = servers.Get(computeClient, vmObject.Identifier).ExtractInto(&serverResult)
+	if err != nil {
+		return "", fmt.Errorf("failed to get Openstack server details: %v", err)
+	}
+
+	var powerState utils.PowerState
+	switch serverResult.PowerState {
+	// No State
+	case extendedstatus.NOSTATE:
+		powerState = utils.Unknown
+	// Running
+	case extendedstatus.RUNNING:
+		powerState = utils.PoweredOn
+	// Paused
+	case extendedstatus.PAUSED:
+		powerState = utils.Suspended
+	// Shutdown
+	case extendedstatus.SHUTDOWN:
+		powerState = utils.PoweredOff
+	// Crashed
+	case extendedstatus.CRASHED:
+		powerState = utils.Unknown
+	// Suspended
+	case extendedstatus.SUSPENDED:
+		powerState = utils.Suspended
+	default:
+		powerState = utils.Unknown
+	}
+	return powerState, nil
+}
+
 func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 	// Create Openstack compute client
 	computeClient, err := provider.newComputeClient()
@@ -238,10 +283,8 @@ func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebo
 	switch rebootType {
 	case utils.SoftReboot:
 		rebootMethod = servers.SoftReboot
-		break
 	case utils.HardReboot:
 		rebootMethod = servers.HardReboot
-		break
 	default:
 		rebootMethod = servers.SoftReboot
 	}

@@ -122,6 +122,11 @@ type ComplexityRoot struct {
 		UpdateVMObject           func(childComplexity int, input model.VMObjectInput) int
 	}
 
+	PowerStateUpdate struct {
+		ID    func(childComplexity int) int
+		State func(childComplexity int) int
+	}
+
 	Provider struct {
 		Config func(childComplexity int) int
 		ID     func(childComplexity int) int
@@ -144,6 +149,7 @@ type ComplexityRoot struct {
 		MyCompetition     func(childComplexity int) int
 		MyTeam            func(childComplexity int) int
 		MyVMObjects       func(childComplexity int) int
+		PowerState        func(childComplexity int, vmObjectID string) int
 		Providers         func(childComplexity int) int
 		ServiceAccounts   func(childComplexity int) int
 		Teams             func(childComplexity int) int
@@ -175,7 +181,8 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		Lockout func(childComplexity int, id string) int
+		Lockout    func(childComplexity int, id string) int
+		PowerState func(childComplexity int, id string) int
 	}
 
 	Team struct {
@@ -253,6 +260,7 @@ type QueryResolver interface {
 	Console(ctx context.Context, vmObjectID string, consoleType model.ConsoleType) (string, error)
 	Me(ctx context.Context) (*ent.User, error)
 	VMObject(ctx context.Context, vmObjectID string) (*ent.VmObject, error)
+	PowerState(ctx context.Context, vmObjectID string) (model.PowerState, error)
 	MyVMObjects(ctx context.Context) ([]*ent.VmObject, error)
 	MyTeam(ctx context.Context) (*ent.Team, error)
 	MyCompetition(ctx context.Context) (*ent.Competition, error)
@@ -279,6 +287,7 @@ type ServiceAccountResolver interface {
 }
 type SubscriptionResolver interface {
 	Lockout(ctx context.Context, id string) (<-chan *ent.VmObject, error)
+	PowerState(ctx context.Context, id string) (<-chan *model.PowerStateUpdate, error)
 }
 type TeamResolver interface {
 	ID(ctx context.Context, obj *ent.Team) (string, error)
@@ -815,6 +824,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateVMObject(childComplexity, args["input"].(model.VMObjectInput)), true
 
+	case "PowerStateUpdate.ID":
+		if e.complexity.PowerStateUpdate.ID == nil {
+			break
+		}
+
+		return e.complexity.PowerStateUpdate.ID(childComplexity), true
+
+	case "PowerStateUpdate.State":
+		if e.complexity.PowerStateUpdate.State == nil {
+			break
+		}
+
+		return e.complexity.PowerStateUpdate.State(childComplexity), true
+
 	case "Provider.Config":
 		if e.complexity.Provider.Config == nil {
 			break
@@ -986,6 +1009,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.MyVMObjects(childComplexity), true
 
+	case "Query.powerState":
+		if e.complexity.Query.PowerState == nil {
+			break
+		}
+
+		args, err := ec.field_Query_powerState_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PowerState(childComplexity, args["vmObjectId"].(string)), true
+
 	case "Query.providers":
 		if e.complexity.Query.Providers == nil {
 			break
@@ -1140,6 +1175,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Subscription.Lockout(childComplexity, args["id"].(string)), true
+
+	case "Subscription.powerState":
+		if e.complexity.Subscription.PowerState == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_powerState_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.PowerState(childComplexity, args["id"].(string)), true
 
 	case "Team.ID":
 		if e.complexity.Team.ID == nil {
@@ -1489,6 +1536,15 @@ enum ConsoleType {
   MKS
 }
 
+enum PowerState {
+  POWERED_ON
+  POWERED_OFF
+  REBOOTING
+  SHUTTING_DOWN
+  SUSPENDED
+  UNKNOWN
+}
+
 directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 
 type Query {
@@ -1496,6 +1552,7 @@ type Query {
   console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
   me: User! @hasRole(roles: [ADMIN, USER])
   vmObject(vmObjectId: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
+  powerState(vmObjectId: ID!): PowerState! @hasRole(roles: [ADMIN, USER])
   # User actions
   myVmObjects: [VmObject!]! @hasRole(roles: [USER])
   myTeam: Team! @hasRole(roles: [USER])
@@ -1622,8 +1679,14 @@ type Mutation {
   lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
 }
 
+type PowerStateUpdate {
+  ID: ID!
+  State: PowerState!
+}
+
 type Subscription {
   lockout(id: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
+  powerState(id: ID!): PowerStateUpdate! @hasRole(roles: [ADMIN, USER])
 }
 `, BuiltIn: false},
 }
@@ -2329,6 +2392,21 @@ func (ec *executionContext) field_Query_listProviderVms_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_powerState_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["vmObjectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vmObjectId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vmObjectId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_validateConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2369,6 +2447,21 @@ func (ec *executionContext) field_Query_vmObject_args(ctx context.Context, rawAr
 }
 
 func (ec *executionContext) field_Subscription_lockout_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_powerState_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -5974,6 +6067,94 @@ func (ec *executionContext) fieldContext_Mutation_lockoutCompetition(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _PowerStateUpdate_ID(ctx context.Context, field graphql.CollectedField, obj *model.PowerStateUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PowerStateUpdate_ID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PowerStateUpdate_ID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PowerStateUpdate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PowerStateUpdate_State(ctx context.Context, field graphql.CollectedField, obj *model.PowerStateUpdate) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PowerStateUpdate_State(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PowerState)
+	fc.Result = res
+	return ec.marshalNPowerState2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PowerStateUpdate_State(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PowerStateUpdate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PowerState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Provider_ID(ctx context.Context, field graphql.CollectedField, obj *ent.Provider) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Provider_ID(ctx, field)
 	if err != nil {
@@ -6400,6 +6581,85 @@ func (ec *executionContext) fieldContext_Query_vmObject(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_vmObject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_powerState(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_powerState(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().PowerState(rctx, fc.Args["vmObjectId"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(model.PowerState); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/BradHacker/compsole/graph/model.PowerState`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PowerState)
+	fc.Result = res
+	return ec.marshalNPowerState2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_powerState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PowerState does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_powerState_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -8691,6 +8951,105 @@ func (ec *executionContext) fieldContext_Subscription_lockout(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Subscription_lockout_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_powerState(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_powerState(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Subscription().PowerState(rctx, fc.Args["id"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalNRole2ᚕgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "USER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(<-chan *model.PowerStateUpdate); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be <-chan *github.com/BradHacker/compsole/graph/model.PowerStateUpdate`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.PowerStateUpdate):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNPowerStateUpdate2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerStateUpdate(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_powerState(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "ID":
+				return ec.fieldContext_PowerStateUpdate_ID(ctx, field)
+			case "State":
+				return ec.fieldContext_PowerStateUpdate_State(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PowerStateUpdate", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_powerState_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -12281,6 +12640,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var powerStateUpdateImplementors = []string{"PowerStateUpdate"}
+
+func (ec *executionContext) _PowerStateUpdate(ctx context.Context, sel ast.SelectionSet, obj *model.PowerStateUpdate) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, powerStateUpdateImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PowerStateUpdate")
+		case "ID":
+
+			out.Values[i] = ec._PowerStateUpdate_ID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "State":
+
+			out.Values[i] = ec._PowerStateUpdate_State(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var providerImplementors = []string{"Provider"}
 
 func (ec *executionContext) _Provider(ctx context.Context, sel ast.SelectionSet, obj *ent.Provider) graphql.Marshaler {
@@ -12418,6 +12812,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_vmObject(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "powerState":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_powerState(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -13056,6 +13473,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	switch fields[0].Name {
 	case "lockout":
 		return ec._Subscription_lockout(ctx, fields[0])
+	case "powerState":
+		return ec._Subscription_powerState(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -14010,6 +14429,30 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNPowerState2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerState(ctx context.Context, v interface{}) (model.PowerState, error) {
+	var res model.PowerState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPowerState2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerState(ctx context.Context, sel ast.SelectionSet, v model.PowerState) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNPowerStateUpdate2githubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerStateUpdate(ctx context.Context, sel ast.SelectionSet, v model.PowerStateUpdate) graphql.Marshaler {
+	return ec._PowerStateUpdate(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPowerStateUpdate2ᚖgithubᚗcomᚋBradHackerᚋcompsoleᚋgraphᚋmodelᚐPowerStateUpdate(ctx context.Context, sel ast.SelectionSet, v *model.PowerStateUpdate) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PowerStateUpdate(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNProvider2githubᚗcomᚋBradHackerᚋcompsoleᚋentᚐProvider(ctx context.Context, sel ast.SelectionSet, v ent.Provider) graphql.Marshaler {

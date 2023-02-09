@@ -128,6 +128,15 @@ enum ConsoleType {
   MKS
 }
 
+enum PowerState {
+  POWERED_ON
+  POWERED_OFF
+  REBOOTING
+  SHUTTING_DOWN
+  SUSPENDED
+  UNKNOWN
+}
+
 directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 
 type Query {
@@ -135,6 +144,7 @@ type Query {
   console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
   me: User! @hasRole(roles: [ADMIN, USER])
   vmObject(vmObjectId: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
+  powerState(vmObjectId: ID!): PowerState! @hasRole(roles: [ADMIN, USER])
   # User actions
   myVmObjects: [VmObject!]! @hasRole(roles: [USER])
   myTeam: Team! @hasRole(roles: [USER])
@@ -261,6 +271,12 @@ type Mutation {
   lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
 }
 
+type PowerStateUpdate {
+  ID: ID!
+  State: PowerState!
+}
+
 type Subscription {
   lockout(id: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
+  powerState(id: ID!): PowerStateUpdate! @hasRole(roles: [ADMIN, USER])
 }

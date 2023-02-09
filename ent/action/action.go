@@ -96,6 +96,7 @@ const (
 	TypeSIGN_OUT             Type = "SIGN_OUT"
 	TypeAPI_CALL             Type = "API_CALL"
 	TypeCONSOLE_ACCESS       Type = "CONSOLE_ACCESS"
+	TypePOWER_STATE          Type = "POWER_STATE"
 	TypeREBOOT               Type = "REBOOT"
 	TypeSHUTDOWN             Type = "SHUTDOWN"
 	TypePOWER_ON             Type = "POWER_ON"
@@ -115,7 +116,7 @@ func (_type Type) String() string {
 // TypeValidator is a validator for the "type" field enum values. It is called by the builders before save.
 func TypeValidator(_type Type) error {
 	switch _type {
-	case TypeSIGN_IN, TypeFAILED_SIGN_IN, TypeSIGN_OUT, TypeAPI_CALL, TypeCONSOLE_ACCESS, TypeREBOOT, TypeSHUTDOWN, TypePOWER_ON, TypePOWER_OFF, TypeCHANGE_SELF_PASSWORD, TypeCHANGE_PASSWORD, TypeCREATE_OBJECT, TypeUPDATE_OBJECT, TypeDELETE_OBJECT, TypeUPDATE_LOCKOUT:
+	case TypeSIGN_IN, TypeFAILED_SIGN_IN, TypeSIGN_OUT, TypeAPI_CALL, TypeCONSOLE_ACCESS, TypePOWER_STATE, TypeREBOOT, TypeSHUTDOWN, TypePOWER_ON, TypePOWER_OFF, TypeCHANGE_SELF_PASSWORD, TypeCHANGE_PASSWORD, TypeCREATE_OBJECT, TypeUPDATE_OBJECT, TypeDELETE_OBJECT, TypeUPDATE_LOCKOUT:
 		return nil
 	default:
 		return fmt.Errorf("action: invalid enum value for type field: %q", _type)

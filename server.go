@@ -243,7 +243,9 @@ func main() {
 	gqlApi.Use(graph.GinContextToContextMiddleware())
 	gqlApi.POST("/query", gqlHandler)
 	gqlApi.GET("/query", gqlHandler)
-	gqlApi.GET("/playground", playgroundHandler())
+	if gin.Mode() == gin.DebugMode {
+		gqlApi.GET("/playground", playgroundHandler())
+	}
 
 	restApi := apiGroup.Group("/rest")
 	rest.RegisterRESTEndpoints(client, restApi)

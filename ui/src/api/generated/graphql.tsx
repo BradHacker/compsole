@@ -287,6 +287,21 @@ export type MutationUpdateVmObjectArgs = {
   input: VmObjectInput;
 };
 
+export enum PowerState {
+  PoweredOff = 'POWERED_OFF',
+  PoweredOn = 'POWERED_ON',
+  Rebooting = 'REBOOTING',
+  ShuttingDown = 'SHUTTING_DOWN',
+  Suspended = 'SUSPENDED',
+  Unknown = 'UNKNOWN'
+}
+
+export type PowerStateUpdate = {
+  __typename?: 'PowerStateUpdate';
+  ID: Scalars['ID'];
+  State: PowerState;
+};
+
 export type Provider = {
   __typename?: 'Provider';
   Config: Scalars['String'];
@@ -318,6 +333,7 @@ export type Query = {
   myCompetition: Competition;
   myTeam: Team;
   myVmObjects: Array<VmObject>;
+  powerState: PowerState;
   providers: Array<Provider>;
   serviceAccounts: Array<ServiceAccount>;
   teams: Array<Team>;
@@ -376,6 +392,11 @@ export type QueryListProviderVmsArgs = {
 };
 
 
+export type QueryPowerStateArgs = {
+  vmObjectId: Scalars['ID'];
+};
+
+
 export type QueryValidateConfigArgs = {
   config: Scalars['String'];
   type: Scalars['String'];
@@ -430,10 +451,16 @@ export type SkeletonVmObject = {
 export type Subscription = {
   __typename?: 'Subscription';
   lockout: VmObject;
+  powerState: PowerStateUpdate;
 };
 
 
 export type SubscriptionLockoutArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type SubscriptionPowerStateArgs = {
   id: Scalars['ID'];
 };
 
@@ -782,6 +809,13 @@ export type GetVmConsoleQueryVariables = Exact<{
 
 export type GetVmConsoleQuery = { __typename?: 'Query', console: string };
 
+export type GetVmPowerStateQueryVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type GetVmPowerStateQuery = { __typename?: 'Query', powerState: PowerState };
+
 export type RebootVmMutationVariables = Exact<{
   vmObjectId: Scalars['ID'];
   rebootType: RebootType;
@@ -839,6 +873,13 @@ export type LockoutSubscriptionVariables = Exact<{
 
 
 export type LockoutSubscription = { __typename?: 'Subscription', lockout: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+
+export type PowerStateSubscriptionVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type PowerStateSubscription = { __typename?: 'Subscription', powerState: { __typename?: 'PowerStateUpdate', ID: string, State: PowerState } };
 
 export type DeleteVmObjectMutationVariables = Exact<{
   vmObjectId: Scalars['ID'];
@@ -2326,6 +2367,39 @@ export function useGetVmConsoleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type GetVmConsoleQueryHookResult = ReturnType<typeof useGetVmConsoleQuery>;
 export type GetVmConsoleLazyQueryHookResult = ReturnType<typeof useGetVmConsoleLazyQuery>;
 export type GetVmConsoleQueryResult = Apollo.QueryResult<GetVmConsoleQuery, GetVmConsoleQueryVariables>;
+export const GetVmPowerStateDocument = gql`
+    query GetVmPowerState($vmObjectId: ID!) {
+  powerState(vmObjectId: $vmObjectId)
+}
+    `;
+
+/**
+ * __useGetVmPowerStateQuery__
+ *
+ * To run a query within a React component, call `useGetVmPowerStateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetVmPowerStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetVmPowerStateQuery({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function useGetVmPowerStateQuery(baseOptions: Apollo.QueryHookOptions<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>(GetVmPowerStateDocument, options);
+      }
+export function useGetVmPowerStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>(GetVmPowerStateDocument, options);
+        }
+export type GetVmPowerStateQueryHookResult = ReturnType<typeof useGetVmPowerStateQuery>;
+export type GetVmPowerStateLazyQueryHookResult = ReturnType<typeof useGetVmPowerStateLazyQuery>;
+export type GetVmPowerStateQueryResult = Apollo.QueryResult<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>;
 export const RebootVmDocument = gql`
     mutation RebootVm($vmObjectId: ID!, $rebootType: RebootType!) {
   reboot(vmObjectId: $vmObjectId, rebootType: $rebootType)
@@ -2581,6 +2655,37 @@ export function useLockoutSubscription(baseOptions: Apollo.SubscriptionHookOptio
       }
 export type LockoutSubscriptionHookResult = ReturnType<typeof useLockoutSubscription>;
 export type LockoutSubscriptionResult = Apollo.SubscriptionResult<LockoutSubscription>;
+export const PowerStateDocument = gql`
+    subscription PowerState($vmObjectId: ID!) {
+  powerState(id: $vmObjectId) {
+    ID
+    State
+  }
+}
+    `;
+
+/**
+ * __usePowerStateSubscription__
+ *
+ * To run a query within a React component, call `usePowerStateSubscription` and pass it any options that fit your needs.
+ * When your component renders, `usePowerStateSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePowerStateSubscription({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function usePowerStateSubscription(baseOptions: Apollo.SubscriptionHookOptions<PowerStateSubscription, PowerStateSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<PowerStateSubscription, PowerStateSubscriptionVariables>(PowerStateDocument, options);
+      }
+export type PowerStateSubscriptionHookResult = ReturnType<typeof usePowerStateSubscription>;
+export type PowerStateSubscriptionResult = Apollo.SubscriptionResult<PowerStateSubscription>;
 export const DeleteVmObjectDocument = gql`
     mutation DeleteVmObject($vmObjectId: ID!) {
   deleteVmObject(id: $vmObjectId)

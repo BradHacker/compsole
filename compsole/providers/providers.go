@@ -15,6 +15,7 @@ type CompsoleProvider interface {
 	Author() string
 	Version() string
 	GetConsoleUrl(vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error)
+	GetPowerState(vmObject *ent.VmObject) (utils.PowerState, error)
 	ListVMs() ([]*ent.VmObject, error)
 	RestartVM(vmObject *ent.VmObject, rebootType utils.RebootType) error
 	PowerOnVM(vmObject *ent.VmObject) error
