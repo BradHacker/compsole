@@ -40,10 +40,10 @@ import {
   Role,
   useGetVmConsoleLazyQuery,
   useGetVmObjectLazyQuery,
-  useGetVmPowerStateLazyQuery,
   useLockoutSubscription,
   usePowerOffVmMutation,
   usePowerOnVmMutation,
+  usePowerStateSubscription,
   useRebootVmMutation,
 } from "../../api/generated/graphql";
 import { UserContext } from "../../user-context";
@@ -71,26 +71,19 @@ export const Console: React.FC = (): React.ReactElement => {
       refetch: getVmConsoleRefetch,
     },
   ] = useGetVmConsoleLazyQuery();
-  let [
-    getVmPowerState,
-    {
-      data: getVmPowerStateData,
-      loading: getVmPowerStateLoading,
-      error: getVmPowerStateError,
-      refetch: refetchGetVmPowerState,
-    },
-  ] = useGetVmPowerStateLazyQuery({
-    pollInterval: 2500,
-    fetchPolicy: "no-cache",
-  });
   let { data: lockoutData, error: lockoutError } = useLockoutSubscription({
     variables: {
       vmObjectId: id || "",
     },
   });
+  let { data: powerStateData, error: powerStateError } =
+    usePowerStateSubscription({
+      variables: {
+        vmObjectId: id || "",
+      },
+    });
   const { enqueueSnackbar } = useSnackbar();
   let [consoleUrl, setConsoleUrl] = useState<string>("");
-  let [powerState, setPowerState] = useState<PowerState>(PowerState.Unknown);
   const [consoleType, _setConsoleType] = useState<ConsoleType>(
     ConsoleType.Novnc
   );
@@ -149,16 +142,7 @@ export const Console: React.FC = (): React.ReactElement => {
           vmObjectId: id,
           rebootType: options[selectedRebootType].value,
         },
-      }).then(
-        () =>
-          enqueueSnackbar("Rebooted VM", {
-            variant: "success",
-          }),
-        (err) =>
-          enqueueSnackbar(`Failed to Reboot VM: ${err}`, {
-            variant: "error",
-          })
-      );
+      });
   };
 
   const handlePowerOnClick = () => {
@@ -167,16 +151,7 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      }).then(
-        () =>
-          enqueueSnackbar("Powered On VM", {
-            variant: "success",
-          }),
-        (err) =>
-          enqueueSnackbar(`Failed to Power On VM: ${err}`, {
-            variant: "error",
-          })
-      );
+      });
   };
 
   const handlePowerOffClick = () => {
@@ -185,16 +160,7 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      }).then(
-        () =>
-          enqueueSnackbar("Powered Off VM", {
-            variant: "success",
-          }),
-        (err) =>
-          enqueueSnackbar(`Failed to Power Off VM: ${err}`, {
-            variant: "error",
-          })
-      );
+      });
   };
 
   const handleRebootTypeClick = (
@@ -221,7 +187,7 @@ export const Console: React.FC = (): React.ReactElement => {
   };
 
   const getPowerStateString = (powerState: PowerState | undefined): string => {
-    if (getVmPowerStateLoading) return "Loading VM State...";
+    if (!powerStateData) return "Loading VM State...";
     switch (powerState) {
       case PowerState.PoweredOff:
         return "VM is Powered Off";
@@ -241,7 +207,7 @@ export const Console: React.FC = (): React.ReactElement => {
   const getPowerStateIcon = (
     powerState: PowerState | undefined
   ): React.ReactElement => {
-    if (getVmPowerStateLoading) return <SyncTwoTone />;
+    if (!powerStateData) return <SyncTwoTone />;
     switch (powerState) {
       case PowerState.PoweredOff:
         return <PowerOffTwoTone />;
@@ -292,7 +258,7 @@ export const Console: React.FC = (): React.ReactElement => {
     if (getVmObjectData?.vmObject.Locked || lockoutData?.lockout.Locked)
       return false;
     // If the vm is not powered on
-    if (getVmPowerStateData?.powerState !== PowerState.PoweredOn) return false;
+    if (powerStateData?.powerState.State !== PowerState.PoweredOn) return false;
     return true;
   };
 
@@ -303,13 +269,8 @@ export const Console: React.FC = (): React.ReactElement => {
           vmObjectId: id,
         },
       });
-      getVmPowerState({
-        variables: {
-          vmObjectId: id,
-        },
-      });
     }
-  }, [id, getVmObject, getVmPowerState]);
+  }, [id, getVmObject]);
 
   useEffect(() => {
     if (
@@ -373,6 +334,10 @@ export const Console: React.FC = (): React.ReactElement => {
       enqueueSnackbar(lockoutError.message, {
         variant: "error",
       });
+    if (powerStateError)
+      enqueueSnackbar(powerStateError.message, {
+        variant: "error",
+      });
   }, [
     getVmObjectError,
     getVmConsoleError,
@@ -380,20 +345,21 @@ export const Console: React.FC = (): React.ReactElement => {
     powerOnVmError,
     powerOffVmError,
     lockoutError,
+    powerStateError,
     enqueueSnackbar,
   ]);
 
   useEffect(() => {
     if (rebootVmData?.reboot)
-      enqueueSnackbar("Rebooted VM.", {
+      enqueueSnackbar("Rebooting VM.", {
         variant: "success",
       });
     if (powerOffVmData?.powerOff)
-      enqueueSnackbar("Powered Off VM.", {
+      enqueueSnackbar("Powering Off VM.", {
         variant: "success",
       });
     if (powerOnVmData?.powerOn)
-      enqueueSnackbar("Powered On VM.", {
+      enqueueSnackbar("Powering On VM.", {
         variant: "success",
       });
   }, [rebootVmData, powerOnVmData, powerOffVmData, enqueueSnackbar]);
@@ -417,8 +383,7 @@ export const Console: React.FC = (): React.ReactElement => {
 
   useEffect(() => {
     if (getVmConsoleData) setConsoleUrl(getVmConsoleData.console);
-    if (getVmPowerStateData) setPowerState(getVmPowerStateData.powerState);
-  }, [getVmConsoleData, getVmPowerStateData]);
+  }, [getVmConsoleData]);
 
   return (
     <Container
@@ -444,8 +409,10 @@ export const Console: React.FC = (): React.ReactElement => {
           >
             <FiberManualRecord
               sx={{ height: "1rem", width: "1rem", mr: 1 }}
-              color={getPowerStateColor(powerState)}
-              titleAccess={getPowerStateString(powerState)}
+              color={getPowerStateColor(powerStateData?.powerState.State)}
+              titleAccess={getPowerStateString(
+                powerStateData?.powerState.State
+              )}
             />
             {getVmObjectLoading || !getVmObjectData ? (
               <Skeleton />
@@ -648,9 +615,9 @@ export const Console: React.FC = (): React.ReactElement => {
             </>
           ) : (
             <>
-              {getPowerStateIcon(powerState)}
+              {getPowerStateIcon(powerStateData?.powerState.State)}
               <Typography variant="subtitle1">
-                {getPowerStateString(powerState)}
+                {getPowerStateString(powerStateData?.powerState.State)}
               </Typography>
             </>
           )}
@@ -699,10 +666,50 @@ export const Console: React.FC = (): React.ReactElement => {
               width: "100%",
               display: "flex",
               alignItems: "center",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               paddingX: 1,
             }}
           >
+            <Box
+              sx={{
+                display: "flex",
+                alignContent: "center",
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mr: 2,
+                }}
+              >
+                <FiberManualRecord
+                  sx={{ height: "1rem", width: "1rem", mr: 1 }}
+                  color={getPowerStateColor(powerStateData?.powerState.State)}
+                  titleAccess={getPowerStateString(
+                    powerStateData?.powerState.State
+                  )}
+                />
+                {getVmObjectLoading || !getVmObjectData ? (
+                  <Skeleton />
+                ) : (
+                  getVmObjectData.vmObject.Name
+                )}
+              </Typography>
+              {getVmObjectLoading || !getVmObjectData ? (
+                <Skeleton />
+              ) : (
+                <Typography
+                  variant="caption"
+                  component="code"
+                  sx={{ display: "flex", alignItems: "center" }}
+                >
+                  {getVmObjectData.vmObject.IPAddresses?.join(", ") ??
+                    "No IP Addresses Found"}
+                </Typography>
+              )}
+            </Box>
             <ButtonGroup variant="contained">
               <Button
                 size="small"
@@ -858,19 +865,48 @@ export const Console: React.FC = (): React.ReactElement => {
               width: "100%",
             }}
           >
-            {fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
-              <iframe
-                id="console"
-                title="console"
-                src={consoleUrl}
-                style={{
-                  position: "relative",
+            {shouldShowConsole() ? (
+              fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
+                <iframe
+                  id="console"
+                  title="console"
+                  src={consoleUrl}
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              ) : (
+                <Skeleton width="100%" height="100%" />
+              )
+            ) : (
+              <Paper
+                elevation={6}
+                sx={{
                   width: "100%",
                   height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
                 }}
-              />
-            ) : (
-              <Skeleton width="100%" height="800px" />
+              >
+                {lockoutData?.lockout.Locked ||
+                getVmObjectData?.vmObject.Locked ? (
+                  <>
+                    <LockTwoTone />
+                    <Typography variant="subtitle1">VM is Locked</Typography>
+                  </>
+                ) : (
+                  <>
+                    {getPowerStateIcon(powerStateData?.powerState.State)}
+                    <Typography variant="subtitle1">
+                      {getPowerStateString(powerStateData?.powerState.State)}
+                    </Typography>
+                  </>
+                )}
+              </Paper>
             )}
           </Box>
         </Paper>
