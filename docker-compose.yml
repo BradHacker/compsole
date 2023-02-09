@@ -48,13 +48,8 @@ services:
       - REFRESH_WINDOW=8
       # Change this to a randomly generated value (>= 64 bytes encouraged)
       - JWT_SECRET=secret
-      # OAuth
-      # - GITLAB_KEY=
-      # - GITLAB_SECRET=
       # Database
       - PG_URI=postgresql://compsole:compsole@db/compsole
-      # - PG_CONN_LIMIT=
-      # - PG_IDLE_LIMIT=
       # Redis
       - REDIS_URI=redis:6379
       - REDIS_PASSWORD=

@@ -37,6 +37,22 @@ Set the environment variables as follows:
 # [...]
 services:
   # [...]
+  ui:
+    build:
+      context: ./ui
+      # Use "./Dockerfile.ssl" instead for SSL
+      dockerfile: ./Dockerfile
+    # [...]
+    volumes:
+      - /app/node_modules/
+      # vvvvvvvvvvvvv FOR SSL vvvvvvvvvvvvv #
+      - ./ui/docker_files/caddyfile:/etc/caddy/Caddyfile
+      - ./.caddy/data:/data
+      - ./.caddy/config:/config
+      # ^^^^^^^^^^^^^ FOR SSL ^^^^^^^^^^^^^ #
+    environment:
+      - DOMAIN=<fqdn of host>
+  # [...]
   backend:
     # [...]
     environment:
@@ -44,19 +60,19 @@ services:
       - GRAPHQL_HOSTNAME=<fqdn of host>
       - CORS_ALLOWED_ORIGINS=http(s)://<fqdn of host>
       - PORT=:<port for graphql api (8080 by default)>
+      # Toggle this option if using SSL
       - HTTPS_ENABLED=<true/false>
       - DEFAULT_ADMIN_USERNAME=<admin username>
       - DEFAULT_ADMIN_PASSWORD=<admin password>
-      - GIN_MODE=release
+      # [...]
       # Timeout in minutes
       - COOKIE_TIMEOUT=<suggested is 180 (or 3 hours)>
-      # OAuth
-      - GITLAB_KEY=<gitlab key for oauth (not supported yet)>
-      - GITLAB_SECRET=<gitlab secret for oauth (not supported yet)>
+      # Window is in hours (time after invalid session to refresh REST tokens)
+      - REFRESH_WINDOW=<suggested is 8 hours>
+      # Change this to a randomly generated value (>= 64 bytes encouraged)
+      - JWT_SECRET=<random key (>= 64 bytes</random>)>
       # Database
       - PG_URI=postgresql://<postgres user>:<postgres password>@db/compsole
-      # - PG_CONN_LIMIT=
-      # - PG_IDLE_LIMIT=
       # Redis
       - REDIS_URI=redis:6379
       - REDIS_PASSWORD=
@@ -66,7 +82,7 @@ services:
       environment:
         - POSTGRES_USER=<postgres user>
         - POSTGRES_PASSWORD=<postgres password>
-        - POSTGRES_DB=compsole
+        # [...]
 ```
 
 ### Create React `.env` file
@@ -77,13 +93,37 @@ Set the environment variable as follows:
 
 ```env
 REACT_APP_SERVER_URL=http(s)://<fqdn of host>
-REACT_APP_WS_URL=ws://fqdn of host>
+REACT_APP_WS_URL=ws(s)://fqdn of host>
 ```
+
+| _Note: be sure to use **both** `https` and `wss` if using SSL_
 
 ### Bring up the production environment
 
 ```shell
 docker compose -f docker-compose.prod.yml up -d
+```
+
+## API Documentation
+
+### Generating API Documentation
+
+The swagger docs are auto-generating. To generate them, simply run:
+
+```shell
+go generate ./api
+```
+
+### Accessing API Documentation
+
+The API docs for Compsole are hosted by the Compsole server. To access, simply start the server (whether [development](#development) or [production](#production)) and then access the docs by navigating to:
+
+```plaintext
+# Development
+http://localhost:8080/api/docs/index.html
+
+# Production
+http(s)://<deployment url>/api/docs/index.html
 ```
 
 ## Development
@@ -100,26 +140,7 @@ $ vagrant ssh
 # Inside the VM
 $ cd /vagrant
 $ docker compose -f docker-compose.dev.yml up -d
-$ export $(grep -v '^#' .env | xargs)
+$ source .envrc
+# Edit the .env file and exit (will be loaded as env vars automatically)
 $ go run server.go
-```
-
-### Generating API Documentation
-
-The swagger docs are auto-generating. To generate them, simply run:
-
-```shell
-go generate ./api
-```
-
-### Accessing API Documentation
-
-The API docs for Compsole are hosted by the Compsole server. To access, simply start the server (whether [development](#development) or [producution](#production)) and then access the docs by navigating to:
-
-```plaintext
-# Development
-http://localhost:8080/api/docs/index.html
-
-# Production
-http(s)://<deployment url>/api/docs/index.html
 ```
