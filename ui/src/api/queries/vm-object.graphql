@@ -81,6 +81,13 @@ subscription Lockout($vmObjectId: ID!) {
   }
 }
 
+subscription PowerState($vmObjectId: ID!) {
+  powerState(id: $vmObjectId) {
+    ID
+    State
+  }
+}
+
 mutation DeleteVmObject($vmObjectId: ID!) {
   deleteVmObject(id: $vmObjectId)
 }

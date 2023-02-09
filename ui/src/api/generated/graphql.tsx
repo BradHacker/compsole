@@ -296,6 +296,12 @@ export enum PowerState {
   Unknown = 'UNKNOWN'
 }
 
+export type PowerStateUpdate = {
+  __typename?: 'PowerStateUpdate';
+  ID: Scalars['ID'];
+  State: PowerState;
+};
+
 export type Provider = {
   __typename?: 'Provider';
   Config: Scalars['String'];
@@ -445,10 +451,16 @@ export type SkeletonVmObject = {
 export type Subscription = {
   __typename?: 'Subscription';
   lockout: VmObject;
+  powerState: PowerStateUpdate;
 };
 
 
 export type SubscriptionLockoutArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type SubscriptionPowerStateArgs = {
   id: Scalars['ID'];
 };
 
@@ -861,6 +873,13 @@ export type LockoutSubscriptionVariables = Exact<{
 
 
 export type LockoutSubscription = { __typename?: 'Subscription', lockout: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
+
+export type PowerStateSubscriptionVariables = Exact<{
+  vmObjectId: Scalars['ID'];
+}>;
+
+
+export type PowerStateSubscription = { __typename?: 'Subscription', powerState: { __typename?: 'PowerStateUpdate', ID: string, State: PowerState } };
 
 export type DeleteVmObjectMutationVariables = Exact<{
   vmObjectId: Scalars['ID'];
@@ -2636,6 +2655,37 @@ export function useLockoutSubscription(baseOptions: Apollo.SubscriptionHookOptio
       }
 export type LockoutSubscriptionHookResult = ReturnType<typeof useLockoutSubscription>;
 export type LockoutSubscriptionResult = Apollo.SubscriptionResult<LockoutSubscription>;
+export const PowerStateDocument = gql`
+    subscription PowerState($vmObjectId: ID!) {
+  powerState(id: $vmObjectId) {
+    ID
+    State
+  }
+}
+    `;
+
+/**
+ * __usePowerStateSubscription__
+ *
+ * To run a query within a React component, call `usePowerStateSubscription` and pass it any options that fit your needs.
+ * When your component renders, `usePowerStateSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePowerStateSubscription({
+ *   variables: {
+ *      vmObjectId: // value for 'vmObjectId'
+ *   },
+ * });
+ */
+export function usePowerStateSubscription(baseOptions: Apollo.SubscriptionHookOptions<PowerStateSubscription, PowerStateSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<PowerStateSubscription, PowerStateSubscriptionVariables>(PowerStateDocument, options);
+      }
+export type PowerStateSubscriptionHookResult = ReturnType<typeof usePowerStateSubscription>;
+export type PowerStateSubscriptionResult = Apollo.SubscriptionResult<PowerStateSubscription>;
 export const DeleteVmObjectDocument = gql`
     mutation DeleteVmObject($vmObjectId: ID!) {
   deleteVmObject(id: $vmObjectId)
