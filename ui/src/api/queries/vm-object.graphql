@@ -37,6 +37,10 @@ query GetVmConsole($vmObjectId: ID!, $consoleType: ConsoleType!) {
   console(vmObjectId: $vmObjectId, consoleType: $consoleType)
 }
 
+query GetVmPowerState($vmObjectId: ID!) {
+  powerState(vmObjectId: $vmObjectId)
+}
+
 mutation RebootVm($vmObjectId: ID!, $rebootType: RebootType!) {
   reboot(vmObjectId: $vmObjectId, rebootType: $rebootType)
 }
