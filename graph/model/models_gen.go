@@ -38,6 +38,11 @@ type CompetitionUser struct {
 	UserToTeam *ent.Team `json:"UserToTeam"`
 }
 
+type PowerStateUpdate struct {
+	ID    string     `json:"ID"`
+	State PowerState `json:"State"`
+}
+
 type ProviderInput struct {
 	ID     *string `json:"ID"`
 	Name   string  `json:"Name"`

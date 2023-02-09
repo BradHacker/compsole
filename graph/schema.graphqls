@@ -271,6 +271,12 @@ type Mutation {
   lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
 }
 
+type PowerStateUpdate {
+  ID: ID!
+  State: PowerState!
+}
+
 type Subscription {
   lockout(id: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
+  powerState(id: ID!): PowerStateUpdate! @hasRole(roles: [ADMIN, USER])
 }

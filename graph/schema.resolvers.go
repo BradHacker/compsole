@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/compsole/providers"
@@ -2590,6 +2591,56 @@ func (r *subscriptionResolver) Lockout(ctx context.Context, id string) (<-chan *
 		}
 	}()
 	return vmObjectLockout, nil
+}
+
+// PowerState is the resolver for the powerState field.
+func (r *subscriptionResolver) PowerState(ctx context.Context, id string) (<-chan *model.PowerStateUpdate, error) {
+	powerStateUpdate := make(chan *model.PowerStateUpdate, 1)
+	go func() {
+		// Check the power state every second
+		ticker := time.NewTicker(1 * time.Second)
+		vmObjectUuid, err := uuid.Parse(id)
+		if err != nil {
+			return
+		}
+		entVmObject, err := r.client.VmObject.Get(ctx, vmObjectUuid)
+		if err != nil {
+			logrus.WithField("vmObjectId", id).Errorf("failed to query for vm object: %v", err)
+			return
+		}
+		entProvider, err := entVmObject.QueryVmObjectToTeam().QueryTeamToCompetition().QueryCompetitionToProvider().Only(ctx)
+		if err != nil {
+			logrus.WithField("vmObjectId", id).Errorf("failed to query provider for power state subscription: %v", err)
+			return
+		}
+		vmProvider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
+		if err != nil {
+			logrus.WithField("vmObjectId", id).Errorf("failed to create provider for power state subscription: %v", err)
+			return
+		}
+		previousPowerState := utils.Unknown
+		for {
+			select {
+			case <-ticker.C:
+				latestPowerState, err := vmProvider.GetPowerState(entVmObject)
+				if err != nil {
+					logrus.WithField("vmObjectId", id).Warnf("failed to get vm power state: %v", err)
+				}
+				if previousPowerState != latestPowerState {
+					powerStateUpdate <- &model.PowerStateUpdate{
+						ID:    id,
+						State: model.PowerState(latestPowerState),
+					}
+				}
+				previousPowerState = latestPowerState
+			// close when context done
+			case <-ctx.Done():
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+	return powerStateUpdate, nil
 }
 
 // ID is the resolver for the ID field.
