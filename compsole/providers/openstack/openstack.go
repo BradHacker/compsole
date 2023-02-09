@@ -11,7 +11,7 @@ import (
 	"github.com/BradHacker/compsole/ent"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/diagnostics"
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/extendedstatus"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
@@ -167,36 +167,43 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 }
 
 func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) (utils.PowerState, error) {
+	type ServerWithExt struct {
+		servers.Server
+		extendedstatus.ServerExtendedStatusExt
+	}
+
 	// Create Openstack compute client
 	computeClient, err := provider.newComputeClient()
 	if err != nil {
 		return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
 	}
 
-	// Create the remote console and return the URL
-	diagnosticsResult, err := diagnostics.Get(computeClient, vmObject.Identifier).Extract()
+	var serverResult ServerWithExt
+	err = servers.Get(computeClient, vmObject.Identifier).ExtractInto(&serverResult)
 	if err != nil {
-		return "", fmt.Errorf("failed to get Openstack vm diagnostics: %v", err)
-	}
-	vmState, ok := diagnosticsResult["state"]
-	if !ok {
-		return "", fmt.Errorf("failed to parse diagnostics results for vm state: %v", err)
+		return "", fmt.Errorf("failed to get Openstack server details: %v", err)
 	}
 
 	var powerState utils.PowerState
-	switch vmState {
-	case "pending":
+	switch serverResult.PowerState {
+	// No State
+	case extendedstatus.NOSTATE:
 		powerState = utils.Unknown
-	case "running":
+	// Running
+	case extendedstatus.RUNNING:
 		powerState = utils.PoweredOn
-	case "paused":
+	// Paused
+	case extendedstatus.PAUSED:
 		powerState = utils.Suspended
-	case "shutdown":
+	// Shutdown
+	case extendedstatus.SHUTDOWN:
 		powerState = utils.PoweredOff
-	case "suspended":
-		powerState = utils.Suspended
-	case "crashed":
+	// Crashed
+	case extendedstatus.CRASHED:
 		powerState = utils.Unknown
+	// Suspended
+	case extendedstatus.SUSPENDED:
+		powerState = utils.Suspended
 	default:
 		powerState = utils.Unknown
 	}
