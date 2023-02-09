@@ -1,0 +1,18 @@
+{$DOMAIN}
+
+# Compress responses according to Accept-Encoding headers
+encode gzip zstd
+
+# Send API requests to backend
+route /api/* {
+  reverse_proxy http://backend:8080
+}
+route /auth/* {
+  reverse_proxy http://backend:8080
+}
+
+route {
+  # Serve everything else from the file system
+  root * /app
+  try_files {path} index.html
+  file_server
