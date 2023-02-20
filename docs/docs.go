@@ -1172,7 +1172,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.VmObject"
+                                "$ref": "#/definitions/rest.VmObjectModel"
                             }
                         }
                     },
@@ -1205,7 +1205,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateVMObject.VmObjectInput"
+                            "$ref": "#/definitions/rest.VmObjectInput"
                         }
                     }
                 ],
@@ -1213,7 +1213,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.VmObject"
+                            "$ref": "#/definitions/rest.VmObjectModel"
                         }
                     },
                     "404": {
@@ -1267,7 +1267,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.VmObject"
+                            "$ref": "#/definitions/rest.VmObjectModel"
                         }
                     },
                     "404": {
@@ -1320,7 +1320,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateVMObject.VmObjectInput"
+                            "$ref": "#/definitions/rest.VmObjectInput"
                         }
                     }
                 ],
@@ -1328,7 +1328,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.VmObject"
+                            "$ref": "#/definitions/rest.VmObjectModel"
                         }
                     },
                     "404": {
@@ -1411,6 +1411,7 @@ const docTemplate = `{
                 "SIGN_OUT",
                 "API_CALL",
                 "CONSOLE_ACCESS",
+                "POWER_STATE",
                 "REBOOT",
                 "SHUTDOWN",
                 "POWER_ON",
@@ -1428,6 +1429,7 @@ const docTemplate = `{
                 "TypeSIGN_OUT",
                 "TypeAPI_CALL",
                 "TypeCONSOLE_ACCESS",
+                "TypePOWER_STATE",
                 "TypeREBOOT",
                 "TypeSHUTDOWN",
                 "TypePOWER_ON",
@@ -1589,7 +1591,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "description": "Type holds the value of the \"type\" field.\n[REQUIRED] The unique name (aka. slug) for the provider.",
+                    "description": "Type holds the value of the \"type\" field.\n[REQUIRED] The type of provider this is (must match a registered one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)",
                     "type": "string"
                 }
             }
@@ -1597,8 +1599,8 @@ const docTemplate = `{
         "ent.ProviderEdges": {
             "type": "object",
             "properties": {
-                "ProviderToCompetition": {
-                    "description": "ProviderToCompetition holds the value of the ProviderToCompetition edge.",
+                "ProviderToCompetitions": {
+                    "description": "ProviderToCompetitions holds the value of the ProviderToCompetitions edge.",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ent.Competition"
@@ -2011,39 +2013,6 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.CreateVMObject.VmObjectInput": {
-            "type": "object",
-            "required": [
-                "identifier",
-                "ip_addresses",
-                "name",
-                "vm_object_to_team"
-            ],
-            "properties": {
-                "identifier": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                },
-                "ip_addresses": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "10.0.0.1",
-                        "100.64.0.1"
-                    ]
-                },
-                "name": {
-                    "type": "string",
-                    "example": "team01.dc.comp.co"
-                },
-                "vm_object_to_team": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                }
-            }
-        },
         "rest.ServiceLoginResult": {
             "type": "object",
             "properties": {
@@ -2067,6 +2036,27 @@ const docTemplate = `{
                 },
                 "api_secret": {
                     "type": "string"
+                }
+            }
+        },
+        "rest.TeamEdge": {
+            "description": "Used for Team in edges",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[OPTIONAL] The display name for the team.",
+                    "type": "string",
+                    "example": "Team 1"
+                },
+                "team_number": {
+                    "description": "[REQUIRED] The team number.",
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -2168,7 +2158,8 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.UpdateVMObject.VmObjectInput": {
+        "rest.VmObjectInput": {
+            "description": "Used as an input model for creating/updating VM Objects",
             "type": "object",
             "required": [
                 "identifier",
@@ -2198,6 +2189,51 @@ const docTemplate = `{
                 "vm_object_to_team": {
                     "type": "string",
                     "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                }
+            }
+        },
+        "rest.VmObjectModel": {
+            "description": "Used for VM Object endpoints",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "identifier": {
+                    "description": "[REQUIRED] The identifier of the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "ip_addresses": {
+                    "description": "[OPTIONAL] IP addresses of the VM. This will be displayed to the user.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "10.0.0.1",
+                        "100.64.0.1"
+                    ]
+                },
+                "locked": {
+                    "description": "[REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "name": {
+                    "description": "[REQUIRED] A user-friendly name for the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "team01.dc.comp.co"
+                },
+                "vm_object_to_team": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.TeamEdge"
+                        }
+                    ]
                 }
             }
         },

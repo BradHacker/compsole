@@ -7,6 +7,7 @@ definitions:
     - SIGN_OUT
     - API_CALL
     - CONSOLE_ACCESS
+    - POWER_STATE
     - REBOOT
     - SHUTDOWN
     - POWER_ON
@@ -24,6 +25,7 @@ definitions:
     - TypeSIGN_OUT
     - TypeAPI_CALL
     - TypeCONSOLE_ACCESS
+    - TypePOWER_STATE
     - TypeREBOOT
     - TypeSHUTDOWN
     - TypePOWER_ON
@@ -144,13 +146,13 @@ definitions:
       type:
         description: |-
           Type holds the value of the "type" field.
-          [REQUIRED] The unique name (aka. slug) for the provider.
+          [REQUIRED] The type of provider this is (must match a registered one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)
         type: string
     type: object
   ent.ProviderEdges:
     properties:
-      ProviderToCompetition:
-        description: ProviderToCompetition holds the value of the ProviderToCompetition
+      ProviderToCompetitions:
+        description: ProviderToCompetitions holds the value of the ProviderToCompetitions
           edge.
         items:
           $ref: '#/definitions/ent.Competition'
@@ -478,30 +480,6 @@ definitions:
     - role
     - username
     type: object
-  rest.CreateVMObject.VmObjectInput:
-    properties:
-      identifier:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-      ip_addresses:
-        example:
-        - 10.0.0.1
-        - 100.64.0.1
-        items:
-          type: string
-        type: array
-      name:
-        example: team01.dc.comp.co
-        type: string
-      vm_object_to_team:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-    required:
-    - identifier
-    - ip_addresses
-    - name
-    - vm_object_to_team
-    type: object
   rest.ServiceLoginResult:
     properties:
       token:
@@ -518,6 +496,22 @@ definitions:
     required:
     - api_key
     - api_secret
+    type: object
+  rest.TeamEdge:
+    description: Used for Team in edges
+    properties:
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        description: '[OPTIONAL] The display name for the team.'
+        example: Team 1
+        type: string
+      team_number:
+        description: '[REQUIRED] The team number.'
+        example: 1
+        type: integer
     type: object
   rest.UpdateCompetition.CompetitionInput:
     properties:
@@ -591,7 +585,8 @@ definitions:
     - role
     - username
     type: object
-  rest.UpdateVMObject.VmObjectInput:
+  rest.VmObjectInput:
+    description: Used as an input model for creating/updating VM Objects
     properties:
       identifier:
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -614,6 +609,40 @@ definitions:
     - ip_addresses
     - name
     - vm_object_to_team
+    type: object
+  rest.VmObjectModel:
+    description: Used for VM Object endpoints
+    properties:
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      identifier:
+        description: '[REQUIRED] The identifier of the VM. This will be provider-specific.'
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        description: '[OPTIONAL] IP addresses of the VM. This will be displayed to
+          the user.'
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      locked:
+        description: '[REQUIRED] (default is false) If a vm is locked, standard users
+          will not be able to access this VM.'
+        example: false
+        type: boolean
+      name:
+        description: '[REQUIRED] A user-friendly name for the VM. This will be provider-specific.'
+        example: team01.dc.comp.co
+        type: string
+      vm_object_to_team:
+        allOf:
+        - $ref: '#/definitions/rest.TeamEdge'
+        description: Edges
     type: object
   user.Provider:
     enum:
@@ -1404,7 +1433,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.VmObject'
+              $ref: '#/definitions/rest.VmObjectModel'
             type: array
         "500":
           description: Internal Server Error
@@ -1423,14 +1452,14 @@ paths:
         name: vm_object
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateVMObject.VmObjectInput'
+          $ref: '#/definitions/rest.VmObjectInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.VmObject'
+            $ref: '#/definitions/rest.VmObjectModel'
         "404":
           description: Not Found
           schema:
@@ -1497,7 +1526,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.VmObject'
+            $ref: '#/definitions/rest.VmObjectModel'
         "404":
           description: Not Found
           schema:
@@ -1530,14 +1559,14 @@ paths:
         name: vm_object
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateVMObject.VmObjectInput'
+          $ref: '#/definitions/rest.VmObjectInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.VmObject'
+            $ref: '#/definitions/rest.VmObjectModel'
         "404":
           description: Not Found
           schema:
