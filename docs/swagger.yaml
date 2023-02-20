@@ -454,32 +454,6 @@ definitions:
     - team_number
     - team_to_competition
     type: object
-  rest.CreateUser.UserInput:
-    properties:
-      first_name:
-        example: John
-        type: string
-      last_name:
-        example: Doe
-        type: string
-      role:
-        enum:
-        - USER
-        - ADMIN
-        example: USER
-        type: string
-      user_to_team:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-      username:
-        example: compsole
-        type: string
-    required:
-    - first_name
-    - last_name
-    - role
-    - username
-    type: object
   rest.ServiceLoginResult:
     properties:
       token:
@@ -559,7 +533,8 @@ definitions:
     - team_number
     - team_to_competition
     type: object
-  rest.UpdateUser.UserInput:
+  rest.UserInput:
+    description: Used as an input model for creating/updating Users
     properties:
       first_name:
         example: John
@@ -584,6 +559,35 @@ definitions:
     - last_name
     - role
     - username
+    type: object
+  rest.UserModel:
+    description: Used for User endpoints
+    properties:
+      first_name:
+        description: '[OPTIONAL] The display first name for the user.'
+        example: Default
+        type: string
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      last_name:
+        description: '[OPTIONAL] The display last name for the user.'
+        example: User
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/user.Role'
+        description: '[REQUIRED] The role of the user. Admins have full access.'
+        example: USER
+      user_to_team:
+        allOf:
+        - $ref: '#/definitions/rest.TeamEdge'
+        description: Edges
+      username:
+        description: '[REQUIRED] The username for the user.'
+        example: compsole
+        type: string
     type: object
   rest.VmObjectInput:
     description: Used as an input model for creating/updating VM Objects
@@ -1272,7 +1276,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.User'
+              $ref: '#/definitions/rest.UserModel'
             type: array
         "500":
           description: Internal Server Error
@@ -1291,14 +1295,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateUser.UserInput'
+          $ref: '#/definitions/rest.UserInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/rest.UserModel'
         "404":
           description: Not Found
           schema:
@@ -1365,7 +1369,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/rest.UserModel'
         "404":
           description: Not Found
           schema:
@@ -1398,14 +1402,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateUser.UserInput'
+          $ref: '#/definitions/rest.UserInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/rest.UserModel'
         "404":
           description: Not Found
           schema:

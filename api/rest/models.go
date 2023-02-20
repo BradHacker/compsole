@@ -111,6 +111,17 @@ type TeamEdge struct {
 	Name       string    `json:"name" example:"Team 1"`                             // [OPTIONAL] The display name for the team.
 }
 
+// UserInput model info
+//
+//	@Description	Used as an input model for creating/updating Users
+type UserInput struct {
+	Username   string  `json:"username" form:"username" binding:"required" example:"compsole"`
+	FirstName  string  `json:"first_name" form:"first_name" binding:"required" example:"John"`
+	LastName   string  `json:"last_name" form:"last_name" binding:"required" example:"Doe"`
+	Role       string  `json:"role" form:"role" binding:"required" example:"USER" enums:"USER,ADMIN"`
+	UserToTeam *string `json:"user_to_team,omitempty" form:"user_to_team" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+}
+
 // UserModel model info
 //
 //	@Description	Used for User endpoints

@@ -922,7 +922,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.User"
+                                "$ref": "#/definitions/rest.UserModel"
                             }
                         }
                     },
@@ -955,7 +955,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateUser.UserInput"
+                            "$ref": "#/definitions/rest.UserInput"
                         }
                     }
                 ],
@@ -963,7 +963,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/rest.UserModel"
                         }
                     },
                     "404": {
@@ -1017,7 +1017,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/rest.UserModel"
                         }
                     },
                     "404": {
@@ -1070,7 +1070,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateUser.UserInput"
+                            "$ref": "#/definitions/rest.UserInput"
                         }
                     }
                 ],
@@ -1078,7 +1078,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/rest.UserModel"
                         }
                     },
                     "404": {
@@ -1978,41 +1978,6 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.CreateUser.UserInput": {
-            "type": "object",
-            "required": [
-                "first_name",
-                "last_name",
-                "role",
-                "username"
-            ],
-            "properties": {
-                "first_name": {
-                    "type": "string",
-                    "example": "John"
-                },
-                "last_name": {
-                    "type": "string",
-                    "example": "Doe"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "USER",
-                        "ADMIN"
-                    ],
-                    "example": "USER"
-                },
-                "user_to_team": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "compsole"
-                }
-            }
-        },
         "rest.ServiceLoginResult": {
             "type": "object",
             "properties": {
@@ -2123,7 +2088,8 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.UpdateUser.UserInput": {
+        "rest.UserInput": {
+            "description": "Used as an input model for creating/updating Users",
             "type": "object",
             "required": [
                 "first_name",
@@ -2153,6 +2119,49 @@ const docTemplate = `{
                     "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 },
                 "username": {
+                    "type": "string",
+                    "example": "compsole"
+                }
+            }
+        },
+        "rest.UserModel": {
+            "description": "Used for User endpoints",
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "description": "[OPTIONAL] The display first name for the user.",
+                    "type": "string",
+                    "example": "Default"
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "last_name": {
+                    "description": "[OPTIONAL] The display last name for the user.",
+                    "type": "string",
+                    "example": "User"
+                },
+                "role": {
+                    "description": "[REQUIRED] The role of the user. Admins have full access.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Role"
+                        }
+                    ],
+                    "example": "USER"
+                },
+                "user_to_team": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.TeamEdge"
+                        }
+                    ]
+                },
+                "username": {
+                    "description": "[REQUIRED] The username for the user.",
                     "type": "string",
                     "example": "compsole"
                 }
