@@ -42,6 +42,14 @@ type VmObjectEdge struct {
 	Locked      bool      `json:"locked" example:"false"`                                    // [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
 }
 
+// CompetitionInput model info
+//
+//	@Description	Used as an input model for creating/updating Competitions
+type CompetitionInput struct {
+	Name                  string `json:"name" form:"name" binding:"required" example:"ISTS 'XX"`
+	CompetitionToProvider string `json:"competition_to_provider" form:"competition_to_provider" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+}
+
 // CompetitionModel model info
 //
 //	@Description	Used for Competition endpoints
