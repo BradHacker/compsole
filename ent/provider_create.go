@@ -53,14 +53,14 @@ func (pc *ProviderCreate) SetNillableID(u *uuid.UUID) *ProviderCreate {
 	return pc
 }
 
-// AddProviderToCompetitionIDs adds the "ProviderToCompetition" edge to the Competition entity by IDs.
+// AddProviderToCompetitionIDs adds the "ProviderToCompetitions" edge to the Competition entity by IDs.
 func (pc *ProviderCreate) AddProviderToCompetitionIDs(ids ...uuid.UUID) *ProviderCreate {
 	pc.mutation.AddProviderToCompetitionIDs(ids...)
 	return pc
 }
 
-// AddProviderToCompetition adds the "ProviderToCompetition" edges to the Competition entity.
-func (pc *ProviderCreate) AddProviderToCompetition(c ...*Competition) *ProviderCreate {
+// AddProviderToCompetitions adds the "ProviderToCompetitions" edges to the Competition entity.
+func (pc *ProviderCreate) AddProviderToCompetitions(c ...*Competition) *ProviderCreate {
 	ids := make([]uuid.UUID, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
@@ -216,12 +216,12 @@ func (pc *ProviderCreate) createSpec() (*Provider, *sqlgraph.CreateSpec) {
 		})
 		_node.Config = value
 	}
-	if nodes := pc.mutation.ProviderToCompetitionIDs(); len(nodes) > 0 {
+	if nodes := pc.mutation.ProviderToCompetitionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
-			Table:   provider.ProviderToCompetitionTable,
-			Columns: []string{provider.ProviderToCompetitionColumn},
+			Table:   provider.ProviderToCompetitionsTable,
+			Columns: []string{provider.ProviderToCompetitionsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

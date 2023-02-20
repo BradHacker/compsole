@@ -1,39 +1,5 @@
 basePath: /api
 definitions:
-  action.Type:
-    enum:
-    - SIGN_IN
-    - FAILED_SIGN_IN
-    - SIGN_OUT
-    - API_CALL
-    - CONSOLE_ACCESS
-    - REBOOT
-    - SHUTDOWN
-    - POWER_ON
-    - POWER_OFF
-    - CHANGE_SELF_PASSWORD
-    - CHANGE_PASSWORD
-    - CREATE_OBJECT
-    - UPDATE_OBJECT
-    - DELETE_OBJECT
-    - UPDATE_LOCKOUT
-    type: string
-    x-enum-varnames:
-    - TypeSIGN_IN
-    - TypeFAILED_SIGN_IN
-    - TypeSIGN_OUT
-    - TypeAPI_CALL
-    - TypeCONSOLE_ACCESS
-    - TypeREBOOT
-    - TypeSHUTDOWN
-    - TypePOWER_ON
-    - TypePOWER_OFF
-    - TypeCHANGE_SELF_PASSWORD
-    - TypeCHANGE_PASSWORD
-    - TypeCREATE_OBJECT
-    - TypeUPDATE_OBJECT
-    - TypeDELETE_OBJECT
-    - TypeUPDATE_LOCKOUT
   api.APIError:
     properties:
       error: {}
@@ -41,6 +7,7 @@ definitions:
         type: string
     type: object
   auth.UserLoginVals:
+    description: Used as an input to the login input
     properties:
       password:
         example: password123
@@ -52,358 +19,49 @@ definitions:
     - password
     - username
     type: object
-  ent.Action:
+  auth.UserModel:
+    description: Used for User login
     properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.ActionEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the ActionQuery when eager-loading is set.
-      id:
-        description: ID of the ent.
-        type: string
-      ip_address:
-        description: IPAddress holds the value of the "ip_address" field.
-        type: string
-      message:
-        description: Message holds the value of the "message" field.
-        type: string
-      performed_at:
-        description: PerformedAt holds the value of the "performed_at" field.
-        type: string
-      type:
-        allOf:
-        - $ref: '#/definitions/action.Type'
-        description: Type holds the value of the "type" field.
-    type: object
-  ent.ActionEdges:
-    properties:
-      ActionToServiceAccount:
-        allOf:
-        - $ref: '#/definitions/ent.ServiceAccount'
-        description: ActionToServiceAccount holds the value of the ActionToServiceAccount
-          edge.
-      ActionToUser:
-        allOf:
-        - $ref: '#/definitions/ent.User'
-        description: ActionToUser holds the value of the ActionToUser edge.
-    type: object
-  ent.Competition:
-    properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.CompetitionEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the CompetitionQuery when eager-loading is set.
-      id:
-        description: ID of the ent.
-        type: string
-      name:
-        description: |-
-          Name holds the value of the "name" field.
-          [REQUIRED] The unique name (aka. slug) for the competition.
-        type: string
-    type: object
-  ent.CompetitionEdges:
-    properties:
-      CompetitionToProvider:
-        allOf:
-        - $ref: '#/definitions/ent.Provider'
-        description: CompetitionToProvider holds the value of the CompetitionToProvider
-          edge.
-      CompetitionToTeams:
-        description: CompetitionToTeams holds the value of the CompetitionToTeams
-          edge.
-        items:
-          $ref: '#/definitions/ent.Team'
-        type: array
-    type: object
-  ent.Provider:
-    properties:
-      config:
-        description: |-
-          Config holds the value of the "config" field.
-          [REQUIRED] This is the JSON configuration for the provider.
-        type: string
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.ProviderEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the ProviderQuery when eager-loading is set.
-      id:
-        description: ID of the ent.
-        type: string
-      name:
-        description: |-
-          Name holds the value of the "name" field.
-          [REQUIRED] The unique name (aka. slug) for the provider.
-        type: string
-      type:
-        description: |-
-          Type holds the value of the "type" field.
-          [REQUIRED] The unique name (aka. slug) for the provider.
-        type: string
-    type: object
-  ent.ProviderEdges:
-    properties:
-      ProviderToCompetition:
-        description: ProviderToCompetition holds the value of the ProviderToCompetition
-          edge.
-        items:
-          $ref: '#/definitions/ent.Competition'
-        type: array
-    type: object
-  ent.ServiceAccount:
-    properties:
-      active:
-        description: |-
-          Active holds the value of the "active" field.
-          [REQUIRED] Determines whether or not the service account is active or not
-        type: boolean
-      api_key:
-        description: |-
-          APIKey holds the value of the "api_key" field.
-          [REQUIRED] The API key for the service account. Equivalent to a username.
-        type: string
-      api_secret:
-        description: |-
-          APISecret holds the value of the "api_secret" field.
-          [REQUIRED] The API secret for the service account. This value MUST be protected.
-        type: string
-      display_name:
-        description: |-
-          DisplayName holds the value of the "display_name" field.
-          [REQUIRED] The display/common name for the service account.
-        type: string
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.ServiceAccountEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the ServiceAccountQuery when eager-loading is set.
-      id:
-        description: ID of the ent.
-        type: string
-    type: object
-  ent.ServiceAccountEdges:
-    properties:
-      ServiceAccountToActions:
-        description: ServiceAccountToActions holds the value of the ServiceAccountToActions
-          edge.
-        items:
-          $ref: '#/definitions/ent.Action'
-        type: array
-      ServiceAccountToToken:
-        description: ServiceAccountToToken holds the value of the ServiceAccountToToken
-          edge.
-        items:
-          $ref: '#/definitions/ent.ServiceToken'
-        type: array
-    type: object
-  ent.ServiceToken:
-    properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.ServiceTokenEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the ServiceTokenQuery when eager-loading is set.
-      id:
-        description: ID of the ent.
-        type: string
-      issued_at:
-        description: |-
-          IssuedAt holds the value of the "issued_at" field.
-          [REQUIRED] The time the token was issued
-        type: integer
-      refresh_token:
-        description: |-
-          RefreshToken holds the value of the "refresh_token" field.
-          [REQUIRED] The refresh token used to renew an expired service account session. These are valid for `REFRESH_WINDOW` hours.
-        type: string
-      token:
-        description: |-
-          Token holds the value of the "token" field.
-          [REQUIRED] The API token for a service account session.
-        type: string
-    type: object
-  ent.ServiceTokenEdges:
-    properties:
-      TokenToServiceAccount:
-        allOf:
-        - $ref: '#/definitions/ent.ServiceAccount'
-        description: TokenToServiceAccount holds the value of the TokenToServiceAccount
-          edge.
-    type: object
-  ent.Team:
-    properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.TeamEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the TeamQuery when eager-loading is set.
-      id:
-        description: ID of the ent.
-        type: string
-      name:
-        description: |-
-          Name holds the value of the "name" field.
-          [OPTIONAL] The display name for the team.
-        type: string
-      team_number:
-        description: |-
-          TeamNumber holds the value of the "team_number" field.
-          [REQUIRED] The team number.
-        type: integer
-    type: object
-  ent.TeamEdges:
-    properties:
-      TeamToCompetition:
-        allOf:
-        - $ref: '#/definitions/ent.Competition'
-        description: TeamToCompetition holds the value of the TeamToCompetition edge.
-      TeamToUsers:
-        description: TeamToUsers holds the value of the TeamToUsers edge.
-        items:
-          $ref: '#/definitions/ent.User'
-        type: array
-      TeamToVmObjects:
-        description: TeamToVmObjects holds the value of the TeamToVmObjects edge.
-        items:
-          $ref: '#/definitions/ent.VmObject'
-        type: array
-    type: object
-  ent.Token:
-    properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.TokenEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the TokenQuery when eager-loading is set.
-      expire_at:
-        description: |-
-          ExpireAt holds the value of the "expire_at" field.
-          [REQUIRED] The time the token should expire.
-        type: integer
-      id:
-        description: ID of the ent.
-        type: string
-      token:
-        description: |-
-          Token holds the value of the "token" field.
-          [REQUIRED] The auth-token cookie value for the user session.
-        type: string
-    type: object
-  ent.TokenEdges:
-    properties:
-      TokenToUser:
-        allOf:
-        - $ref: '#/definitions/ent.User'
-        description: TokenToUser holds the value of the TokenToUser edge.
-    type: object
-  ent.User:
-    properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.UserEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the UserQuery when eager-loading is set.
       first_name:
-        description: |-
-          FirstName holds the value of the "first_name" field.
-          [OPTIONAL] The display first name for the user.
+        description: '[OPTIONAL] The display first name for the user.'
+        example: Default
         type: string
       id:
-        description: ID of the ent.
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         type: string
       last_name:
-        description: |-
-          LastName holds the value of the "last_name" field.
-          [OPTIONAL] The display last name for the user
+        description: '[OPTIONAL] The display last name for the user.'
+        example: User
         type: string
-      provider:
-        allOf:
-        - $ref: '#/definitions/user.Provider'
-        description: |-
-          Provider holds the value of the "provider" field.
-          [REQUIRED] The type of login the user will be using.
       role:
         allOf:
         - $ref: '#/definitions/user.Role'
-        description: |-
-          Role holds the value of the "role" field.
-          [REQUIRED] The role of the user. Admins have full access.
+        description: '[REQUIRED] The role of the user. Admins have full access.'
+        example: USER
+      user_to_team:
+        allOf:
+        - $ref: '#/definitions/rest.TeamEdge'
+        description: Edges
       username:
-        description: |-
-          Username holds the value of the "username" field.
-          [REQUIRED] The username for the user.
+        description: '[REQUIRED] The username for the user.'
+        example: compsole
         type: string
     type: object
-  ent.UserEdges:
+  rest.CompetitionEdge:
+    description: Used for Competition in edges
     properties:
-      UserToActions:
-        description: UserToActions holds the value of the UserToActions edge.
-        items:
-          $ref: '#/definitions/ent.Action'
-        type: array
-      UserToTeam:
-        allOf:
-        - $ref: '#/definitions/ent.Team'
-        description: UserToTeam holds the value of the UserToTeam edge.
-      UserToToken:
-        description: UserToToken holds the value of the UserToToken edge.
-        items:
-          $ref: '#/definitions/ent.Token'
-        type: array
-    type: object
-  ent.VmObject:
-    properties:
-      edges:
-        allOf:
-        - $ref: '#/definitions/ent.VmObjectEdges'
-        description: |-
-          Edges holds the relations/edges for other nodes in the graph.
-          The values are being populated by the VmObjectQuery when eager-loading is set.
       id:
-        description: ID of the ent.
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         type: string
-      identifier:
-        description: |-
-          Identifier holds the value of the "identifier" field.
-          [REQUIRED] The identifier of the VM. This will be provider-specific.
-        type: string
-      ip_addresses:
-        description: |-
-          IPAddresses holds the value of the "ip_addresses" field.
-          [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
-        items:
-          type: string
-        type: array
-      locked:
-        description: |-
-          Locked holds the value of the "locked" field.
-          [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
-        type: boolean
       name:
-        description: |-
-          Name holds the value of the "name" field.
-          [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
+        description: '[REQUIRED] The unique name (aka. slug) for the competition.'
+        example: Test Competition
         type: string
     type: object
-  ent.VmObjectEdges:
-    properties:
-      VmObjectToTeam:
-        allOf:
-        - $ref: '#/definitions/ent.Team'
-        description: VmObjectToTeam holds the value of the VmObjectToTeam edge.
-    type: object
-  rest.CreateCompetition.CompetitionInput:
+  rest.CompetitionInput:
+    description: Used as an input model for creating/updating Competitions
     properties:
       competition_to_provider:
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -415,7 +73,48 @@ definitions:
     - competition_to_provider
     - name
     type: object
-  rest.CreateProvider.ProviderInput:
+  rest.CompetitionModel:
+    description: Used for Competition endpoints
+    properties:
+      competition_to_provider:
+        $ref: '#/definitions/rest.ProviderEdge'
+      competition_to_teams:
+        description: Edges
+        items:
+          $ref: '#/definitions/rest.TeamEdge'
+        type: array
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        description: '[REQUIRED] The unique name (aka. slug) for the competition.'
+        example: Test Competition
+        type: string
+    type: object
+  rest.ProviderEdge:
+    description: Used for Provider in edges
+    properties:
+      config:
+        description: '[REQUIRED] This is the JSON configuration for the provider.'
+        example: '{...}'
+        type: string
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        description: '[REQUIRED] The unique name (aka. slug) for the provider.'
+        example: Local Openstack
+        type: string
+      type:
+        description: '[REQUIRED] The type of provider this is (must match a registered
+          one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)'
+        example: OPENSTACK
+        type: string
+    type: object
+  rest.ProviderInput:
+    description: Used as an input model for creating/updating Providers
     properties:
       config:
         description: See https://github.com/BradHacker/compsole/tree/main/configs
@@ -436,71 +135,31 @@ definitions:
     - name
     - type
     type: object
-  rest.CreateTeam.TeamInput:
+  rest.ProviderModel:
+    description: Used for Provider endpoints
     properties:
+      config:
+        description: '[REQUIRED] This is the JSON configuration for the provider.'
+        example: '{...}'
+        type: string
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
       name:
-        example: ISTS 'XX
+        description: '[REQUIRED] The unique name (aka. slug) for the provider.'
+        example: Local Openstack
         type: string
-      team_number:
-        example: 1
-        type: integer
-      team_to_competition:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-    required:
-    - name
-    - team_number
-    - team_to_competition
-    type: object
-  rest.CreateUser.UserInput:
-    properties:
-      first_name:
-        example: John
-        type: string
-      last_name:
-        example: Doe
-        type: string
-      role:
-        enum:
-        - USER
-        - ADMIN
-        example: USER
-        type: string
-      user_to_team:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-      username:
-        example: compsole
-        type: string
-    required:
-    - first_name
-    - last_name
-    - role
-    - username
-    type: object
-  rest.CreateVMObject.VmObjectInput:
-    properties:
-      identifier:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-      ip_addresses:
-        example:
-        - 10.0.0.1
-        - 100.64.0.1
+      provider_to_competitions:
+        description: Edges
         items:
-          type: string
+          $ref: '#/definitions/rest.CompetitionEdge'
         type: array
-      name:
-        example: team01.dc.comp.co
+      type:
+        description: '[REQUIRED] The type of provider this is (must match a registered
+          one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)'
+        example: OPENSTACK
         type: string
-      vm_object_to_team:
-        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        type: string
-    required:
-    - identifier
-    - ip_addresses
-    - name
-    - vm_object_to_team
     type: object
   rest.ServiceLoginResult:
     properties:
@@ -519,37 +178,24 @@ definitions:
     - api_key
     - api_secret
     type: object
-  rest.UpdateCompetition.CompetitionInput:
+  rest.TeamEdge:
+    description: Used for Team in edges
     properties:
-      competition_to_provider:
+      id:
+        description: Fields
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         type: string
       name:
-        example: ISTS 'XX
+        description: '[OPTIONAL] The display name for the team.'
+        example: Team 1
         type: string
-    required:
-    - competition_to_provider
-    - name
+      team_number:
+        description: '[REQUIRED] The team number.'
+        example: 1
+        type: integer
     type: object
-  rest.UpdateProvider.ProviderInput:
-    properties:
-      config:
-        description: See https://github.com/BradHacker/compsole/tree/main/configs
-          for examples
-        type: string
-      name:
-        example: RITSEC Openstack
-        type: string
-      type:
-        enum:
-        - OPENSTACK
-        type: string
-    required:
-    - config
-    - name
-    - type
-    type: object
-  rest.UpdateTeam.TeamInput:
+  rest.TeamInput:
+    description: Used as an input model for creating/updating Teams
     properties:
       name:
         example: ISTS 'XX
@@ -565,7 +211,61 @@ definitions:
     - team_number
     - team_to_competition
     type: object
-  rest.UpdateUser.UserInput:
+  rest.TeamModel:
+    description: Used for Team endpoints
+    properties:
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        description: '[OPTIONAL] The display name for the team.'
+        example: Team 1
+        type: string
+      team_number:
+        description: '[REQUIRED] The team number.'
+        example: 1
+        type: integer
+      team_to_competition:
+        allOf:
+        - $ref: '#/definitions/rest.CompetitionEdge'
+        description: Edges
+      team_to_users:
+        items:
+          $ref: '#/definitions/rest.UserEdge'
+        type: array
+      team_to_vm_objects:
+        items:
+          $ref: '#/definitions/rest.VmObjectEdge'
+        type: array
+    type: object
+  rest.UserEdge:
+    description: Used for User in edges
+    properties:
+      first_name:
+        description: '[OPTIONAL] The display first name for the user.'
+        example: Default
+        type: string
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      last_name:
+        description: '[OPTIONAL] The display last name for the user.'
+        example: User
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/user.Role'
+        description: '[REQUIRED] The role of the user. Admins have full access.'
+        example: USER
+      username:
+        description: '[REQUIRED] The username for the user.'
+        example: compsole
+        type: string
+    type: object
+  rest.UserInput:
+    description: Used as an input model for creating/updating Users
     properties:
       first_name:
         example: John
@@ -591,7 +291,67 @@ definitions:
     - role
     - username
     type: object
-  rest.UpdateVMObject.VmObjectInput:
+  rest.UserModel:
+    description: Used for User endpoints
+    properties:
+      first_name:
+        description: '[OPTIONAL] The display first name for the user.'
+        example: Default
+        type: string
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      last_name:
+        description: '[OPTIONAL] The display last name for the user.'
+        example: User
+        type: string
+      role:
+        allOf:
+        - $ref: '#/definitions/user.Role'
+        description: '[REQUIRED] The role of the user. Admins have full access.'
+        example: USER
+      user_to_team:
+        allOf:
+        - $ref: '#/definitions/rest.TeamEdge'
+        description: Edges
+      username:
+        description: '[REQUIRED] The username for the user.'
+        example: compsole
+        type: string
+    type: object
+  rest.VmObjectEdge:
+    description: Used for VM Object in edges
+    properties:
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      identifier:
+        description: '[REQUIRED] The identifier of the VM. This will be provider-specific.'
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        description: '[OPTIONAL] IP addresses of the VM. This will be displayed to
+          the user.'
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      locked:
+        description: '[REQUIRED] (default is false) If a vm is locked, standard users
+          will not be able to access this VM.'
+        example: false
+        type: boolean
+      name:
+        description: '[REQUIRED] A user-friendly name for the VM. This will be provider-specific.'
+        example: team01.dc.comp.co
+        type: string
+    type: object
+  rest.VmObjectInput:
+    description: Used as an input model for creating/updating VM Objects
     properties:
       identifier:
         example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -615,14 +375,40 @@ definitions:
     - name
     - vm_object_to_team
     type: object
-  user.Provider:
-    enum:
-    - LOCAL
-    - GITLAB
-    type: string
-    x-enum-varnames:
-    - ProviderLOCAL
-    - ProviderGITLAB
+  rest.VmObjectModel:
+    description: Used for VM Object endpoints
+    properties:
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      identifier:
+        description: '[REQUIRED] The identifier of the VM. This will be provider-specific.'
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      ip_addresses:
+        description: '[OPTIONAL] IP addresses of the VM. This will be displayed to
+          the user.'
+        example:
+        - 10.0.0.1
+        - 100.64.0.1
+        items:
+          type: string
+        type: array
+      locked:
+        description: '[REQUIRED] (default is false) If a vm is locked, standard users
+          will not be able to access this VM.'
+        example: false
+        type: boolean
+      name:
+        description: '[REQUIRED] A user-friendly name for the VM. This will be provider-specific.'
+        example: team01.dc.comp.co
+        type: string
+      vm_object_to_team:
+        allOf:
+        - $ref: '#/definitions/rest.TeamEdge'
+        description: Edges
+    type: object
   user.Role:
     enum:
     - USER
@@ -686,7 +472,7 @@ paths:
               description: '`auth-cookie` contains the session token'
               type: string
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/auth.UserModel'
       summary: Login with a local account
       tags:
       - Auth API
@@ -700,7 +486,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.Competition'
+              $ref: '#/definitions/rest.CompetitionModel'
             type: array
         "500":
           description: Internal Server Error
@@ -719,14 +505,14 @@ paths:
         name: competition
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateCompetition.CompetitionInput'
+          $ref: '#/definitions/rest.CompetitionInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Competition'
+            $ref: '#/definitions/rest.CompetitionModel'
         "404":
           description: Not Found
           schema:
@@ -793,7 +579,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.Competition'
+            $ref: '#/definitions/rest.CompetitionModel'
         "404":
           description: Not Found
           schema:
@@ -826,14 +612,14 @@ paths:
         name: competition
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateCompetition.CompetitionInput'
+          $ref: '#/definitions/rest.CompetitionInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Competition'
+            $ref: '#/definitions/rest.CompetitionModel'
         "404":
           description: Not Found
           schema:
@@ -861,7 +647,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.Provider'
+              $ref: '#/definitions/rest.ProviderModel'
             type: array
         "500":
           description: Internal Server Error
@@ -880,14 +666,14 @@ paths:
         name: provider
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateProvider.ProviderInput'
+          $ref: '#/definitions/rest.ProviderInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Provider'
+            $ref: '#/definitions/rest.ProviderModel'
         "404":
           description: Not Found
           schema:
@@ -954,7 +740,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.Provider'
+            $ref: '#/definitions/rest.ProviderModel'
         "404":
           description: Not Found
           schema:
@@ -987,14 +773,14 @@ paths:
         name: provider
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateProvider.ProviderInput'
+          $ref: '#/definitions/rest.ProviderInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Provider'
+            $ref: '#/definitions/rest.ProviderModel'
         "404":
           description: Not Found
           schema:
@@ -1022,7 +808,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.Team'
+              $ref: '#/definitions/rest.TeamModel'
             type: array
         "500":
           description: Internal Server Error
@@ -1041,14 +827,14 @@ paths:
         name: team
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateTeam.TeamInput'
+          $ref: '#/definitions/rest.TeamInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Team'
+            $ref: '#/definitions/rest.TeamModel'
         "404":
           description: Not Found
           schema:
@@ -1115,7 +901,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.Team'
+            $ref: '#/definitions/rest.TeamModel'
         "404":
           description: Not Found
           schema:
@@ -1148,14 +934,14 @@ paths:
         name: team
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateTeam.TeamInput'
+          $ref: '#/definitions/rest.TeamInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Team'
+            $ref: '#/definitions/rest.TeamModel'
         "404":
           description: Not Found
           schema:
@@ -1243,7 +1029,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.User'
+              $ref: '#/definitions/rest.UserModel'
             type: array
         "500":
           description: Internal Server Error
@@ -1262,14 +1048,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateUser.UserInput'
+          $ref: '#/definitions/rest.UserInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/rest.UserModel'
         "404":
           description: Not Found
           schema:
@@ -1336,7 +1122,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/rest.UserModel'
         "404":
           description: Not Found
           schema:
@@ -1369,14 +1155,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateUser.UserInput'
+          $ref: '#/definitions/rest.UserInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.User'
+            $ref: '#/definitions/rest.UserModel'
         "404":
           description: Not Found
           schema:
@@ -1404,7 +1190,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.VmObject'
+              $ref: '#/definitions/rest.VmObjectModel'
             type: array
         "500":
           description: Internal Server Error
@@ -1423,14 +1209,14 @@ paths:
         name: vm_object
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateVMObject.VmObjectInput'
+          $ref: '#/definitions/rest.VmObjectInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.VmObject'
+            $ref: '#/definitions/rest.VmObjectModel'
         "404":
           description: Not Found
           schema:
@@ -1497,7 +1283,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.VmObject'
+            $ref: '#/definitions/rest.VmObjectModel'
         "404":
           description: Not Found
           schema:
@@ -1530,14 +1316,14 @@ paths:
         name: vm_object
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateVMObject.VmObjectInput'
+          $ref: '#/definitions/rest.VmObjectInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.VmObject'
+            $ref: '#/definitions/rest.VmObjectModel'
         "404":
           description: Not Found
           schema:

@@ -20,7 +20,7 @@ import (
 //	@Description	List all Users
 //	@Tags			Service API
 //	@Produce		json
-//	@Success		200	{array}		ent.User
+//	@Success		200	{array}		rest.UserModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user [get]
 func ListUsers(client *ent.Client) gin.HandlerFunc {
@@ -31,7 +31,12 @@ func ListUsers(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entUsers)
+		userModels := make([]UserModel, len(entUsers))
+		for i, entUser := range entUsers {
+			userModels[i] = UserEntToModel(entUser)
+		}
+
+		ctx.JSON(http.StatusOK, userModels)
 		ctx.Next()
 	}
 }
@@ -45,7 +50,7 @@ func ListUsers(client *ent.Client) gin.HandlerFunc {
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the user"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
-//	@Success		200	{object}	ent.User
+//	@Success		200	{object}	rest.UserModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
@@ -61,7 +66,9 @@ func GetUser(client *ent.Client) gin.HandlerFunc {
 		entUser, err := client.User.Query().
 			Where(
 				user.IDEQ(userUuid),
-			).Only(ctx)
+			).
+			WithUserToTeam().
+			Only(ctx)
 		if ent.IsNotFound(err) {
 			api.ReturnError(ctx, http.StatusNotFound, "user not found", err)
 			return
@@ -71,7 +78,7 @@ func GetUser(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entUser)
+		ctx.JSON(http.StatusOK, UserEntToModel(entUser))
 		ctx.Next()
 	}
 }
@@ -83,22 +90,14 @@ func GetUser(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Create a User
 //	@Tags			Service API
-//	@Param			user	body	rest.CreateUser.UserInput	true	"The user to create"
+//	@Param			user	body	rest.UserInput	true	"The user to create"
 //	@Produce		json
-//	@Success		201	{object}	ent.User
+//	@Success		201	{object}	rest.UserModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user [post]
 func CreateUser(client *ent.Client) gin.HandlerFunc {
-	type UserInput struct {
-		Username   string  `json:"username" form:"username" binding:"required" example:"compsole"`
-		FirstName  string  `json:"first_name" form:"first_name" binding:"required" example:"John"`
-		LastName   string  `json:"last_name" form:"last_name" binding:"required" example:"Doe"`
-		Role       string  `json:"role" form:"role" binding:"required" example:"USER" enums:"USER,ADMIN"`
-		UserToTeam *string `json:"user_to_team,omitempty" form:"user_to_team" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		var newUser UserInput
 		if err := ctx.ShouldBind(&newUser); err != nil {
@@ -139,7 +138,13 @@ func CreateUser(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entUser)
+		entUser, err = client.User.Query().Where(user.IDEQ(entUser.ID)).WithUserToTeam().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new user", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, UserEntToModel(entUser))
 		ctx.Next()
 	}
 }
@@ -151,23 +156,15 @@ func CreateUser(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Update a User
 //	@Tags			Service API
-//	@Param			id		path	string						true	"The id of the user"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-//	@Param			user	body	rest.UpdateUser.UserInput	true	"The updated user"
+//	@Param			id		path	string			true	"The id of the user"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			user	body	rest.UserInput	true	"The updated user"
 //	@Produce		json
-//	@Success		201	{object}	ent.User
+//	@Success		201	{object}	rest.UserModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user/{id} [put]
 func UpdateUser(client *ent.Client) gin.HandlerFunc {
-	type UserInput struct {
-		Username   string  `json:"username" form:"username" binding:"required" example:"compsole"`
-		FirstName  string  `json:"first_name" form:"first_name" binding:"required" example:"John"`
-		LastName   string  `json:"last_name" form:"last_name" binding:"required" example:"Doe"`
-		Role       string  `json:"role" form:"role" binding:"required" example:"USER" enums:"USER,ADMIN"`
-		UserToTeam *string `json:"user_to_team,omitempty" form:"user_to_team" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		userID := ctx.Param("id")
 		userUuid, err := uuid.Parse(userID)
@@ -227,7 +224,13 @@ func UpdateUser(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entUpdatedUser)
+		entUpdatedUser, err = client.User.Query().Where(user.IDEQ(entUpdatedUser.ID)).WithUserToTeam().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new user", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, UserEntToModel(entUpdatedUser))
 		ctx.Next()
 	}
 }

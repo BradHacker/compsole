@@ -19,7 +19,7 @@ import (
 //	@Description	List all Competitions
 //	@Tags			Service API
 //	@Produce		json
-//	@Success		200	{array}		ent.Competition
+//	@Success		200	{array}		rest.CompetitionModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition [get]
 func ListCompetitions(client *ent.Client) gin.HandlerFunc {
@@ -30,7 +30,12 @@ func ListCompetitions(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entCompetitions)
+		competitionModels := make([]CompetitionModel, len(entCompetitions))
+		for i, entCompetition := range entCompetitions {
+			competitionModels[i] = CompetitionEntToModel(entCompetition)
+		}
+
+		ctx.JSON(http.StatusOK, competitionModels)
 		ctx.Next()
 	}
 }
@@ -44,7 +49,7 @@ func ListCompetitions(client *ent.Client) gin.HandlerFunc {
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the competition"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
-//	@Success		200	{object}	ent.Competition
+//	@Success		200	{object}	rest.CompetitionModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
@@ -61,7 +66,10 @@ func GetCompetition(client *ent.Client) gin.HandlerFunc {
 		entCompetition, err := client.Competition.Query().
 			Where(
 				competition.IDEQ(competitionUuid),
-			).Only(ctx)
+			).
+			WithCompetitionToTeams().
+			WithCompetitionToProvider().
+			Only(ctx)
 		if ent.IsNotFound(err) {
 			api.ReturnError(ctx, http.StatusNotFound, "competition not found", err)
 			return
@@ -71,7 +79,7 @@ func GetCompetition(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entCompetition)
+		ctx.JSON(http.StatusOK, CompetitionEntToModel(entCompetition))
 		ctx.Next()
 	}
 }
@@ -83,19 +91,14 @@ func GetCompetition(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Create a Competition
 //	@Tags			Service API
-//	@Param			competition	body	rest.CreateCompetition.CompetitionInput	true	"The competition to create"
+//	@Param			competition	body	rest.CompetitionInput	true	"The competition to create"
 //	@Produce		json
-//	@Success		201	{object}	ent.Competition
+//	@Success		201	{object}	rest.CompetitionModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition [post]
 func CreateCompetition(client *ent.Client) gin.HandlerFunc {
-	type CompetitionInput struct {
-		Name                  string `json:"name" form:"name" binding:"required" example:"ISTS 'XX"`
-		CompetitionToProvider string `json:"competition_to_provider" form:"competition_to_provider" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		var newCompetition CompetitionInput
 		if err := ctx.ShouldBind(&newCompetition); err != nil {
@@ -130,7 +133,13 @@ func CreateCompetition(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entCompetition)
+		entCompetition, err = client.Competition.Query().Where(competition.IDEQ(entCompetition.ID)).WithCompetitionToTeams().WithCompetitionToProvider().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new competition", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, CompetitionEntToModel(entCompetition))
 		ctx.Next()
 	}
 }
@@ -142,20 +151,15 @@ func CreateCompetition(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Update a Competition
 //	@Tags			Service API
-//	@Param			id			path	string									true	"The id of the competition"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-//	@Param			competition	body	rest.UpdateCompetition.CompetitionInput	true	"The updated competition"
+//	@Param			id			path	string					true	"The id of the competition"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			competition	body	rest.CompetitionInput	true	"The updated competition"
 //	@Produce		json
-//	@Success		201	{object}	ent.Competition
+//	@Success		201	{object}	rest.CompetitionModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition/{id} [put]
 func UpdateCompetition(client *ent.Client) gin.HandlerFunc {
-	type CompetitionInput struct {
-		Name                  string `json:"name" form:"name" binding:"required" example:"ISTS 'XX"`
-		CompetitionToProvider string `json:"competition_to_provider" form:"competition_to_provider" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		competitionID := ctx.Param("id")
 		competitionUuid, err := uuid.Parse(competitionID)
@@ -210,7 +214,13 @@ func UpdateCompetition(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entUpdatedCompetition)
+		entUpdatedCompetition, err = client.Competition.Query().Where(competition.IDEQ(entUpdatedCompetition.ID)).WithCompetitionToTeams().WithCompetitionToProvider().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query updated competition", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, CompetitionEntToModel(entUpdatedCompetition))
 		ctx.Next()
 	}
 }

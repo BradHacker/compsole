@@ -19,7 +19,7 @@ import (
 //	@Description	List all Providers
 //	@Tags			Service API
 //	@Produce		json
-//	@Success		200	{array}		ent.Provider
+//	@Success		200	{array}		rest.ProviderModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider [get]
 func ListProviders(client *ent.Client) gin.HandlerFunc {
@@ -30,7 +30,12 @@ func ListProviders(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entProviders)
+		providerModels := make([]ProviderModel, len(entProviders))
+		for i, entProvider := range entProviders {
+			providerModels[i] = ProviderEntToModel(entProvider)
+		}
+
+		ctx.JSON(http.StatusOK, providerModels)
 		ctx.Next()
 	}
 }
@@ -44,7 +49,7 @@ func ListProviders(client *ent.Client) gin.HandlerFunc {
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the provider"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
-//	@Success		200	{object}	ent.Provider
+//	@Success		200	{object}	rest.ProviderModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
@@ -61,7 +66,9 @@ func GetProvider(client *ent.Client) gin.HandlerFunc {
 		entProvider, err := client.Provider.Query().
 			Where(
 				provider.IDEQ(providerUuid),
-			).Only(ctx)
+			).
+			WithProviderToCompetitions().
+			Only(ctx)
 		if ent.IsNotFound(err) {
 			api.ReturnError(ctx, http.StatusNotFound, "provider not found", err)
 			return
@@ -71,7 +78,7 @@ func GetProvider(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entProvider)
+		ctx.JSON(http.StatusOK, ProviderEntToModel(entProvider))
 		ctx.Next()
 	}
 }
@@ -83,20 +90,14 @@ func GetProvider(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Create a Provider
 //	@Tags			Service API
-//	@Param			provider	body	rest.CreateProvider.ProviderInput	true	"The provider to create"
+//	@Param			provider	body	rest.ProviderInput	true	"The provider to create"
 //	@Produce		json
-//	@Success		201	{object}	ent.Provider
+//	@Success		201	{object}	rest.ProviderModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider [post]
 func CreateProvider(client *ent.Client) gin.HandlerFunc {
-	type ProviderInput struct {
-		Name   string `json:"name" form:"name" binding:"required" example:"RITSEC Openstack"`
-		Type   string `json:"type" form:"type" binding:"required" example:"OPENSTACK" enums:"OPENSTACK"`
-		Config string `json:"config" form:"config" binding:"required" example:"See https://github.com/BradHacker/compsole/tree/main/configs for examples"` // See https://github.com/BradHacker/compsole/tree/main/configs for examples
-	}
-
 	return func(ctx *gin.Context) {
 		var newProvider ProviderInput
 		if err := ctx.ShouldBind(&newProvider); err != nil {
@@ -121,7 +122,13 @@ func CreateProvider(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entProvider)
+		entProvider, err = client.Provider.Query().Where(provider.IDEQ(entProvider.ID)).WithProviderToCompetitions().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new provider", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, ProviderEntToModel(entProvider))
 		ctx.Next()
 	}
 }
@@ -133,10 +140,10 @@ func CreateProvider(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Update a Provider
 //	@Tags			Service API
-//	@Param			id			path	string								true	"The id of the provider"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-//	@Param			provider	body	rest.UpdateProvider.ProviderInput	true	"The updated provider"
+//	@Param			id			path	string				true	"The id of the provider"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			provider	body	rest.ProviderInput	true	"The updated provider"
 //	@Produce		json
-//	@Success		201	{object}	ent.Provider
+//	@Success		201	{object}	rest.ProviderModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
@@ -192,7 +199,13 @@ func UpdateProvider(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entUpdatedProvider)
+		entUpdatedProvider, err = client.Provider.Query().Where(provider.IDEQ(entUpdatedProvider.ID)).WithProviderToCompetitions().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query updated provider", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, ProviderEntToModel(entUpdatedProvider))
 		ctx.Next()
 	}
 }

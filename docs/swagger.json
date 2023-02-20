@@ -44,7 +44,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/auth.UserModel"
                         },
                         "headers": {
                             "Cookie": {
@@ -77,7 +77,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.Competition"
+                                "$ref": "#/definitions/rest.CompetitionModel"
                             }
                         }
                     },
@@ -110,7 +110,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateCompetition.CompetitionInput"
+                            "$ref": "#/definitions/rest.CompetitionInput"
                         }
                     }
                 ],
@@ -118,7 +118,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Competition"
+                            "$ref": "#/definitions/rest.CompetitionModel"
                         }
                     },
                     "404": {
@@ -172,7 +172,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.Competition"
+                            "$ref": "#/definitions/rest.CompetitionModel"
                         }
                     },
                     "404": {
@@ -225,7 +225,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateCompetition.CompetitionInput"
+                            "$ref": "#/definitions/rest.CompetitionInput"
                         }
                     }
                 ],
@@ -233,7 +233,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Competition"
+                            "$ref": "#/definitions/rest.CompetitionModel"
                         }
                     },
                     "404": {
@@ -327,7 +327,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.Provider"
+                                "$ref": "#/definitions/rest.ProviderModel"
                             }
                         }
                     },
@@ -360,7 +360,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateProvider.ProviderInput"
+                            "$ref": "#/definitions/rest.ProviderInput"
                         }
                     }
                 ],
@@ -368,7 +368,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Provider"
+                            "$ref": "#/definitions/rest.ProviderModel"
                         }
                     },
                     "404": {
@@ -422,7 +422,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.Provider"
+                            "$ref": "#/definitions/rest.ProviderModel"
                         }
                     },
                     "404": {
@@ -475,7 +475,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateProvider.ProviderInput"
+                            "$ref": "#/definitions/rest.ProviderInput"
                         }
                     }
                 ],
@@ -483,7 +483,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Provider"
+                            "$ref": "#/definitions/rest.ProviderModel"
                         }
                     },
                     "404": {
@@ -577,7 +577,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.Team"
+                                "$ref": "#/definitions/rest.TeamModel"
                             }
                         }
                     },
@@ -610,7 +610,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateTeam.TeamInput"
+                            "$ref": "#/definitions/rest.TeamInput"
                         }
                     }
                 ],
@@ -618,7 +618,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Team"
+                            "$ref": "#/definitions/rest.TeamModel"
                         }
                     },
                     "404": {
@@ -672,7 +672,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.Team"
+                            "$ref": "#/definitions/rest.TeamModel"
                         }
                     },
                     "404": {
@@ -725,7 +725,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateTeam.TeamInput"
+                            "$ref": "#/definitions/rest.TeamInput"
                         }
                     }
                 ],
@@ -733,7 +733,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Team"
+                            "$ref": "#/definitions/rest.TeamModel"
                         }
                     },
                     "404": {
@@ -915,7 +915,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.User"
+                                "$ref": "#/definitions/rest.UserModel"
                             }
                         }
                     },
@@ -948,7 +948,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateUser.UserInput"
+                            "$ref": "#/definitions/rest.UserInput"
                         }
                     }
                 ],
@@ -956,7 +956,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/rest.UserModel"
                         }
                     },
                     "404": {
@@ -1010,7 +1010,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/rest.UserModel"
                         }
                     },
                     "404": {
@@ -1063,7 +1063,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateUser.UserInput"
+                            "$ref": "#/definitions/rest.UserInput"
                         }
                     }
                 ],
@@ -1071,7 +1071,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.User"
+                            "$ref": "#/definitions/rest.UserModel"
                         }
                     },
                     "404": {
@@ -1165,7 +1165,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.VmObject"
+                                "$ref": "#/definitions/rest.VmObjectModel"
                             }
                         }
                     },
@@ -1198,7 +1198,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateVMObject.VmObjectInput"
+                            "$ref": "#/definitions/rest.VmObjectInput"
                         }
                     }
                 ],
@@ -1206,7 +1206,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.VmObject"
+                            "$ref": "#/definitions/rest.VmObjectModel"
                         }
                     },
                     "404": {
@@ -1260,7 +1260,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.VmObject"
+                            "$ref": "#/definitions/rest.VmObjectModel"
                         }
                     },
                     "404": {
@@ -1313,7 +1313,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateVMObject.VmObjectInput"
+                            "$ref": "#/definitions/rest.VmObjectInput"
                         }
                     }
                 ],
@@ -1321,7 +1321,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.VmObject"
+                            "$ref": "#/definitions/rest.VmObjectModel"
                         }
                     },
                     "404": {
@@ -1396,43 +1396,6 @@
         }
     },
     "definitions": {
-        "action.Type": {
-            "type": "string",
-            "enum": [
-                "SIGN_IN",
-                "FAILED_SIGN_IN",
-                "SIGN_OUT",
-                "API_CALL",
-                "CONSOLE_ACCESS",
-                "REBOOT",
-                "SHUTDOWN",
-                "POWER_ON",
-                "POWER_OFF",
-                "CHANGE_SELF_PASSWORD",
-                "CHANGE_PASSWORD",
-                "CREATE_OBJECT",
-                "UPDATE_OBJECT",
-                "DELETE_OBJECT",
-                "UPDATE_LOCKOUT"
-            ],
-            "x-enum-varnames": [
-                "TypeSIGN_IN",
-                "TypeFAILED_SIGN_IN",
-                "TypeSIGN_OUT",
-                "TypeAPI_CALL",
-                "TypeCONSOLE_ACCESS",
-                "TypeREBOOT",
-                "TypeSHUTDOWN",
-                "TypePOWER_ON",
-                "TypePOWER_OFF",
-                "TypeCHANGE_SELF_PASSWORD",
-                "TypeCHANGE_PASSWORD",
-                "TypeCREATE_OBJECT",
-                "TypeUPDATE_OBJECT",
-                "TypeDELETE_OBJECT",
-                "TypeUPDATE_LOCKOUT"
-            ]
-        },
         "api.APIError": {
             "type": "object",
             "properties": {
@@ -1443,6 +1406,7 @@
             }
         },
         "auth.UserLoginVals": {
+            "description": "Used as an input to the login input",
             "type": "object",
             "required": [
                 "password",
@@ -1459,452 +1423,67 @@
                 }
             }
         },
-        "ent.Action": {
+        "auth.UserModel": {
+            "description": "Used for User login",
             "type": "object",
             "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ActionQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.ActionEdges"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "ip_address": {
-                    "description": "IPAddress holds the value of the \"ip_address\" field.",
-                    "type": "string"
-                },
-                "message": {
-                    "description": "Message holds the value of the \"message\" field.",
-                    "type": "string"
-                },
-                "performed_at": {
-                    "description": "PerformedAt holds the value of the \"performed_at\" field.",
-                    "type": "string"
-                },
-                "type": {
-                    "description": "Type holds the value of the \"type\" field.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/action.Type"
-                        }
-                    ]
-                }
-            }
-        },
-        "ent.ActionEdges": {
-            "type": "object",
-            "properties": {
-                "ActionToServiceAccount": {
-                    "description": "ActionToServiceAccount holds the value of the ActionToServiceAccount edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.ServiceAccount"
-                        }
-                    ]
-                },
-                "ActionToUser": {
-                    "description": "ActionToUser holds the value of the ActionToUser edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.User"
-                        }
-                    ]
-                }
-            }
-        },
-        "ent.Competition": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CompetitionQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.CompetitionEdges"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name holds the value of the \"name\" field.\n[REQUIRED] The unique name (aka. slug) for the competition.",
-                    "type": "string"
-                }
-            }
-        },
-        "ent.CompetitionEdges": {
-            "type": "object",
-            "properties": {
-                "CompetitionToProvider": {
-                    "description": "CompetitionToProvider holds the value of the CompetitionToProvider edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.Provider"
-                        }
-                    ]
-                },
-                "CompetitionToTeams": {
-                    "description": "CompetitionToTeams holds the value of the CompetitionToTeams edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.Team"
-                    }
-                }
-            }
-        },
-        "ent.Provider": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "description": "Config holds the value of the \"config\" field.\n[REQUIRED] This is the JSON configuration for the provider.",
-                    "type": "string"
-                },
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ProviderQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.ProviderEdges"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name holds the value of the \"name\" field.\n[REQUIRED] The unique name (aka. slug) for the provider.",
-                    "type": "string"
-                },
-                "type": {
-                    "description": "Type holds the value of the \"type\" field.\n[REQUIRED] The unique name (aka. slug) for the provider.",
-                    "type": "string"
-                }
-            }
-        },
-        "ent.ProviderEdges": {
-            "type": "object",
-            "properties": {
-                "ProviderToCompetition": {
-                    "description": "ProviderToCompetition holds the value of the ProviderToCompetition edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.Competition"
-                    }
-                }
-            }
-        },
-        "ent.ServiceAccount": {
-            "type": "object",
-            "properties": {
-                "active": {
-                    "description": "Active holds the value of the \"active\" field.\n[REQUIRED] Determines whether or not the service account is active or not",
-                    "type": "boolean"
-                },
-                "api_key": {
-                    "description": "APIKey holds the value of the \"api_key\" field.\n[REQUIRED] The API key for the service account. Equivalent to a username.",
-                    "type": "string"
-                },
-                "api_secret": {
-                    "description": "APISecret holds the value of the \"api_secret\" field.\n[REQUIRED] The API secret for the service account. This value MUST be protected.",
-                    "type": "string"
-                },
-                "display_name": {
-                    "description": "DisplayName holds the value of the \"display_name\" field.\n[REQUIRED] The display/common name for the service account.",
-                    "type": "string"
-                },
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ServiceAccountQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.ServiceAccountEdges"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                }
-            }
-        },
-        "ent.ServiceAccountEdges": {
-            "type": "object",
-            "properties": {
-                "ServiceAccountToActions": {
-                    "description": "ServiceAccountToActions holds the value of the ServiceAccountToActions edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.Action"
-                    }
-                },
-                "ServiceAccountToToken": {
-                    "description": "ServiceAccountToToken holds the value of the ServiceAccountToToken edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.ServiceToken"
-                    }
-                }
-            }
-        },
-        "ent.ServiceToken": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ServiceTokenQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.ServiceTokenEdges"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "issued_at": {
-                    "description": "IssuedAt holds the value of the \"issued_at\" field.\n[REQUIRED] The time the token was issued",
-                    "type": "integer"
-                },
-                "refresh_token": {
-                    "description": "RefreshToken holds the value of the \"refresh_token\" field.\n[REQUIRED] The refresh token used to renew an expired service account session. These are valid for `REFRESH_WINDOW` hours.",
-                    "type": "string"
-                },
-                "token": {
-                    "description": "Token holds the value of the \"token\" field.\n[REQUIRED] The API token for a service account session.",
-                    "type": "string"
-                }
-            }
-        },
-        "ent.ServiceTokenEdges": {
-            "type": "object",
-            "properties": {
-                "TokenToServiceAccount": {
-                    "description": "TokenToServiceAccount holds the value of the TokenToServiceAccount edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.ServiceAccount"
-                        }
-                    ]
-                }
-            }
-        },
-        "ent.Team": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the TeamQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.TeamEdges"
-                        }
-                    ]
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name holds the value of the \"name\" field.\n[OPTIONAL] The display name for the team.",
-                    "type": "string"
-                },
-                "team_number": {
-                    "description": "TeamNumber holds the value of the \"team_number\" field.\n[REQUIRED] The team number.",
-                    "type": "integer"
-                }
-            }
-        },
-        "ent.TeamEdges": {
-            "type": "object",
-            "properties": {
-                "TeamToCompetition": {
-                    "description": "TeamToCompetition holds the value of the TeamToCompetition edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.Competition"
-                        }
-                    ]
-                },
-                "TeamToUsers": {
-                    "description": "TeamToUsers holds the value of the TeamToUsers edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.User"
-                    }
-                },
-                "TeamToVmObjects": {
-                    "description": "TeamToVmObjects holds the value of the TeamToVmObjects edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.VmObject"
-                    }
-                }
-            }
-        },
-        "ent.Token": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the TokenQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.TokenEdges"
-                        }
-                    ]
-                },
-                "expire_at": {
-                    "description": "ExpireAt holds the value of the \"expire_at\" field.\n[REQUIRED] The time the token should expire.",
-                    "type": "integer"
-                },
-                "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "token": {
-                    "description": "Token holds the value of the \"token\" field.\n[REQUIRED] The auth-token cookie value for the user session.",
-                    "type": "string"
-                }
-            }
-        },
-        "ent.TokenEdges": {
-            "type": "object",
-            "properties": {
-                "TokenToUser": {
-                    "description": "TokenToUser holds the value of the TokenToUser edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.User"
-                        }
-                    ]
-                }
-            }
-        },
-        "ent.User": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the UserQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.UserEdges"
-                        }
-                    ]
-                },
                 "first_name": {
-                    "description": "FirstName holds the value of the \"first_name\" field.\n[OPTIONAL] The display first name for the user.",
-                    "type": "string"
+                    "description": "[OPTIONAL] The display first name for the user.",
+                    "type": "string",
+                    "example": "Default"
                 },
                 "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 },
                 "last_name": {
-                    "description": "LastName holds the value of the \"last_name\" field.\n[OPTIONAL] The display last name for the user",
-                    "type": "string"
-                },
-                "provider": {
-                    "description": "Provider holds the value of the \"provider\" field.\n[REQUIRED] The type of login the user will be using.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/user.Provider"
-                        }
-                    ]
+                    "description": "[OPTIONAL] The display last name for the user.",
+                    "type": "string",
+                    "example": "User"
                 },
                 "role": {
-                    "description": "Role holds the value of the \"role\" field.\n[REQUIRED] The role of the user. Admins have full access.",
+                    "description": "[REQUIRED] The role of the user. Admins have full access.",
                     "allOf": [
                         {
                             "$ref": "#/definitions/user.Role"
                         }
+                    ],
+                    "example": "USER"
+                },
+                "user_to_team": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.TeamEdge"
+                        }
                     ]
                 },
                 "username": {
-                    "description": "Username holds the value of the \"username\" field.\n[REQUIRED] The username for the user.",
-                    "type": "string"
+                    "description": "[REQUIRED] The username for the user.",
+                    "type": "string",
+                    "example": "compsole"
                 }
             }
         },
-        "ent.UserEdges": {
+        "rest.CompetitionEdge": {
+            "description": "Used for Competition in edges",
             "type": "object",
             "properties": {
-                "UserToActions": {
-                    "description": "UserToActions holds the value of the UserToActions edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.Action"
-                    }
-                },
-                "UserToTeam": {
-                    "description": "UserToTeam holds the value of the UserToTeam edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.Team"
-                        }
-                    ]
-                },
-                "UserToToken": {
-                    "description": "UserToToken holds the value of the UserToToken edge.",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ent.Token"
-                    }
-                }
-            }
-        },
-        "ent.VmObject": {
-            "type": "object",
-            "properties": {
-                "edges": {
-                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the VmObjectQuery when eager-loading is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.VmObjectEdges"
-                        }
-                    ]
-                },
                 "id": {
-                    "description": "ID of the ent.",
-                    "type": "string"
-                },
-                "identifier": {
-                    "description": "Identifier holds the value of the \"identifier\" field.\n[REQUIRED] The identifier of the VM. This will be provider-specific.",
-                    "type": "string"
-                },
-                "ip_addresses": {
-                    "description": "IPAddresses holds the value of the \"ip_addresses\" field.\n[OPTIONAL] IP addresses of the VM. This will be displayed to the user.",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "locked": {
-                    "description": "Locked holds the value of the \"locked\" field.\n[REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.",
-                    "type": "boolean"
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 },
                 "name": {
-                    "description": "Name holds the value of the \"name\" field.\n[REQUIRED] A user-friendly name for the VM. This will be provider-specific.",
-                    "type": "string"
+                    "description": "[REQUIRED] The unique name (aka. slug) for the competition.",
+                    "type": "string",
+                    "example": "Test Competition"
                 }
             }
         },
-        "ent.VmObjectEdges": {
-            "type": "object",
-            "properties": {
-                "VmObjectToTeam": {
-                    "description": "VmObjectToTeam holds the value of the VmObjectToTeam edge.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ent.Team"
-                        }
-                    ]
-                }
-            }
-        },
-        "rest.CreateCompetition.CompetitionInput": {
+        "rest.CompetitionInput": {
+            "description": "Used as an input model for creating/updating Competitions",
             "type": "object",
             "required": [
                 "competition_to_provider",
@@ -1921,7 +1500,60 @@
                 }
             }
         },
-        "rest.CreateProvider.ProviderInput": {
+        "rest.CompetitionModel": {
+            "description": "Used for Competition endpoints",
+            "type": "object",
+            "properties": {
+                "competition_to_provider": {
+                    "$ref": "#/definitions/rest.ProviderEdge"
+                },
+                "competition_to_teams": {
+                    "description": "Edges",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.TeamEdge"
+                    }
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[REQUIRED] The unique name (aka. slug) for the competition.",
+                    "type": "string",
+                    "example": "Test Competition"
+                }
+            }
+        },
+        "rest.ProviderEdge": {
+            "description": "Used for Provider in edges",
+            "type": "object",
+            "properties": {
+                "config": {
+                    "description": "[REQUIRED] This is the JSON configuration for the provider.",
+                    "type": "string",
+                    "example": "{...}"
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[REQUIRED] The unique name (aka. slug) for the provider.",
+                    "type": "string",
+                    "example": "Local Openstack"
+                },
+                "type": {
+                    "description": "[REQUIRED] The type of provider this is (must match a registered one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)",
+                    "type": "string",
+                    "example": "OPENSTACK"
+                }
+            }
+        },
+        "rest.ProviderInput": {
+            "description": "Used as an input model for creating/updating Providers",
             "type": "object",
             "required": [
                 "config",
@@ -1947,93 +1579,36 @@
                 }
             }
         },
-        "rest.CreateTeam.TeamInput": {
+        "rest.ProviderModel": {
+            "description": "Used for Provider endpoints",
             "type": "object",
-            "required": [
-                "name",
-                "team_number",
-                "team_to_competition"
-            ],
             "properties": {
+                "config": {
+                    "description": "[REQUIRED] This is the JSON configuration for the provider.",
+                    "type": "string",
+                    "example": "{...}"
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
                 "name": {
+                    "description": "[REQUIRED] The unique name (aka. slug) for the provider.",
                     "type": "string",
-                    "example": "ISTS 'XX"
+                    "example": "Local Openstack"
                 },
-                "team_number": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "team_to_competition": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                }
-            }
-        },
-        "rest.CreateUser.UserInput": {
-            "type": "object",
-            "required": [
-                "first_name",
-                "last_name",
-                "role",
-                "username"
-            ],
-            "properties": {
-                "first_name": {
-                    "type": "string",
-                    "example": "John"
-                },
-                "last_name": {
-                    "type": "string",
-                    "example": "Doe"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "USER",
-                        "ADMIN"
-                    ],
-                    "example": "USER"
-                },
-                "user_to_team": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "compsole"
-                }
-            }
-        },
-        "rest.CreateVMObject.VmObjectInput": {
-            "type": "object",
-            "required": [
-                "identifier",
-                "ip_addresses",
-                "name",
-                "vm_object_to_team"
-            ],
-            "properties": {
-                "identifier": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                },
-                "ip_addresses": {
+                "provider_to_competitions": {
+                    "description": "Edges",
                     "type": "array",
                     "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "10.0.0.1",
-                        "100.64.0.1"
-                    ]
+                        "$ref": "#/definitions/rest.CompetitionEdge"
+                    }
                 },
-                "name": {
+                "type": {
+                    "description": "[REQUIRED] The type of provider this is (must match a registered one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)",
                     "type": "string",
-                    "example": "team01.dc.comp.co"
-                },
-                "vm_object_to_team": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    "example": "OPENSTACK"
                 }
             }
         },
@@ -2063,48 +1638,29 @@
                 }
             }
         },
-        "rest.UpdateCompetition.CompetitionInput": {
+        "rest.TeamEdge": {
+            "description": "Used for Team in edges",
             "type": "object",
-            "required": [
-                "competition_to_provider",
-                "name"
-            ],
             "properties": {
-                "competition_to_provider": {
+                "id": {
+                    "description": "Fields",
                     "type": "string",
                     "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 },
                 "name": {
+                    "description": "[OPTIONAL] The display name for the team.",
                     "type": "string",
-                    "example": "ISTS 'XX"
+                    "example": "Team 1"
+                },
+                "team_number": {
+                    "description": "[REQUIRED] The team number.",
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
-        "rest.UpdateProvider.ProviderInput": {
-            "type": "object",
-            "required": [
-                "config",
-                "name",
-                "type"
-            ],
-            "properties": {
-                "config": {
-                    "description": "See https://github.com/BradHacker/compsole/tree/main/configs for examples",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "RITSEC Openstack"
-                },
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "OPENSTACK"
-                    ]
-                }
-            }
-        },
-        "rest.UpdateTeam.TeamInput": {
+        "rest.TeamInput": {
+            "description": "Used as an input model for creating/updating Teams",
             "type": "object",
             "required": [
                 "name",
@@ -2126,7 +1682,84 @@
                 }
             }
         },
-        "rest.UpdateUser.UserInput": {
+        "rest.TeamModel": {
+            "description": "Used for Team endpoints",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[OPTIONAL] The display name for the team.",
+                    "type": "string",
+                    "example": "Team 1"
+                },
+                "team_number": {
+                    "description": "[REQUIRED] The team number.",
+                    "type": "integer",
+                    "example": 1
+                },
+                "team_to_competition": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.CompetitionEdge"
+                        }
+                    ]
+                },
+                "team_to_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.UserEdge"
+                    }
+                },
+                "team_to_vm_objects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.VmObjectEdge"
+                    }
+                }
+            }
+        },
+        "rest.UserEdge": {
+            "description": "Used for User in edges",
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "description": "[OPTIONAL] The display first name for the user.",
+                    "type": "string",
+                    "example": "Default"
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "last_name": {
+                    "description": "[OPTIONAL] The display last name for the user.",
+                    "type": "string",
+                    "example": "User"
+                },
+                "role": {
+                    "description": "[REQUIRED] The role of the user. Admins have full access.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Role"
+                        }
+                    ],
+                    "example": "USER"
+                },
+                "username": {
+                    "description": "[REQUIRED] The username for the user.",
+                    "type": "string",
+                    "example": "compsole"
+                }
+            }
+        },
+        "rest.UserInput": {
+            "description": "Used as an input model for creating/updating Users",
             "type": "object",
             "required": [
                 "first_name",
@@ -2161,7 +1794,88 @@
                 }
             }
         },
-        "rest.UpdateVMObject.VmObjectInput": {
+        "rest.UserModel": {
+            "description": "Used for User endpoints",
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "description": "[OPTIONAL] The display first name for the user.",
+                    "type": "string",
+                    "example": "Default"
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "last_name": {
+                    "description": "[OPTIONAL] The display last name for the user.",
+                    "type": "string",
+                    "example": "User"
+                },
+                "role": {
+                    "description": "[REQUIRED] The role of the user. Admins have full access.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Role"
+                        }
+                    ],
+                    "example": "USER"
+                },
+                "user_to_team": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.TeamEdge"
+                        }
+                    ]
+                },
+                "username": {
+                    "description": "[REQUIRED] The username for the user.",
+                    "type": "string",
+                    "example": "compsole"
+                }
+            }
+        },
+        "rest.VmObjectEdge": {
+            "description": "Used for VM Object in edges",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "identifier": {
+                    "description": "[REQUIRED] The identifier of the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "ip_addresses": {
+                    "description": "[OPTIONAL] IP addresses of the VM. This will be displayed to the user.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "10.0.0.1",
+                        "100.64.0.1"
+                    ]
+                },
+                "locked": {
+                    "description": "[REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "name": {
+                    "description": "[REQUIRED] A user-friendly name for the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "team01.dc.comp.co"
+                }
+            }
+        },
+        "rest.VmObjectInput": {
+            "description": "Used as an input model for creating/updating VM Objects",
             "type": "object",
             "required": [
                 "identifier",
@@ -2194,16 +1908,50 @@
                 }
             }
         },
-        "user.Provider": {
-            "type": "string",
-            "enum": [
-                "LOCAL",
-                "GITLAB"
-            ],
-            "x-enum-varnames": [
-                "ProviderLOCAL",
-                "ProviderGITLAB"
-            ]
+        "rest.VmObjectModel": {
+            "description": "Used for VM Object endpoints",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "identifier": {
+                    "description": "[REQUIRED] The identifier of the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "ip_addresses": {
+                    "description": "[OPTIONAL] IP addresses of the VM. This will be displayed to the user.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "10.0.0.1",
+                        "100.64.0.1"
+                    ]
+                },
+                "locked": {
+                    "description": "[REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "name": {
+                    "description": "[REQUIRED] A user-friendly name for the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "team01.dc.comp.co"
+                },
+                "vm_object_to_team": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.TeamEdge"
+                        }
+                    ]
+                }
+            }
         },
         "user.Role": {
             "type": "string",

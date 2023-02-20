@@ -19,18 +19,23 @@ import (
 //	@Description	List all VM Objects
 //	@Tags			Service API
 //	@Produce		json
-//	@Success		200	{array}		ent.VmObject
+//	@Success		200	{array}		rest.VmObjectModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/vm-object [get]
 func ListVmObjects(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		entVmObjects, err := client.VmObject.Query().All(ctx)
+		entVmObjects, err := client.VmObject.Query().WithVmObjectToTeam().All(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for vm objects", err)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entVmObjects)
+		vmObjectModels := make([]VmObjectModel, len(entVmObjects))
+		for i, entVmObject := range entVmObjects {
+			vmObjectModels[i] = VmObjectEntToModel(entVmObject)
+		}
+
+		ctx.JSON(http.StatusOK, vmObjectModels)
 		ctx.Next()
 	}
 }
@@ -44,7 +49,7 @@ func ListVmObjects(client *ent.Client) gin.HandlerFunc {
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
-//	@Success		200	{object}	ent.VmObject
+//	@Success		200	{object}	rest.VmObjectModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
@@ -61,7 +66,9 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 		entVmObject, err := client.VmObject.Query().
 			Where(
 				vmobject.IDEQ(vmObjectUuid),
-			).Only(ctx)
+			).
+			WithVmObjectToTeam().
+			Only(ctx)
 		if ent.IsNotFound(err) {
 			api.ReturnError(ctx, http.StatusNotFound, "vm object not found", err)
 			return
@@ -71,33 +78,26 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entVmObject)
+		ctx.JSON(http.StatusOK, VmObjectEntToModel(entVmObject))
 		ctx.Next()
 	}
 }
 
-// CreatVMObject godoc
+// CreateVMObject godoc
 //
 //	@Security		ServiceAuth
 //	@Summary		Create a VM Object
 //	@Schemes		http https
 //	@Description	Create a VM Object
 //	@Tags			Service API
-//	@Param			vm_object	body	rest.CreateVMObject.VmObjectInput	true	"The vm object to create"
+//	@Param			vm_object	body	rest.VmObjectInput	true	"The vm object to create"
 //	@Produce		json
-//	@Success		201	{object}	ent.VmObject
+//	@Success		201	{object}	rest.VmObjectModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/vm-object [post]
 func CreateVMObject(client *ent.Client) gin.HandlerFunc {
-	type VmObjectInput struct {
-		Name           string   `json:"name" form:"name" binding:"required" example:"team01.dc.comp.co"`
-		Identifier     string   `json:"identifier" form:"identifier" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-		IpAddresses    []string `json:"ip_addresses" form:"ip_addresses" binding:"required" example:"10.0.0.1,100.64.0.1"`
-		VmObjectToTeam string   `json:"vm_object_to_team" form:"vm_object_to_team" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		var newVmObject VmObjectInput
 		if err := ctx.ShouldBind(&newVmObject); err != nil {
@@ -134,7 +134,13 @@ func CreateVMObject(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entVmObject)
+		entVmObject, err = client.VmObject.Query().Where(vmobject.IDEQ(entVmObject.ID)).WithVmObjectToTeam().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new vm object", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, VmObjectEntToModel(entVmObject))
 		ctx.Next()
 	}
 }
@@ -146,22 +152,15 @@ func CreateVMObject(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Update a VM Object
 //	@Tags			Service API
-//	@Param			id			path	string								true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-//	@Param			vm_object	body	rest.UpdateVMObject.VmObjectInput	true	"The updated vm object"
+//	@Param			id			path	string				true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			vm_object	body	rest.VmObjectInput	true	"The updated vm object"
 //	@Produce		json
-//	@Success		201	{object}	ent.VmObject
+//	@Success		201	{object}	rest.VmObjectModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/vm-object/{id} [put]
 func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
-	type VmObjectInput struct {
-		Name           string   `json:"name" form:"name" binding:"required" example:"team01.dc.comp.co"`
-		Identifier     string   `json:"identifier" form:"identifier" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-		IpAddresses    []string `json:"ip_addresses" form:"ip_addresses" binding:"required" example:"10.0.0.1,100.64.0.1"`
-		VmObjectToTeam string   `json:"vm_object_to_team" form:"vm_object_to_team" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		vmObjectID := ctx.Param("id")
 		vmObjectUuid, err := uuid.Parse(vmObjectID)
@@ -218,7 +217,13 @@ func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entUpdatedVmObject)
+		entUpdatedVmObject, err = client.VmObject.Query().Where(vmobject.IDEQ(entUpdatedVmObject.ID)).WithVmObjectToTeam().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new vm object", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, VmObjectEntToModel(entUpdatedVmObject))
 		ctx.Next()
 	}
 }

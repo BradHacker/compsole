@@ -17,17 +17,17 @@ const (
 	FieldType = "type"
 	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
-	// EdgeProviderToCompetition holds the string denoting the providertocompetition edge name in mutations.
-	EdgeProviderToCompetition = "ProviderToCompetition"
+	// EdgeProviderToCompetitions holds the string denoting the providertocompetitions edge name in mutations.
+	EdgeProviderToCompetitions = "ProviderToCompetitions"
 	// Table holds the table name of the provider in the database.
 	Table = "providers"
-	// ProviderToCompetitionTable is the table that holds the ProviderToCompetition relation/edge.
-	ProviderToCompetitionTable = "competitions"
-	// ProviderToCompetitionInverseTable is the table name for the Competition entity.
+	// ProviderToCompetitionsTable is the table that holds the ProviderToCompetitions relation/edge.
+	ProviderToCompetitionsTable = "competitions"
+	// ProviderToCompetitionsInverseTable is the table name for the Competition entity.
 	// It exists in this package in order to avoid circular dependency with the "competition" package.
-	ProviderToCompetitionInverseTable = "competitions"
-	// ProviderToCompetitionColumn is the table column denoting the ProviderToCompetition relation/edge.
-	ProviderToCompetitionColumn = "competition_competition_to_provider"
+	ProviderToCompetitionsInverseTable = "competitions"
+	// ProviderToCompetitionsColumn is the table column denoting the ProviderToCompetitions relation/edge.
+	ProviderToCompetitionsColumn = "competition_competition_to_provider"
 )
 
 // Columns holds all SQL columns for provider fields.

@@ -508,15 +508,15 @@ func (c *ProviderClient) GetX(ctx context.Context, id uuid.UUID) *Provider {
 	return obj
 }
 
-// QueryProviderToCompetition queries the ProviderToCompetition edge of a Provider.
-func (c *ProviderClient) QueryProviderToCompetition(pr *Provider) *CompetitionQuery {
+// QueryProviderToCompetitions queries the ProviderToCompetitions edge of a Provider.
+func (c *ProviderClient) QueryProviderToCompetitions(pr *Provider) *CompetitionQuery {
 	query := &CompetitionQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := pr.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(provider.Table, provider.FieldID, id),
 			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, provider.ProviderToCompetitionTable, provider.ProviderToCompetitionColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, provider.ProviderToCompetitionsTable, provider.ProviderToCompetitionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
 		return fromV, nil

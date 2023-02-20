@@ -185,9 +185,9 @@ func (pr *Provider) Node(ctx context.Context) (node *Node, err error) {
 	}
 	node.Edges[0] = &Edge{
 		Type: "Competition",
-		Name: "ProviderToCompetition",
+		Name: "ProviderToCompetitions",
 	}
-	err = pr.QueryProviderToCompetition().
+	err = pr.QueryProviderToCompetitions().
 		Select(competition.FieldID).
 		Scan(ctx, &node.Edges[0].IDs)
 	if err != nil {
