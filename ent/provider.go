@@ -20,7 +20,7 @@ type Provider struct {
 	// [REQUIRED] The unique name (aka. slug) for the provider.
 	Name string `json:"name,omitempty"`
 	// Type holds the value of the "type" field.
-	// [REQUIRED] The unique name (aka. slug) for the provider.
+	// [REQUIRED] The type of provider this is (must match a registered one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)
 	Type string `json:"type,omitempty"`
 	// Config holds the value of the "config" field.
 	// [REQUIRED] This is the JSON configuration for the provider.
@@ -32,20 +32,20 @@ type Provider struct {
 
 // ProviderEdges holds the relations/edges for other nodes in the graph.
 type ProviderEdges struct {
-	// ProviderToCompetition holds the value of the ProviderToCompetition edge.
-	ProviderToCompetition []*Competition `json:"ProviderToCompetition,omitempty"`
+	// ProviderToCompetitions holds the value of the ProviderToCompetitions edge.
+	ProviderToCompetitions []*Competition `json:"ProviderToCompetitions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// ProviderToCompetitionOrErr returns the ProviderToCompetition value or an error if the edge
+// ProviderToCompetitionsOrErr returns the ProviderToCompetitions value or an error if the edge
 // was not loaded in eager-loading.
-func (e ProviderEdges) ProviderToCompetitionOrErr() ([]*Competition, error) {
+func (e ProviderEdges) ProviderToCompetitionsOrErr() ([]*Competition, error) {
 	if e.loadedTypes[0] {
-		return e.ProviderToCompetition, nil
+		return e.ProviderToCompetitions, nil
 	}
-	return nil, &NotLoadedError{edge: "ProviderToCompetition"}
+	return nil, &NotLoadedError{edge: "ProviderToCompetitions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -101,9 +101,9 @@ func (pr *Provider) assignValues(columns []string, values []interface{}) error {
 	return nil
 }
 
-// QueryProviderToCompetition queries the "ProviderToCompetition" edge of the Provider entity.
-func (pr *Provider) QueryProviderToCompetition() *CompetitionQuery {
-	return (&ProviderClient{config: pr.config}).QueryProviderToCompetition(pr)
+// QueryProviderToCompetitions queries the "ProviderToCompetitions" edge of the Provider entity.
+func (pr *Provider) QueryProviderToCompetitions() *CompetitionQuery {
+	return (&ProviderClient{config: pr.config}).QueryProviderToCompetitions(pr)
 }
 
 // Update returns a builder for updating this Provider.

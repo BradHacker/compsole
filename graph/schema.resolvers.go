@@ -1385,7 +1385,7 @@ func (r *mutationResolver) DeleteProvider(ctx context.Context, id string) (bool,
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
 	}
-	if competitionCount, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).QueryProviderToCompetition().Count(ctx); err != nil {
+	if competitionCount, err := r.client.Provider.Query().Where(provider.IDEQ(providerUuid)).QueryProviderToCompetitions().Count(ctx); err != nil {
 		return false, fmt.Errorf("failed to query competitions from provider")
 	} else if competitionCount > 0 {
 		return false, fmt.Errorf("cannot delete provider while competitions actively reference it")

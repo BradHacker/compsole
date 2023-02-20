@@ -446,25 +446,25 @@ func ConfigContainsFold(v string) predicate.Provider {
 	})
 }
 
-// HasProviderToCompetition applies the HasEdge predicate on the "ProviderToCompetition" edge.
-func HasProviderToCompetition() predicate.Provider {
+// HasProviderToCompetitions applies the HasEdge predicate on the "ProviderToCompetitions" edge.
+func HasProviderToCompetitions() predicate.Provider {
 	return predicate.Provider(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ProviderToCompetitionTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, ProviderToCompetitionTable, ProviderToCompetitionColumn),
+			sqlgraph.To(ProviderToCompetitionsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ProviderToCompetitionsTable, ProviderToCompetitionsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasProviderToCompetitionWith applies the HasEdge predicate on the "ProviderToCompetition" edge with a given conditions (other predicates).
-func HasProviderToCompetitionWith(preds ...predicate.Competition) predicate.Provider {
+// HasProviderToCompetitionsWith applies the HasEdge predicate on the "ProviderToCompetitions" edge with a given conditions (other predicates).
+func HasProviderToCompetitionsWith(preds ...predicate.Competition) predicate.Provider {
 	return predicate.Provider(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ProviderToCompetitionInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, ProviderToCompetitionTable, ProviderToCompetitionColumn),
+			sqlgraph.To(ProviderToCompetitionsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ProviderToCompetitionsTable, ProviderToCompetitionsColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

@@ -28,7 +28,7 @@ type ProviderQuery struct {
 	fields     []string
 	predicates []predicate.Provider
 	// eager-loading edges.
-	withProviderToCompetition *CompetitionQuery
+	withProviderToCompetitions *CompetitionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,8 +65,8 @@ func (pq *ProviderQuery) Order(o ...OrderFunc) *ProviderQuery {
 	return pq
 }
 
-// QueryProviderToCompetition chains the current query on the "ProviderToCompetition" edge.
-func (pq *ProviderQuery) QueryProviderToCompetition() *CompetitionQuery {
+// QueryProviderToCompetitions chains the current query on the "ProviderToCompetitions" edge.
+func (pq *ProviderQuery) QueryProviderToCompetitions() *CompetitionQuery {
 	query := &CompetitionQuery{config: pq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := pq.prepareQuery(ctx); err != nil {
@@ -79,7 +79,7 @@ func (pq *ProviderQuery) QueryProviderToCompetition() *CompetitionQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(provider.Table, provider.FieldID, selector),
 			sqlgraph.To(competition.Table, competition.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, provider.ProviderToCompetitionTable, provider.ProviderToCompetitionColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, provider.ProviderToCompetitionsTable, provider.ProviderToCompetitionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -263,12 +263,12 @@ func (pq *ProviderQuery) Clone() *ProviderQuery {
 		return nil
 	}
 	return &ProviderQuery{
-		config:                    pq.config,
-		limit:                     pq.limit,
-		offset:                    pq.offset,
-		order:                     append([]OrderFunc{}, pq.order...),
-		predicates:                append([]predicate.Provider{}, pq.predicates...),
-		withProviderToCompetition: pq.withProviderToCompetition.Clone(),
+		config:                     pq.config,
+		limit:                      pq.limit,
+		offset:                     pq.offset,
+		order:                      append([]OrderFunc{}, pq.order...),
+		predicates:                 append([]predicate.Provider{}, pq.predicates...),
+		withProviderToCompetitions: pq.withProviderToCompetitions.Clone(),
 		// clone intermediate query.
 		sql:    pq.sql.Clone(),
 		path:   pq.path,
@@ -276,14 +276,14 @@ func (pq *ProviderQuery) Clone() *ProviderQuery {
 	}
 }
 
-// WithProviderToCompetition tells the query-builder to eager-load the nodes that are connected to
-// the "ProviderToCompetition" edge. The optional arguments are used to configure the query builder of the edge.
-func (pq *ProviderQuery) WithProviderToCompetition(opts ...func(*CompetitionQuery)) *ProviderQuery {
+// WithProviderToCompetitions tells the query-builder to eager-load the nodes that are connected to
+// the "ProviderToCompetitions" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProviderQuery) WithProviderToCompetitions(opts ...func(*CompetitionQuery)) *ProviderQuery {
 	query := &CompetitionQuery{config: pq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	pq.withProviderToCompetition = query
+	pq.withProviderToCompetitions = query
 	return pq
 }
 
@@ -351,7 +351,7 @@ func (pq *ProviderQuery) sqlAll(ctx context.Context) ([]*Provider, error) {
 		nodes       = []*Provider{}
 		_spec       = pq.querySpec()
 		loadedTypes = [1]bool{
-			pq.withProviderToCompetition != nil,
+			pq.withProviderToCompetitions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -374,17 +374,17 @@ func (pq *ProviderQuery) sqlAll(ctx context.Context) ([]*Provider, error) {
 		return nodes, nil
 	}
 
-	if query := pq.withProviderToCompetition; query != nil {
+	if query := pq.withProviderToCompetitions; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
 		nodeids := make(map[uuid.UUID]*Provider)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.ProviderToCompetition = []*Competition{}
+			nodes[i].Edges.ProviderToCompetitions = []*Competition{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Competition(func(s *sql.Selector) {
-			s.Where(sql.InValues(provider.ProviderToCompetitionColumn, fks...))
+			s.Where(sql.InValues(provider.ProviderToCompetitionsColumn, fks...))
 		}))
 		neighbors, err := query.All(ctx)
 		if err != nil {
@@ -399,7 +399,7 @@ func (pq *ProviderQuery) sqlAll(ctx context.Context) ([]*Provider, error) {
 			if !ok {
 				return nil, fmt.Errorf(`unexpected foreign-key "competition_competition_to_provider" returned %v for node %v`, *fk, n.ID)
 			}
-			node.Edges.ProviderToCompetition = append(node.Edges.ProviderToCompetition, n)
+			node.Edges.ProviderToCompetitions = append(node.Edges.ProviderToCompetitions, n)
 		}
 	}
 

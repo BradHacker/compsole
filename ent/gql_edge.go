@@ -36,10 +36,10 @@ func (c *Competition) CompetitionToProvider(ctx context.Context) (*Provider, err
 	return result, err
 }
 
-func (pr *Provider) ProviderToCompetition(ctx context.Context) ([]*Competition, error) {
-	result, err := pr.Edges.ProviderToCompetitionOrErr()
+func (pr *Provider) ProviderToCompetitions(ctx context.Context) ([]*Competition, error) {
+	result, err := pr.Edges.ProviderToCompetitionsOrErr()
 	if IsNotLoaded(err) {
-		result, err = pr.QueryProviderToCompetition().All(ctx)
+		result, err = pr.QueryProviderToCompetitions().All(ctx)
 	}
 	return result, err
 }
