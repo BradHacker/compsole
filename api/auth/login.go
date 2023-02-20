@@ -18,11 +18,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserLoginVals struct {
-	Username string `form:"username" json:"username" binding:"required" example:"admin"`
-	Password string `form:"password" json:"password" binding:"required" example:"password123"`
-}
-
 // LocalLogin godoc
 //
 //	@Summary		Login with a local account
@@ -30,9 +25,9 @@ type UserLoginVals struct {
 //	@Description	Login with a local account
 //	@Tags			Auth API
 //	@Accept			json,mpfd
-//	@Param			login	body	UserLoginVals	true	"User account details"
+//	@Param			login	body	auth.UserLoginVals	true	"User account details"
 //	@Produce		json
-//	@Success		200	{object}	ent.User
+//	@Success		200	{object}	auth.UserModel
 //	@Header			200	{string}	Cookie	"`auth-cookie` contains the session token"
 //	@Router			/auth/local/login [post]
 func LocalLogin(client *ent.Client) gin.HandlerFunc {
@@ -81,7 +76,9 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 				user.UsernameEQ(username),
 				user.ProviderEQ(user.ProviderLOCAL),
 			),
-		).Only(ctx)
+		).
+			WithUserToTeam().
+			Only(ctx)
 		if ent.IsNotFound(err) {
 			err = client.Action.Create().
 				SetIPAddress(clientIp).
@@ -186,7 +183,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		}
 
 		entUser.Password = ""
-		ctx.JSON(200, entUser)
+		ctx.JSON(200, UserEntToModel(entUser))
 
 		ctx.Next()
 	}
