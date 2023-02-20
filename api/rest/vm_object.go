@@ -83,7 +83,7 @@ func GetVMObject(client *ent.Client) gin.HandlerFunc {
 	}
 }
 
-// CreatVMObject godoc
+// CreateVMObject godoc
 //
 //	@Security		ServiceAuth
 //	@Summary		Create a VM Object

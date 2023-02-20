@@ -19,7 +19,7 @@ import (
 //	@Description	List all Teams
 //	@Tags			Service API
 //	@Produce		json
-//	@Success		200	{array}		ent.Team
+//	@Success		200	{array}		rest.TeamModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team [get]
 func ListTeams(client *ent.Client) gin.HandlerFunc {
@@ -30,7 +30,12 @@ func ListTeams(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entTeams)
+		teamModels := make([]TeamModel, len(entTeams))
+		for i, entTeam := range entTeams {
+			teamModels[i] = TeamEntToModel(entTeam)
+		}
+
+		ctx.JSON(http.StatusOK, teamModels)
 		ctx.Next()
 	}
 }
@@ -44,7 +49,7 @@ func ListTeams(client *ent.Client) gin.HandlerFunc {
 //	@Tags			Service API
 //	@Param			id	path	string	true	"The id of the team"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
 //	@Produce		json
-//	@Success		200	{object}	ent.Team
+//	@Success		200	{object}	rest.TeamModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
@@ -61,7 +66,11 @@ func GetTeam(client *ent.Client) gin.HandlerFunc {
 		entTeam, err := client.Team.Query().
 			Where(
 				team.IDEQ(teamUuid),
-			).Only(ctx)
+			).
+			WithTeamToCompetition().
+			WithTeamToVmObjects().
+			WithTeamToUsers().
+			Only(ctx)
 		if ent.IsNotFound(err) {
 			api.ReturnError(ctx, http.StatusNotFound, "team not found", err)
 			return
@@ -71,7 +80,7 @@ func GetTeam(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, entTeam)
+		ctx.JSON(http.StatusOK, TeamEntToModel(entTeam))
 		ctx.Next()
 	}
 }
@@ -83,20 +92,14 @@ func GetTeam(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Create a Team
 //	@Tags			Service API
-//	@Param			team	body	rest.CreateTeam.TeamInput	true	"The team to create"
+//	@Param			team	body	rest.TeamInput	true	"The team to create"
 //	@Produce		json
-//	@Success		201	{object}	ent.Team
+//	@Success		201	{object}	rest.TeamModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team [post]
 func CreateTeam(client *ent.Client) gin.HandlerFunc {
-	type TeamInput struct {
-		Name              string `json:"name" form:"name" binding:"required" example:"ISTS 'XX"`
-		TeamNumber        int    `json:"team_number" form:"team_number" binding:"required" example:"1"`
-		TeamToCompetition string `json:"team_to_competition" form:"team_to_competition" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		var newTeam TeamInput
 		if err := ctx.ShouldBind(&newTeam); err != nil {
@@ -132,7 +135,13 @@ func CreateTeam(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entTeam)
+		entTeam, err = client.Team.Query().Where(team.IDEQ(entTeam.ID)).WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new team", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, TeamEntToModel(entTeam))
 		ctx.Next()
 	}
 }
@@ -144,21 +153,15 @@ func CreateTeam(client *ent.Client) gin.HandlerFunc {
 //	@Schemes		http https
 //	@Description	Update a Team
 //	@Tags			Service API
-//	@Param			id		path	string						true	"The id of the team"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-//	@Param			team	body	rest.UpdateTeam.TeamInput	true	"The updated team"
+//	@Param			id		path	string			true	"The id of the team"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			team	body	rest.TeamInput	true	"The updated team"
 //	@Produce		json
-//	@Success		201	{object}	ent.Team
+//	@Success		201	{object}	rest.TeamModel
 //	@Failure		422	{object}	api.APIError
 //	@Failure		404	{object}	api.APIError
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team/{id} [put]
 func UpdateTeam(client *ent.Client) gin.HandlerFunc {
-	type TeamInput struct {
-		Name              string `json:"name" form:"name" binding:"required" example:"ISTS 'XX"`
-		TeamNumber        int    `json:"team_number" form:"team_number" binding:"required" example:"1"`
-		TeamToCompetition string `json:"team_to_competition" form:"team_to_competition" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	}
-
 	return func(ctx *gin.Context) {
 		teamID := ctx.Param("id")
 		teamUuid, err := uuid.Parse(teamID)
@@ -214,7 +217,13 @@ func UpdateTeam(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, entUpdatedTeam)
+		entUpdatedTeam, err = client.Team.Query().Where(team.IDEQ(entUpdatedTeam.ID)).WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new team", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, TeamEntToModel(entUpdatedTeam))
 		ctx.Next()
 	}
 }

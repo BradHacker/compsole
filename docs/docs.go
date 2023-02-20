@@ -584,7 +584,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.Team"
+                                "$ref": "#/definitions/rest.TeamModel"
                             }
                         }
                     },
@@ -617,7 +617,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateTeam.TeamInput"
+                            "$ref": "#/definitions/rest.TeamInput"
                         }
                     }
                 ],
@@ -625,7 +625,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Team"
+                            "$ref": "#/definitions/rest.TeamModel"
                         }
                     },
                     "404": {
@@ -679,7 +679,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.Team"
+                            "$ref": "#/definitions/rest.TeamModel"
                         }
                     },
                     "404": {
@@ -732,7 +732,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateTeam.TeamInput"
+                            "$ref": "#/definitions/rest.TeamInput"
                         }
                     }
                 ],
@@ -740,7 +740,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Team"
+                            "$ref": "#/definitions/rest.TeamModel"
                         }
                     },
                     "404": {
@@ -1913,6 +1913,22 @@ const docTemplate = `{
                 }
             }
         },
+        "rest.CompetitionEdge": {
+            "description": "Used for Competition in edges",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[REQUIRED] The unique name (aka. slug) for the competition.",
+                    "type": "string",
+                    "example": "Test Competition"
+                }
+            }
+        },
         "rest.CreateCompetition.CompetitionInput": {
             "type": "object",
             "required": [
@@ -1953,28 +1969,6 @@ const docTemplate = `{
                         "OPENSTACK"
                     ],
                     "example": "OPENSTACK"
-                }
-            }
-        },
-        "rest.CreateTeam.TeamInput": {
-            "type": "object",
-            "required": [
-                "name",
-                "team_number",
-                "team_to_competition"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "example": "ISTS 'XX"
-                },
-                "team_number": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "team_to_competition": {
-                    "type": "string",
-                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 }
             }
         },
@@ -2025,6 +2019,70 @@ const docTemplate = `{
                 }
             }
         },
+        "rest.TeamInput": {
+            "description": "Used as an input model for creating/updating Teams",
+            "type": "object",
+            "required": [
+                "name",
+                "team_number",
+                "team_to_competition"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "ISTS 'XX"
+                },
+                "team_number": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "team_to_competition": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                }
+            }
+        },
+        "rest.TeamModel": {
+            "description": "Used for Team endpoints",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[OPTIONAL] The display name for the team.",
+                    "type": "string",
+                    "example": "Team 1"
+                },
+                "team_number": {
+                    "description": "[REQUIRED] The team number.",
+                    "type": "integer",
+                    "example": 1
+                },
+                "team_to_competition": {
+                    "description": "Edges",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rest.CompetitionEdge"
+                        }
+                    ]
+                },
+                "team_to_users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.UserEdge"
+                    }
+                },
+                "team_to_vm_objects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.VmObjectEdge"
+                    }
+                }
+            }
+        },
         "rest.UpdateCompetition.CompetitionInput": {
             "type": "object",
             "required": [
@@ -2066,25 +2124,38 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.UpdateTeam.TeamInput": {
+        "rest.UserEdge": {
+            "description": "Used for User in edges",
             "type": "object",
-            "required": [
-                "name",
-                "team_number",
-                "team_to_competition"
-            ],
             "properties": {
-                "name": {
+                "first_name": {
+                    "description": "[OPTIONAL] The display first name for the user.",
                     "type": "string",
-                    "example": "ISTS 'XX"
+                    "example": "Default"
                 },
-                "team_number": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "team_to_competition": {
+                "id": {
+                    "description": "Fields",
                     "type": "string",
                     "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "last_name": {
+                    "description": "[OPTIONAL] The display last name for the user.",
+                    "type": "string",
+                    "example": "User"
+                },
+                "role": {
+                    "description": "[REQUIRED] The role of the user. Admins have full access.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Role"
+                        }
+                    ],
+                    "example": "USER"
+                },
+                "username": {
+                    "description": "[REQUIRED] The username for the user.",
+                    "type": "string",
+                    "example": "compsole"
                 }
             }
         },
@@ -2164,6 +2235,43 @@ const docTemplate = `{
                     "description": "[REQUIRED] The username for the user.",
                     "type": "string",
                     "example": "compsole"
+                }
+            }
+        },
+        "rest.VmObjectEdge": {
+            "description": "Used for VM Object in edges",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "identifier": {
+                    "description": "[REQUIRED] The identifier of the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "ip_addresses": {
+                    "description": "[OPTIONAL] IP addresses of the VM. This will be displayed to the user.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "10.0.0.1",
+                        "100.64.0.1"
+                    ]
+                },
+                "locked": {
+                    "description": "[REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.",
+                    "type": "boolean",
+                    "example": false
+                },
+                "name": {
+                    "description": "[REQUIRED] A user-friendly name for the VM. This will be provider-specific.",
+                    "type": "string",
+                    "example": "team01.dc.comp.co"
                 }
             }
         },

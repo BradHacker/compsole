@@ -87,6 +87,15 @@ type ProviderEdge struct {
 	Config string    `json:"config" example:"{...}"`                            // [REQUIRED] This is the JSON configuration for the provider.
 }
 
+// TeamInput model info
+//
+//	@Description	Used as an input model for creating/updating Teams
+type TeamInput struct {
+	Name              string `json:"name" form:"name" binding:"required" example:"ISTS 'XX"`
+	TeamNumber        int    `json:"team_number" form:"team_number" binding:"required" example:"1"`
+	TeamToCompetition string `json:"team_to_competition" form:"team_to_competition" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+}
+
 // TeamModel model info
 //
 //	@Description	Used for Team endpoints
