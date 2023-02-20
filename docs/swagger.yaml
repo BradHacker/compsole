@@ -429,7 +429,8 @@ definitions:
     - competition_to_provider
     - name
     type: object
-  rest.CreateProvider.ProviderInput:
+  rest.ProviderInput:
+    description: Used as an input model for creating/updating Providers
     properties:
       config:
         description: See https://github.com/BradHacker/compsole/tree/main/configs
@@ -449,6 +450,32 @@ definitions:
     - config
     - name
     - type
+    type: object
+  rest.ProviderModel:
+    description: Used for Provider endpoints
+    properties:
+      config:
+        description: '[REQUIRED] This is the JSON configuration for the provider.'
+        example: '{...}'
+        type: string
+      id:
+        description: Fields
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+      name:
+        description: '[REQUIRED] The unique name (aka. slug) for the provider.'
+        example: Local Openstack
+        type: string
+      provider_to_competitions:
+        description: Edges
+        items:
+          $ref: '#/definitions/rest.CompetitionEdge'
+        type: array
+      type:
+        description: '[REQUIRED] The type of provider this is (must match a registered
+          one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)'
+        example: OPENSTACK
+        type: string
     type: object
   rest.ServiceLoginResult:
     properties:
@@ -539,24 +566,6 @@ definitions:
     required:
     - competition_to_provider
     - name
-    type: object
-  rest.UpdateProvider.ProviderInput:
-    properties:
-      config:
-        description: See https://github.com/BradHacker/compsole/tree/main/configs
-          for examples
-        type: string
-      name:
-        example: RITSEC Openstack
-        type: string
-      type:
-        enum:
-        - OPENSTACK
-        type: string
-    required:
-    - config
-    - name
-    - type
     type: object
   rest.UserEdge:
     description: Used for User in edges
@@ -974,7 +983,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/ent.Provider'
+              $ref: '#/definitions/rest.ProviderModel'
             type: array
         "500":
           description: Internal Server Error
@@ -993,14 +1002,14 @@ paths:
         name: provider
         required: true
         schema:
-          $ref: '#/definitions/rest.CreateProvider.ProviderInput'
+          $ref: '#/definitions/rest.ProviderInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Provider'
+            $ref: '#/definitions/rest.ProviderModel'
         "404":
           description: Not Found
           schema:
@@ -1067,7 +1076,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ent.Provider'
+            $ref: '#/definitions/rest.ProviderModel'
         "404":
           description: Not Found
           schema:
@@ -1100,14 +1109,14 @@ paths:
         name: provider
         required: true
         schema:
-          $ref: '#/definitions/rest.UpdateProvider.ProviderInput'
+          $ref: '#/definitions/rest.ProviderInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/ent.Provider'
+            $ref: '#/definitions/rest.ProviderModel'
         "404":
           description: Not Found
           schema:

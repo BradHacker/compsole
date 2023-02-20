@@ -63,6 +63,15 @@ type CompetitionEdge struct {
 	Name string    `json:"name" example:"Test Competition"`                   // [REQUIRED] The unique name (aka. slug) for the competition.
 }
 
+// ProviderInput model info
+//
+//	@Description	Used as an input model for creating/updating Providers
+type ProviderInput struct {
+	Name   string `json:"name" form:"name" binding:"required" example:"RITSEC Openstack"`
+	Type   string `json:"type" form:"type" binding:"required" example:"OPENSTACK" enums:"OPENSTACK"`
+	Config string `json:"config" form:"config" binding:"required" example:"See https://github.com/BradHacker/compsole/tree/main/configs for examples"` // See https://github.com/BradHacker/compsole/tree/main/configs for examples
+}
+
 // ProviderModel model info
 //
 //	@Description	Used for Provider endpoints

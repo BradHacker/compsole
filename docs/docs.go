@@ -334,7 +334,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/ent.Provider"
+                                "$ref": "#/definitions/rest.ProviderModel"
                             }
                         }
                     },
@@ -367,7 +367,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.CreateProvider.ProviderInput"
+                            "$ref": "#/definitions/rest.ProviderInput"
                         }
                     }
                 ],
@@ -375,7 +375,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Provider"
+                            "$ref": "#/definitions/rest.ProviderModel"
                         }
                     },
                     "404": {
@@ -429,7 +429,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ent.Provider"
+                            "$ref": "#/definitions/rest.ProviderModel"
                         }
                     },
                     "404": {
@@ -482,7 +482,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/rest.UpdateProvider.ProviderInput"
+                            "$ref": "#/definitions/rest.ProviderInput"
                         }
                     }
                 ],
@@ -490,7 +490,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/ent.Provider"
+                            "$ref": "#/definitions/rest.ProviderModel"
                         }
                     },
                     "404": {
@@ -1946,7 +1946,8 @@ const docTemplate = `{
                 }
             }
         },
-        "rest.CreateProvider.ProviderInput": {
+        "rest.ProviderInput": {
+            "description": "Used as an input model for creating/updating Providers",
             "type": "object",
             "required": [
                 "config",
@@ -1968,6 +1969,39 @@ const docTemplate = `{
                     "enum": [
                         "OPENSTACK"
                     ],
+                    "example": "OPENSTACK"
+                }
+            }
+        },
+        "rest.ProviderModel": {
+            "description": "Used for Provider endpoints",
+            "type": "object",
+            "properties": {
+                "config": {
+                    "description": "[REQUIRED] This is the JSON configuration for the provider.",
+                    "type": "string",
+                    "example": "{...}"
+                },
+                "id": {
+                    "description": "Fields",
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                "name": {
+                    "description": "[REQUIRED] The unique name (aka. slug) for the provider.",
+                    "type": "string",
+                    "example": "Local Openstack"
+                },
+                "provider_to_competitions": {
+                    "description": "Edges",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rest.CompetitionEdge"
+                    }
+                },
+                "type": {
+                    "description": "[REQUIRED] The type of provider this is (must match a registered one in https://github.com/BradHacker/compsole/tree/main/compsole/providers)",
+                    "type": "string",
                     "example": "OPENSTACK"
                 }
             }
@@ -2097,30 +2131,6 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "ISTS 'XX"
-                }
-            }
-        },
-        "rest.UpdateProvider.ProviderInput": {
-            "type": "object",
-            "required": [
-                "config",
-                "name",
-                "type"
-            ],
-            "properties": {
-                "config": {
-                    "description": "See https://github.com/BradHacker/compsole/tree/main/configs for examples",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "example": "RITSEC Openstack"
-                },
-                "type": {
-                    "type": "string",
-                    "enum": [
-                        "OPENSTACK"
-                    ]
                 }
             }
         },
