@@ -25,7 +25,7 @@ import (
 //	@Router			/rest/user [get]
 func ListUsers(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		entUsers, err := client.User.Query().All(ctx)
+		entUsers, err := client.User.Query().WithUserToTeam().All(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for users", err)
 			return

@@ -6,42 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// VmObjectInput model info
-//
-//	@Description	Used as an input model for creating/updating VM Objects
-type VmObjectInput struct {
-	Name           string   `json:"name" form:"name" binding:"required" example:"team01.dc.comp.co"`
-	Identifier     string   `json:"identifier" form:"identifier" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-	IpAddresses    []string `json:"ip_addresses" form:"ip_addresses" binding:"required" example:"10.0.0.1,100.64.0.1"`
-	VmObjectToTeam string   `json:"vm_object_to_team" form:"vm_object_to_team" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
-}
-
-// VmObjectModel model info
-//
-//	@Description	Used for VM Object endpoints
-type VmObjectModel struct {
-	//Fields
-	ID          uuid.UUID `json:"id" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`         // Compsole ID
-	Name        string    `json:"name" example:"team01.dc.comp.co"`                          // [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
-	Identifier  string    `json:"identifier" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"` // [REQUIRED] The identifier of the VM. This will be provider-specific.
-	IpAddresses []string  `json:"ip_addresses" example:"10.0.0.1,100.64.0.1"`                // [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
-	Locked      bool      `json:"locked" example:"false"`                                    // [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
-	// Edges
-	VmObjectToTeam *TeamEdge `json:"vm_object_to_team"`
-}
-
-// VmObjectModel model info
-//
-//	@Description	Used for VM Object in edges
-type VmObjectEdge struct {
-	//Fields
-	ID          uuid.UUID `json:"id" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`         // Compsole ID
-	Name        string    `json:"name" example:"team01.dc.comp.co"`                          // [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
-	Identifier  string    `json:"identifier" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"` // [REQUIRED] The identifier of the VM. This will be provider-specific.
-	IpAddresses []string  `json:"ip_addresses" example:"10.0.0.1,100.64.0.1"`                // [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
-	Locked      bool      `json:"locked" example:"false"`                                    // [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
-}
-
 // CompetitionInput model info
 //
 //	@Description	Used as an input model for creating/updating Competitions
@@ -174,23 +138,40 @@ type UserEdge struct {
 	Role      user.Role `json:"role" example:"USER"`                               // [REQUIRED] The role of the user. Admins have full access.
 }
 
-// VmObjectEntToModel converts the result of a VM Object ENT query into a VmObjectModel for API responses
-func VmObjectEntToModel(entVmObject *ent.VmObject) VmObjectModel {
-	vmObjectModel := VmObjectModel{
-		ID:          entVmObject.ID,
-		Name:        entVmObject.Name,
-		Identifier:  entVmObject.Identifier,
-		IpAddresses: entVmObject.IPAddresses,
-		Locked:      entVmObject.Locked,
-	}
-	if entVmObject.Edges.VmObjectToTeam != nil {
-		vmObjectModel.VmObjectToTeam = &TeamEdge{
-			ID:         entVmObject.Edges.VmObjectToTeam.ID,
-			TeamNumber: entVmObject.Edges.VmObjectToTeam.TeamNumber,
-			Name:       entVmObject.Edges.VmObjectToTeam.Name,
-		}
-	}
-	return vmObjectModel
+// VmObjectInput model info
+//
+//	@Description	Used as an input model for creating/updating VM Objects
+type VmObjectInput struct {
+	Name           string   `json:"name" form:"name" binding:"required" example:"team01.dc.comp.co"`
+	Identifier     string   `json:"identifier" form:"identifier" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+	IpAddresses    []string `json:"ip_addresses" form:"ip_addresses" binding:"required" example:"10.0.0.1,100.64.0.1"`
+	VmObjectToTeam string   `json:"vm_object_to_team" form:"vm_object_to_team" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+}
+
+// VmObjectModel model info
+//
+//	@Description	Used for VM Object endpoints
+type VmObjectModel struct {
+	//Fields
+	ID          uuid.UUID `json:"id" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`         // Compsole ID
+	Name        string    `json:"name" example:"team01.dc.comp.co"`                          // [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
+	Identifier  string    `json:"identifier" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"` // [REQUIRED] The identifier of the VM. This will be provider-specific.
+	IpAddresses []string  `json:"ip_addresses" example:"10.0.0.1,100.64.0.1"`                // [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
+	Locked      bool      `json:"locked" example:"false"`                                    // [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
+	// Edges
+	VmObjectToTeam *TeamEdge `json:"vm_object_to_team"`
+}
+
+// VmObjectModel model info
+//
+//	@Description	Used for VM Object in edges
+type VmObjectEdge struct {
+	//Fields
+	ID          uuid.UUID `json:"id" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`         // Compsole ID
+	Name        string    `json:"name" example:"team01.dc.comp.co"`                          // [REQUIRED] A user-friendly name for the VM. This will be provider-specific.
+	Identifier  string    `json:"identifier" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"` // [REQUIRED] The identifier of the VM. This will be provider-specific.
+	IpAddresses []string  `json:"ip_addresses" example:"10.0.0.1,100.64.0.1"`                // [OPTIONAL] IP addresses of the VM. This will be displayed to the user.
+	Locked      bool      `json:"locked" example:"false"`                                    // [REQUIRED] (default is false) If a vm is locked, standard users will not be able to access this VM.
 }
 
 // CompetitionEntToModel converts the result of a Competition ENT query into a CompetitionModel for API responses
@@ -293,4 +274,23 @@ func UserEntToModel(entUser *ent.User) UserModel {
 		}
 	}
 	return userModel
+}
+
+// VmObjectEntToModel converts the result of a VM Object ENT query into a VmObjectModel for API responses
+func VmObjectEntToModel(entVmObject *ent.VmObject) VmObjectModel {
+	vmObjectModel := VmObjectModel{
+		ID:          entVmObject.ID,
+		Name:        entVmObject.Name,
+		Identifier:  entVmObject.Identifier,
+		IpAddresses: entVmObject.IPAddresses,
+		Locked:      entVmObject.Locked,
+	}
+	if entVmObject.Edges.VmObjectToTeam != nil {
+		vmObjectModel.VmObjectToTeam = &TeamEdge{
+			ID:         entVmObject.Edges.VmObjectToTeam.ID,
+			TeamNumber: entVmObject.Edges.VmObjectToTeam.TeamNumber,
+			Name:       entVmObject.Edges.VmObjectToTeam.Name,
+		}
+	}
+	return vmObjectModel
 }

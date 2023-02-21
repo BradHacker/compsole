@@ -24,7 +24,7 @@ import (
 //	@Router			/rest/team [get]
 func ListTeams(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		entTeams, err := client.Team.Query().All(ctx)
+		entTeams, err := client.Team.Query().WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().All(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for teams", err)
 			return

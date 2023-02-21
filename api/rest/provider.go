@@ -24,7 +24,7 @@ import (
 //	@Router			/rest/provider [get]
 func ListProviders(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		entProviders, err := client.Provider.Query().All(ctx)
+		entProviders, err := client.Provider.Query().WithProviderToCompetitions().All(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for providers", err)
 			return

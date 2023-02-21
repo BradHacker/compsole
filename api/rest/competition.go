@@ -24,7 +24,7 @@ import (
 //	@Router			/rest/competition [get]
 func ListCompetitions(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		entCompetitions, err := client.Competition.Query().All(ctx)
+		entCompetitions, err := client.Competition.Query().WithCompetitionToTeams().WithCompetitionToProvider().All(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competitions", err)
 			return
