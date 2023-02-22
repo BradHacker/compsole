@@ -148,6 +148,13 @@ type VmObjectInput struct {
 	VmObjectToTeam string   `json:"vm_object_to_team" form:"vm_object_to_team" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
 }
 
+// VmObjectInput model info
+//
+//	@Description	Used as an input model for updating VM Object identifiers
+type VmObjectIdentifierInput struct {
+	Identifier string `json:"identifier" form:"identifier" binding:"required" example:"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`
+}
+
 // VmObjectModel model info
 //
 //	@Description	Used for VM Object endpoints

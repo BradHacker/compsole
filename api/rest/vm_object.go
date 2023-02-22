@@ -24,6 +24,7 @@ import (
 //	@Router			/rest/vm-object [get]
 func ListVmObjects(client *ent.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+
 		entVmObjects, err := client.VmObject.Query().WithVmObjectToTeam().All(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for vm objects", err)
@@ -211,6 +212,68 @@ func UpdateVMObject(client *ent.Client) gin.HandlerFunc {
 			SetIdentifier(updatedVmObject.Identifier).
 			SetIPAddresses(updatedVmObject.IpAddresses).
 			SetVmObjectToTeam(entTeam).
+			Save(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to update vm object", err)
+			return
+		}
+
+		entUpdatedVmObject, err = client.VmObject.Query().Where(vmobject.IDEQ(entUpdatedVmObject.ID)).WithVmObjectToTeam().Only(ctx)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new vm object", err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, VmObjectEntToModel(entUpdatedVmObject))
+		ctx.Next()
+	}
+}
+
+// UpdateVMObjectIdentifier godoc
+//
+//	@Security		ServiceAuth
+//	@Summary		Update the Identifier of a VM Object
+//	@Schemes		http https
+//	@Description	Update the Identifier of a VM Object
+//	@Tags			Service API
+//	@Param			id			path	string							true	"The id of the vm object"	format(uuid)	example(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+//	@Param			identifier	body	rest.VmObjectIdentifierInput	true	"The updated vm object identifier"
+//	@Produce		json
+//	@Success		201	{object}	rest.VmObjectModel
+//	@Failure		422	{object}	api.APIError
+//	@Failure		404	{object}	api.APIError
+//	@Failure		500	{object}	api.APIError
+//	@Router			/rest/vm-object/{id}/identifier [put]
+func UpdateVMObjectIdentifier(client *ent.Client) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		vmObjectID := ctx.Param("id")
+		vmObjectUuid, err := uuid.Parse(vmObjectID)
+		if err != nil {
+			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse vm object uuid", err)
+			return
+		}
+
+		entVmObject, err := client.VmObject.Query().
+			Where(
+				vmobject.IDEQ(vmObjectUuid),
+			).Only(ctx)
+		if ent.IsNotFound(err) {
+			api.ReturnError(ctx, http.StatusNotFound, "vm object not found", err)
+			return
+		}
+		if err != nil {
+			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for vm object", err)
+			return
+		}
+
+		var updatedVmObjectIdentifier VmObjectIdentifierInput
+		if err := ctx.ShouldBind(&updatedVmObjectIdentifier); err != nil {
+			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to identifier data", err)
+			return
+		}
+
+		entUpdatedVmObject, err := entVmObject.Update().
+			SetIdentifier(updatedVmObjectIdentifier.Identifier).
 			Save(ctx)
 		if err != nil {
 			api.ReturnError(ctx, http.StatusInternalServerError, "failed to update vm object", err)

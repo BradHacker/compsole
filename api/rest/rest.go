@@ -17,6 +17,7 @@ func RegisterRESTEndpoints(client *ent.Client, r *gin.RouterGroup) {
 	r.POST("/vm-object", CreateVMObject(client))
 	r.GET("/vm-object/:id", GetVMObject(client))
 	r.PUT("/vm-object/:id", UpdateVMObject(client))
+	r.PUT("/vm-object/:id/identifier", UpdateVMObjectIdentifier(client))
 	r.DELETE("/vm-object/:id", DeleteVMObject(client))
 	// Competitions
 	r.GET("/competition", ListCompetitions(client))
