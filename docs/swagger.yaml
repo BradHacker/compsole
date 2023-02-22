@@ -1192,6 +1192,18 @@ paths:
   /rest/vm-object:
     get:
       description: List all VM Objects
+      parameters:
+      - description: field to search by
+        enum:
+        - identifier
+        - name
+        in: query
+        name: field
+        type: string
+      - description: search text
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:

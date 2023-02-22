@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
@@ -18,14 +19,33 @@ import (
 //	@Schemes		http https
 //	@Description	List all VM Objects
 //	@Tags			Service API
+//	@Param			field	query	string	false	"field to search by"	Enums(identifier,name)	validate(optional)
+//	@Param			q		query	string	false	"search text"			validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.VmObjectModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/vm-object [get]
 func ListVmObjects(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "name"
+		}
 
-		entVmObjects, err := client.VmObject.Query().WithVmObjectToTeam().All(c)
+		entVmObjectQuery := client.VmObject.Query().WithVmObjectToTeam()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "identifier":
+				entVmObjectQuery = entVmObjectQuery.Where(vmobject.IdentifierContains(queryText))
+			case "name":
+				entVmObjectQuery = entVmObjectQuery.Where(vmobject.NameContains(queryText))
+			}
+		}
+
+		entVmObjects, err := entVmObjectQuery.All(c)
 		if err != nil {
 			api.ReturnError(c, http.StatusInternalServerError, "failed to query for vm objects", err)
 			return

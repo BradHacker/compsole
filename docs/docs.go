@@ -1166,6 +1166,24 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all VM Objects",
+                "parameters": [
+                    {
+                        "enum": [
+                            "identifier",
+                            "name"
+                        ],
+                        "type": "string",
+                        "description": "field to search by",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search text",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
