@@ -916,6 +916,25 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all Users",
+                "parameters": [
+                    {
+                        "enum": [
+                            "username",
+                            "first_name",
+                            "last_name"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1173,13 +1192,13 @@ const docTemplate = `{
                             "name"
                         ],
                         "type": "string",
-                        "description": "field to search by",
+                        "description": "Field to search by (optional)",
                         "name": "field",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "search text",
+                        "description": "Search text (optional)",
                         "name": "q",
                         "in": "query"
                     }

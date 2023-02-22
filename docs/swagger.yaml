@@ -1031,6 +1031,19 @@ paths:
   /rest/user:
     get:
       description: List all Users
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - username
+        - first_name
+        - last_name
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
@@ -1193,14 +1206,14 @@ paths:
     get:
       description: List all VM Objects
       parameters:
-      - description: field to search by
+      - description: Field to search by (optional)
         enum:
         - identifier
         - name
         in: query
         name: field
         type: string
-      - description: search text
+      - description: Search text (optional)
         in: query
         name: q
         type: string

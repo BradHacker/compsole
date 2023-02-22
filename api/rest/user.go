@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
@@ -19,13 +20,35 @@ import (
 //	@Schemes		http https
 //	@Description	List all Users
 //	@Tags			Service API
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(username,first_name,last_name)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.UserModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user [get]
 func ListUsers(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		entUsers, err := client.User.Query().WithUserToTeam().All(c)
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "name"
+		}
+
+		entUserQuery := client.User.Query().WithUserToTeam()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "username":
+				entUserQuery = entUserQuery.Where(user.UsernameContains(queryText))
+			case "first_name":
+				entUserQuery = entUserQuery.Where(user.FirstNameContains(queryText))
+			case "last_name":
+				entUserQuery = entUserQuery.Where(user.LastNameContains(queryText))
+			}
+		}
+
+		entUsers, err := entUserQuery.All(c)
 		if err != nil {
 			api.ReturnError(c, http.StatusInternalServerError, "failed to query for users", err)
 			return

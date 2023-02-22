@@ -19,8 +19,8 @@ import (
 //	@Schemes		http https
 //	@Description	List all VM Objects
 //	@Tags			Service API
-//	@Param			field	query	string	false	"field to search by"	Enums(identifier,name)	validate(optional)
-//	@Param			q		query	string	false	"search text"			validate(optional)
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(identifier,name)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.VmObjectModel
 //	@Failure		500	{object}	api.APIError
