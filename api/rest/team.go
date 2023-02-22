@@ -2,6 +2,8 @@ package rest
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
@@ -18,13 +20,38 @@ import (
 //	@Schemes		http https
 //	@Description	List all Teams
 //	@Tags			Service API
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(name,number)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.TeamModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team [get]
 func ListTeams(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		entTeams, err := client.Team.Query().WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().All(c)
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "name"
+		}
+
+		entTeamQuery := client.Team.Query().WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "name":
+				entTeamQuery = entTeamQuery.Where(team.NameContains(queryText))
+			case "number":
+				teamNumber, err := strconv.Atoi(queryText)
+				if err != nil {
+					api.ReturnError(c, http.StatusBadRequest, "failed to parse team number as int", err)
+					return
+				}
+				entTeamQuery = entTeamQuery.Where(team.TeamNumberEQ(teamNumber))
+			}
+		}
+
+		entTeams, err := entTeamQuery.All(c)
 		if err != nil {
 			api.ReturnError(c, http.StatusInternalServerError, "failed to query for teams", err)
 			return

@@ -578,6 +578,24 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all Teams",
+                "parameters": [
+                    {
+                        "enum": [
+                            "name",
+                            "number"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

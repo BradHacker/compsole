@@ -810,6 +810,18 @@ paths:
   /rest/team:
     get:
       description: List all Teams
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - name
+        - number
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
