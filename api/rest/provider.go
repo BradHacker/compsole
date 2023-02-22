@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/compsole/providers"
@@ -18,13 +19,31 @@ import (
 //	@Schemes		http https
 //	@Description	List all Providers
 //	@Tags			Service API
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(name)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.ProviderModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider [get]
 func ListProviders(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		entProviders, err := client.Provider.Query().WithProviderToCompetitions().All(c)
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "name"
+		}
+
+		entProviderQuery := client.Provider.Query().WithProviderToCompetitions()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "name":
+				entProviderQuery = entProviderQuery.Where(provider.NameContains(queryText))
+			}
+		}
+
+		entProviders, err := entProviderQuery.All(c)
 		if err != nil {
 			api.ReturnError(c, http.StatusInternalServerError, "failed to query for providers", err)
 			return

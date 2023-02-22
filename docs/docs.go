@@ -328,6 +328,23 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all Providers",
+                "parameters": [
+                    {
+                        "enum": [
+                            "name"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

@@ -30,7 +30,7 @@ func ListUsers(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		queryField := c.Query("field")
 		if queryField == "" {
-			queryField = "name"
+			queryField = "username"
 		}
 
 		entUserQuery := client.User.Query().WithUserToTeam()

@@ -649,6 +649,17 @@ paths:
   /rest/provider:
     get:
       description: List all Providers
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - name
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
