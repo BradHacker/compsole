@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
@@ -18,13 +19,31 @@ import (
 //	@Schemes		http https
 //	@Description	List all Competitions
 //	@Tags			Service API
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(name)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.CompetitionModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition [get]
 func ListCompetitions(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		entCompetitions, err := client.Competition.Query().WithCompetitionToTeams().WithCompetitionToProvider().All(c)
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "name"
+		}
+
+		entCompetitionQuery := client.Competition.Query().WithCompetitionToTeams().WithCompetitionToProvider()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "name":
+				entCompetitionQuery = entCompetitionQuery.Where(competition.NameContains(queryText))
+			}
+		}
+
+		entCompetitions, err := entCompetitionQuery.All(c)
 		if err != nil {
 			api.ReturnError(c, http.StatusInternalServerError, "failed to query for competitions", err)
 			return
