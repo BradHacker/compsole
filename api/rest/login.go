@@ -31,7 +31,7 @@ type ServiceLoginResult struct {
 	ExpiresAt int64  `json:"token_expires_at"`
 }
 
-func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServiceAccount *ent.ServiceAccount, existingRefreshToken *string) {
+func generateAndReturnServiceToken(c *gin.Context, client *ent.Client, entServiceAccount *ent.ServiceAccount, existingRefreshToken *string) {
 	hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
 	if !ok {
 		hostname = "localhost"
@@ -59,7 +59,7 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 	if !exists {
 		// Kill the request if we don't have a valid JWT_SECRET
 		logrus.Error("env variable JWT_SECRET not set")
-		api.ReturnError(ctx, http.StatusInternalServerError, "check logs for details", fmt.Errorf("check logs for details"))
+		api.ReturnError(c, http.StatusInternalServerError, "check logs for details", fmt.Errorf("check logs for details"))
 		return
 	}
 
@@ -76,7 +76,7 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, tokenClaims)
 	tokenString, err := token.SignedString([]byte(jwtKey))
 	if err != nil {
-		api.ReturnError(ctx, http.StatusUnauthorized, "failed to sign api token", err)
+		api.ReturnError(c, http.StatusUnauthorized, "failed to sign api token", err)
 		return
 	}
 
@@ -94,7 +94,7 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshTokenClaims)
 		refreshTokenString, err = refreshToken.SignedString([]byte(jwtKey))
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "failed to sign api refresh token", err)
+			api.ReturnError(c, http.StatusUnauthorized, "failed to sign api refresh token", err)
 			return
 		}
 	} else {
@@ -107,14 +107,14 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 		SetIssuedAt(issuedAt.Unix()).
 		SetToken(tokenString).
 		SetRefreshToken(refreshTokenString).
-		Save(ctx)
+		Save(c)
 	if err != nil {
-		api.ReturnError(ctx, http.StatusUnauthorized, "failed to update token", err)
+		api.ReturnError(c, http.StatusUnauthorized, "failed to update token", err)
 		return
 	}
 
 	// Get the client's IP address
-	clientIp, err := api.ForContextIp(ctx)
+	clientIp, err := api.ForContextIp(c)
 	if err != nil {
 		logrus.Warnf("failed to get IP from gin context: %v", err)
 	}
@@ -125,18 +125,18 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 		SetType(action.TypeSIGN_IN).
 		SetMessage(fmt.Sprintf("service account \"%s\" has created a session", entServiceAccount.DisplayName)).
 		SetActionToServiceAccount(entServiceAccount).
-		Exec(ctx)
+		Exec(c)
 	if err != nil {
 		logrus.Warn("failed to create SIGN_IN action: %v", err)
 	}
 
 	if secureCookie {
-		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), REFRESH_TOKEN_PATH, hostname, true, true)
+		c.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), REFRESH_TOKEN_PATH, hostname, true, true)
 	} else {
-		ctx.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), REFRESH_TOKEN_PATH, hostname, false, false)
+		c.SetCookie(REFRESH_TOKEN_COOKIE, refreshTokenString, int(time.Duration(time.Hour*time.Duration(refreshWindow)).Seconds()), REFRESH_TOKEN_PATH, hostname, false, false)
 	}
 
-	ctx.JSON(http.StatusOK, ServiceLoginResult{
+	c.JSON(http.StatusOK, ServiceLoginResult{
 		Token:     tokenString,
 		ExpiresAt: tokenExpiresAt,
 	})
@@ -158,28 +158,28 @@ func generateAndReturnServiceToken(ctx *gin.Context, client *ent.Client, entServ
 //
 // ServiceLogin handles login of service accounts and packs the session into context
 func ServiceLogin(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		var loginVals ServiceLoginVals
 
-		if err := ctx.ShouldBind(&loginVals); err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "failed to bind to login values", err)
+		if err := c.ShouldBind(&loginVals); err != nil {
+			api.ReturnError(c, http.StatusUnauthorized, "failed to bind to login values", err)
 			return
 		}
 
 		// Get the client's IP address
-		clientIp, err := api.ForContextIp(ctx)
+		clientIp, err := api.ForContextIp(c)
 		if err != nil {
 			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
 
 		apiKey, err := uuid.Parse(loginVals.ApiKey)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "failed to parse api_key", err)
+			api.ReturnError(c, http.StatusUnauthorized, "failed to parse api_key", err)
 			return
 		}
 		apiSecret, err := uuid.Parse(loginVals.ApiSecret)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "failed to parse api_secret", err)
+			api.ReturnError(c, http.StatusUnauthorized, "failed to parse api_secret", err)
 			return
 		}
 
@@ -189,23 +189,23 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 				serviceaccount.APISecretEQ(apiSecret),
 				serviceaccount.ActiveEQ(true), // only active accounts may authenticate
 			),
-		).Only(ctx)
+		).Only(c)
 		if ent.IsNotFound(err) {
 			err = client.Action.Create().
 				SetIPAddress(clientIp).
 				SetType(action.TypeFAILED_SIGN_IN).
 				SetMessage(fmt.Sprintf("service account failed login for api_key: \"%s\"", apiKey)).
-				Exec(ctx)
+				Exec(c)
 			if err != nil {
 				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "api_key or api_secret is invalid", err)
+			api.ReturnError(c, http.StatusUnauthorized, "api_key or api_secret is invalid", err)
 			return
 		}
 
-		generateAndReturnServiceToken(ctx, client, entServiceAccount, nil)
+		generateAndReturnServiceToken(c, client, entServiceAccount, nil)
 	}
 }
 
@@ -224,10 +224,10 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 //
 // ServiceTokenRefresh handles refreshing sessions automatically
 func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		refreshTokenString, err := ctx.Cookie(REFRESH_TOKEN_COOKIE)
+	return func(c *gin.Context) {
+		refreshTokenString, err := c.Cookie(REFRESH_TOKEN_COOKIE)
 		if err != nil || refreshTokenString == "" {
-			api.ReturnError(ctx, http.StatusBadRequest, fmt.Sprintf("must have `%s` cookie set", REFRESH_TOKEN_COOKIE), fmt.Errorf("must provide refresh token cookie"))
+			api.ReturnError(c, http.StatusBadRequest, fmt.Sprintf("must have `%s` cookie set", REFRESH_TOKEN_COOKIE), fmt.Errorf("must provide refresh token cookie"))
 			return
 		}
 
@@ -235,7 +235,7 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 		if !exists {
 			// Kill the request if we don't have a valid JWT_SECRET
 			logrus.Error("env variable JWT_SECRET not set")
-			api.ReturnError(ctx, http.StatusInternalServerError, "check logs for details", fmt.Errorf("check logs for details"))
+			api.ReturnError(c, http.StatusInternalServerError, "check logs for details", fmt.Errorf("check logs for details"))
 			return
 		}
 
@@ -243,25 +243,25 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 			return []byte(jwtKey), nil
 		})
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "invalid or expired token", err)
+			api.ReturnError(c, http.StatusUnauthorized, "invalid or expired token", err)
 			return
 		}
 
 		claims, ok := refreshToken.Claims.(*api.CompsoleJWTClaims)
 		if !ok {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse JWT claims", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse JWT claims", err)
 			return
 		}
 
 		apiKey := claims.ApiKey
 		apiKeyUUID, err := uuid.Parse(apiKey)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to extract JWT claims", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to extract JWT claims", err)
 			return
 		}
 
 		// Get the client's IP address
-		clientIp, err := api.ForContextIp(ctx)
+		clientIp, err := api.ForContextIp(c)
 		if err != nil {
 			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
@@ -272,28 +272,28 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 				serviceaccount.ActiveEQ(true),
 			),
 			servicetoken.RefreshTokenEQ(refreshTokenString),
-		).Only(ctx)
+		).Only(c)
 		if ent.IsNotFound(err) {
 			err = client.Action.Create().
 				SetIPAddress(clientIp).
 				SetType(action.TypeFAILED_SIGN_IN).
 				SetMessage(fmt.Sprintf("service account failed token refresh for api_key: \"%s\"", apiKey)).
-				Exec(ctx)
+				Exec(c)
 			if err != nil {
 				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnauthorized, "authorization header or refresh token invalid/expired", err)
+			api.ReturnError(c, http.StatusUnauthorized, "authorization header or refresh token invalid/expired", err)
 			return
 		}
 
-		entServiceAccount, err := entServiceToken.QueryTokenToServiceAccount().Only(ctx)
+		entServiceAccount, err := entServiceToken.QueryTokenToServiceAccount().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query service account from service token", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query service account from service token", err)
 			return
 		}
 
-		generateAndReturnServiceToken(ctx, client, entServiceAccount, &refreshTokenString)
+		generateAndReturnServiceToken(c, client, entServiceAccount, &refreshTokenString)
 	}
 }

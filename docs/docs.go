@@ -328,6 +328,23 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all Providers",
+                "parameters": [
+                    {
+                        "enum": [
+                            "name"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -578,6 +595,24 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all Teams",
+                "parameters": [
+                    {
+                        "enum": [
+                            "name",
+                            "number"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -916,6 +951,25 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all Users",
+                "parameters": [
+                    {
+                        "enum": [
+                            "username",
+                            "first_name",
+                            "last_name"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1166,6 +1220,24 @@ const docTemplate = `{
                     "Service API"
                 ],
                 "summary": "List all VM Objects",
+                "parameters": [
+                    {
+                        "enum": [
+                            "identifier",
+                            "name"
+                        ],
+                        "type": "string",
+                        "description": "Field to search by (optional)",
+                        "name": "field",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search text (optional)",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1379,6 +1451,69 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/rest/vm-object/{id}/identifier": {
+            "put": {
+                "security": [
+                    {
+                        "ServiceAuth": []
+                    }
+                ],
+                "description": "Update the Identifier of a VM Object",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Service API"
+                ],
+                "summary": "Update the Identifier of a VM Object",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                        "description": "The id of the vm object",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "The updated vm object identifier",
+                        "name": "identifier",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rest.VmObjectIdentifierInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/rest.VmObjectModel"
+                        }
                     },
                     "404": {
                         "description": "Not Found",
@@ -1878,6 +2013,19 @@ const docTemplate = `{
                     "description": "[REQUIRED] A user-friendly name for the VM. This will be provider-specific.",
                     "type": "string",
                     "example": "team01.dc.comp.co"
+                }
+            }
+        },
+        "rest.VmObjectIdentifierInput": {
+            "description": "Used as an input model for updating VM Object identifiers",
+            "type": "object",
+            "required": [
+                "identifier"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "example": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 }
             }
         },

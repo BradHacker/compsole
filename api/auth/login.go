@@ -31,7 +31,7 @@ import (
 //	@Header			200	{string}	Cookie	"`auth-cookie` contains the session token"
 //	@Router			/auth/local/login [post]
 func LocalLogin(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
 		if !ok {
 			hostname = "localhost"
@@ -52,13 +52,13 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		username := ""
 		password := ""
 
-		if err := ctx.ShouldBind(&loginVals); err != nil {
+		if err := c.ShouldBind(&loginVals); err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
 			return
 		} else {
 			username = loginVals.Username
@@ -66,7 +66,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		}
 
 		// Get the client's IP address
-		clientIp, err := api.ForContextIp(ctx)
+		clientIp, err := api.ForContextIp(c)
 		if err != nil {
 			logrus.Warnf("failed to get IP from gin context: %v", err)
 		}
@@ -78,25 +78,25 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			),
 		).
 			WithUserToTeam().
-			Only(ctx)
+			Only(c)
 		if ent.IsNotFound(err) {
 			err = client.Action.Create().
 				SetIPAddress(clientIp).
 				SetType(action.TypeFAILED_SIGN_IN).
 				SetMessage(fmt.Sprintf("user \"%s\" does not exists", username)).
 				SetActionToUser(entUser).
-				Exec(ctx)
+				Exec(c)
 			if err != nil {
 				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 		}
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			return
 		}
 		// Compare the stored hashed password, with the hashed version of the password that was received
@@ -106,16 +106,16 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 				SetType(action.TypeFAILED_SIGN_IN).
 				SetMessage(fmt.Sprintf("wrong password for user \"%s\"", username)).
 				SetActionToUser(entUser).
-				Exec(ctx)
+				Exec(c)
 			if err != nil {
 				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			return
 		}
 
@@ -133,42 +133,42 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		jwtKey, exists := os.LookupEnv("JWT_SECRET")
 		if !exists {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
 			logrus.Warn("env var JWT_SECRET is not set")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
 			return
 		}
 
 		tokenString, err := token.SignedString([]byte(jwtKey))
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
 			logrus.Errorf("error signing token: %v", err)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error signing token"})
 			return
 		}
 
-		_, err = client.Token.Create().SetTokenToUser(entUser).SetExpireAt(expiresAt).SetToken(tokenString).Save(ctx)
+		_, err = client.Token.Create().SetTokenToUser(entUser).SetExpireAt(expiresAt).SetToken(tokenString).Save(c)
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
 			return
 		}
 
 		if secure_cookie {
-			ctx.SetCookie("auth-cookie", tokenString, cookie_timeout*60, "/", hostname, true, true)
+			c.SetCookie("auth-cookie", tokenString, cookie_timeout*60, "/", hostname, true, true)
 		} else {
-			ctx.SetCookie("auth-cookie", tokenString, cookie_timeout*60, "/", hostname, false, false)
+			c.SetCookie("auth-cookie", tokenString, cookie_timeout*60, "/", hostname, false, false)
 		}
 
 		// Successful sign-in
@@ -177,21 +177,21 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			SetType(action.TypeSIGN_IN).
 			SetMessage(fmt.Sprintf("user \"%s\" has signed in successfully", username)).
 			SetActionToUser(entUser).
-			Exec(ctx)
+			Exec(c)
 		if err != nil {
 			logrus.Warn("failed to create SIGN_IN action: %v", err)
 		}
 
 		entUser.Password = ""
-		ctx.JSON(200, UserEntToModel(entUser))
+		c.JSON(200, UserEntToModel(entUser))
 
-		ctx.Next()
+		c.Next()
 	}
 }
 
 // Logout decodes the share session cookie and packs the session into context
 func Logout(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")
 		if !ok {
 			hostname = "localhost"
@@ -203,14 +203,14 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 			}
 		}
 
-		authCookie, err := ctx.Cookie("auth-cookie")
+		authCookie, err := c.Cookie("auth-cookie")
 
 		// Allow unauthenticated users in
 		if err != nil || authCookie == "" {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
 			return
 		}
@@ -224,11 +224,11 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 		jwtKey, exists := os.LookupEnv("JWT_SECRET")
 		if !exists {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
@@ -242,82 +242,82 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
 			if err == jwt.ErrSignatureInvalid {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
+				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
-			ctx.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatus(http.StatusBadRequest)
 			return
 		}
 		if !tkn.Valid {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
 		// Get the user and log a sign out event
-		entUser, err := client.User.Query().Where(user.HasUserToTokenWith(token.TokenEQ(authCookie))).Only(ctx)
+		entUser, err := client.User.Query().Where(user.HasUserToTokenWith(token.TokenEQ(authCookie))).Only(c)
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
 			return
 		}
-		clientIpValues, exists := ctx.Request.Header["X-Forwarded-For"]
+		clientIpValues, exists := c.Request.Header["X-Forwarded-For"]
 		clientIp := ""
 		if exists {
 			clientIp = clientIpValues[0]
 		} else {
-			clientIp = ctx.RemoteIP()
+			clientIp = c.RemoteIP()
 		}
 		err = client.Action.Create().
 			SetIPAddress(clientIp).
 			SetType(action.TypeSIGN_OUT).
 			SetMessage(fmt.Sprintf("user \"%s\" has signed out", entUser.Username)).
 			SetActionToUser(entUser).
-			Exec(ctx)
+			Exec(c)
 		if err != nil {
 			logrus.Warn("failed to create SIGN_OUT action: %v", err)
 		}
 
-		_, err = client.Token.Delete().Where(token.TokenEQ(authCookie)).Exec(ctx)
+		_, err = client.Token.Delete().Where(token.TokenEQ(authCookie)).Exec(c)
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
 			return
 		}
 
 		if err != nil {
 			if secure_cookie {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
-				ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
 			return
 		}
 
 		if secure_cookie {
-			ctx.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
+			c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 		} else {
-			ctx.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
+			c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 		}
 
-		ctx.Next()
+		c.Next()
 	}
 }

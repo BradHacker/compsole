@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/ent"
@@ -19,15 +20,37 @@ import (
 //	@Schemes		http https
 //	@Description	List all Users
 //	@Tags			Service API
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(username,first_name,last_name)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.UserModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user [get]
 func ListUsers(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		entUsers, err := client.User.Query().WithUserToTeam().All(ctx)
+	return func(c *gin.Context) {
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "username"
+		}
+
+		entUserQuery := client.User.Query().WithUserToTeam()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "username":
+				entUserQuery = entUserQuery.Where(user.UsernameContains(queryText))
+			case "first_name":
+				entUserQuery = entUserQuery.Where(user.FirstNameContains(queryText))
+			case "last_name":
+				entUserQuery = entUserQuery.Where(user.LastNameContains(queryText))
+			}
+		}
+
+		entUsers, err := entUserQuery.All(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for users", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for users", err)
 			return
 		}
 
@@ -36,8 +59,8 @@ func ListUsers(client *ent.Client) gin.HandlerFunc {
 			userModels[i] = UserEntToModel(entUser)
 		}
 
-		ctx.JSON(http.StatusOK, userModels)
-		ctx.Next()
+		c.JSON(http.StatusOK, userModels)
+		c.Next()
 	}
 }
 
@@ -56,11 +79,11 @@ func ListUsers(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user/{id} [get]
 func GetUser(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		userID := ctx.Param("id")
+	return func(c *gin.Context) {
+		userID := c.Param("id")
 		userUuid, err := uuid.Parse(userID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse user uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse user uuid", err)
 		}
 
 		entUser, err := client.User.Query().
@@ -68,18 +91,18 @@ func GetUser(client *ent.Client) gin.HandlerFunc {
 				user.IDEQ(userUuid),
 			).
 			WithUserToTeam().
-			Only(ctx)
+			Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "user not found", err)
+			api.ReturnError(c, http.StatusNotFound, "user not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for user", err)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, UserEntToModel(entUser))
-		ctx.Next()
+		c.JSON(http.StatusOK, UserEntToModel(entUser))
+		c.Next()
 	}
 }
 
@@ -98,10 +121,10 @@ func GetUser(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user [post]
 func CreateUser(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		var newUser UserInput
-		if err := ctx.ShouldBind(&newUser); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to user data", err)
+		if err := c.ShouldBind(&newUser); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to user data", err)
 			return
 		}
 
@@ -109,19 +132,19 @@ func CreateUser(client *ent.Client) gin.HandlerFunc {
 		if newUser.UserToTeam != nil {
 			teamUuid, err := uuid.Parse(*newUser.UserToTeam)
 			if err != nil {
-				api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+				api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
 				return
 			}
 			entTeam, err = client.Team.Query().
 				Where(
 					team.IDEQ(teamUuid),
-				).Only(ctx)
+				).Only(c)
 			if ent.IsNotFound(err) {
-				api.ReturnError(ctx, http.StatusNotFound, "team not found", err)
+				api.ReturnError(c, http.StatusNotFound, "team not found", err)
 				return
 			}
 			if err != nil {
-				api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for team", err)
+				api.ReturnError(c, http.StatusInternalServerError, "failed to query for team", err)
 				return
 			}
 		}
@@ -132,20 +155,20 @@ func CreateUser(client *ent.Client) gin.HandlerFunc {
 			SetLastName(newUser.LastName).
 			SetRole(user.Role(newUser.Role)).
 			SetUserToTeam(entTeam).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to create user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to create user", err)
 			return
 		}
 
-		entUser, err = client.User.Query().Where(user.IDEQ(entUser.ID)).WithUserToTeam().Only(ctx)
+		entUser, err = client.User.Query().Where(user.IDEQ(entUser.ID)).WithUserToTeam().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query new user", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, UserEntToModel(entUser))
-		ctx.Next()
+		c.JSON(http.StatusCreated, UserEntToModel(entUser))
+		c.Next()
 	}
 }
 
@@ -165,29 +188,29 @@ func CreateUser(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user/{id} [put]
 func UpdateUser(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		userID := ctx.Param("id")
+	return func(c *gin.Context) {
+		userID := c.Param("id")
 		userUuid, err := uuid.Parse(userID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse user uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse user uuid", err)
 		}
 
 		entUser, err := client.User.Query().
 			Where(
 				user.IDEQ(userUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "user not found", err)
+			api.ReturnError(c, http.StatusNotFound, "user not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for user", err)
 			return
 		}
 
 		var updatedUser UserInput
-		if err := ctx.ShouldBind(&updatedUser); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to user data", err)
+		if err := c.ShouldBind(&updatedUser); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to user data", err)
 			return
 		}
 
@@ -195,19 +218,19 @@ func UpdateUser(client *ent.Client) gin.HandlerFunc {
 		if updatedUser.UserToTeam != nil {
 			teamUuid, err := uuid.Parse(*updatedUser.UserToTeam)
 			if err != nil {
-				api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+				api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
 				return
 			}
 			entTeam, err = client.Team.Query().
 				Where(
 					team.IDEQ(teamUuid),
-				).Only(ctx)
+				).Only(c)
 			if ent.IsNotFound(err) {
-				api.ReturnError(ctx, http.StatusNotFound, "team not found", err)
+				api.ReturnError(c, http.StatusNotFound, "team not found", err)
 				return
 			}
 			if err != nil {
-				api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for team", err)
+				api.ReturnError(c, http.StatusInternalServerError, "failed to query for team", err)
 				return
 			}
 		}
@@ -218,20 +241,20 @@ func UpdateUser(client *ent.Client) gin.HandlerFunc {
 			SetLastName(updatedUser.LastName).
 			SetRole(user.Role(updatedUser.Role)).
 			SetUserToTeam(entTeam).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to update user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to update user", err)
 			return
 		}
 
-		entUpdatedUser, err = client.User.Query().Where(user.IDEQ(entUpdatedUser.ID)).WithUserToTeam().Only(ctx)
+		entUpdatedUser, err = client.User.Query().Where(user.IDEQ(entUpdatedUser.ID)).WithUserToTeam().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query new user", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, UserEntToModel(entUpdatedUser))
-		ctx.Next()
+		c.JSON(http.StatusCreated, UserEntToModel(entUpdatedUser))
+		c.Next()
 	}
 }
 
@@ -250,11 +273,11 @@ func UpdateUser(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/user/{id} [delete]
 func DeleteUser(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		userID := ctx.Param("id")
+	return func(c *gin.Context) {
+		userID := c.Param("id")
 		userUuid, err := uuid.Parse(userID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse user uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse user uuid", err)
 			return
 		}
 
@@ -264,25 +287,25 @@ func DeleteUser(client *ent.Client) gin.HandlerFunc {
 				user.IDNEQ(userUuid),
 				user.RoleEQ(user.RoleADMIN),
 			),
-		).Count(ctx); err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to count users", err)
+		).Count(c); err != nil {
+			api.ReturnError(c, http.StatusInternalServerError, "failed to count users", err)
 			return
 		} else if userCount <= 0 {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "cannot delete user. at least one admin must exist", fmt.Errorf("cannot delete user. at least one admin must exist"))
+			api.ReturnError(c, http.StatusUnprocessableEntity, "cannot delete user. at least one admin must exist", fmt.Errorf("cannot delete user. at least one admin must exist"))
 			return
 		}
 
-		err = client.User.DeleteOneID(userUuid).Exec(ctx)
+		err = client.User.DeleteOneID(userUuid).Exec(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "user not found", err)
+			api.ReturnError(c, http.StatusNotFound, "user not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to delete user", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to delete user", err)
 			return
 		}
 
-		ctx.Status(http.StatusNoContent)
-		ctx.Next()
+		c.Status(http.StatusNoContent)
+		c.Next()
 	}
 }

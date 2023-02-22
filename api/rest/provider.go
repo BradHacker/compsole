@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/BradHacker/compsole/api"
 	"github.com/BradHacker/compsole/compsole/providers"
@@ -18,15 +19,33 @@ import (
 //	@Schemes		http https
 //	@Description	List all Providers
 //	@Tags			Service API
+//	@Param			field	query	string	false	"Field to search by (optional)"	Enums(name)	validate(optional)
+//	@Param			q		query	string	false	"Search text (optional)"		validate(optional)
 //	@Produce		json
 //	@Success		200	{array}		rest.ProviderModel
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider [get]
 func ListProviders(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		entProviders, err := client.Provider.Query().WithProviderToCompetitions().All(ctx)
+	return func(c *gin.Context) {
+		queryField := c.Query("field")
+		if queryField == "" {
+			queryField = "name"
+		}
+
+		entProviderQuery := client.Provider.Query().WithProviderToCompetitions()
+
+		queryText := c.Query("q")
+		if queryText != "" {
+			queryText = strings.Trim(queryText, " ")
+			switch strings.Trim(queryField, " ") {
+			case "name":
+				entProviderQuery = entProviderQuery.Where(provider.NameContains(queryText))
+			}
+		}
+
+		entProviders, err := entProviderQuery.All(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for providers", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for providers", err)
 			return
 		}
 
@@ -35,8 +54,8 @@ func ListProviders(client *ent.Client) gin.HandlerFunc {
 			providerModels[i] = ProviderEntToModel(entProvider)
 		}
 
-		ctx.JSON(http.StatusOK, providerModels)
-		ctx.Next()
+		c.JSON(http.StatusOK, providerModels)
+		c.Next()
 	}
 }
 
@@ -55,11 +74,11 @@ func ListProviders(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider/{id} [get]
 func GetProvider(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		providerID := ctx.Param("id")
+	return func(c *gin.Context) {
+		providerID := c.Param("id")
 		providerUuid, err := uuid.Parse(providerID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
 			return
 		}
 
@@ -68,18 +87,18 @@ func GetProvider(client *ent.Client) gin.HandlerFunc {
 				provider.IDEQ(providerUuid),
 			).
 			WithProviderToCompetitions().
-			Only(ctx)
+			Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "provider not found", err)
+			api.ReturnError(c, http.StatusNotFound, "provider not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for provider", err)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, ProviderEntToModel(entProvider))
-		ctx.Next()
+		c.JSON(http.StatusOK, ProviderEntToModel(entProvider))
+		c.Next()
 	}
 }
 
@@ -98,17 +117,17 @@ func GetProvider(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider [post]
 func CreateProvider(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		var newProvider ProviderInput
-		if err := ctx.ShouldBind(&newProvider); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to provider data", err)
+		if err := c.ShouldBind(&newProvider); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to provider data", err)
 			return
 		}
 
 		// Validate provider configuration
 		err := providers.ValidateConfig(newProvider.Type, newProvider.Config)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "provider config is invalid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "provider config is invalid", err)
 			return
 		}
 
@@ -116,20 +135,20 @@ func CreateProvider(client *ent.Client) gin.HandlerFunc {
 			SetName(newProvider.Name).
 			SetType(newProvider.Type).
 			SetConfig(newProvider.Config).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to create provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to create provider", err)
 			return
 		}
 
-		entProvider, err = client.Provider.Query().Where(provider.IDEQ(entProvider.ID)).WithProviderToCompetitions().Only(ctx)
+		entProvider, err = client.Provider.Query().Where(provider.IDEQ(entProvider.ID)).WithProviderToCompetitions().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query new provider", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, ProviderEntToModel(entProvider))
-		ctx.Next()
+		c.JSON(http.StatusCreated, ProviderEntToModel(entProvider))
+		c.Next()
 	}
 }
 
@@ -149,43 +168,37 @@ func CreateProvider(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider/{id} [put]
 func UpdateProvider(client *ent.Client) gin.HandlerFunc {
-	type ProviderInput struct {
-		Name   string `json:"name" form:"name" binding:"required" example:"RITSEC Openstack"`
-		Type   string `json:"type" form:"type" binding:"required" enums:"OPENSTACK"`
-		Config string `json:"config" form:"config" binding:"required"` // See https://github.com/BradHacker/compsole/tree/main/configs for examples
-	}
-
-	return func(ctx *gin.Context) {
-		providerID := ctx.Param("id")
+	return func(c *gin.Context) {
+		providerID := c.Param("id")
 		providerUuid, err := uuid.Parse(providerID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
 			return
 		}
 
 		entProvider, err := client.Provider.Query().
 			Where(
 				provider.IDEQ(providerUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "provider not found", err)
+			api.ReturnError(c, http.StatusNotFound, "provider not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for provider", err)
 			return
 		}
 
 		var updatedProvider ProviderInput
-		if err := ctx.ShouldBind(&updatedProvider); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to provider data", err)
+		if err := c.ShouldBind(&updatedProvider); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to provider data", err)
 			return
 		}
 
 		// Validate provider configuration
 		err = providers.ValidateConfig(updatedProvider.Type, updatedProvider.Config)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "provider config is invalid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "provider config is invalid", err)
 			return
 		}
 
@@ -193,20 +206,20 @@ func UpdateProvider(client *ent.Client) gin.HandlerFunc {
 			SetName(updatedProvider.Name).
 			SetType(updatedProvider.Type).
 			SetConfig(updatedProvider.Config).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to update provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to update provider", err)
 			return
 		}
 
-		entUpdatedProvider, err = client.Provider.Query().Where(provider.IDEQ(entUpdatedProvider.ID)).WithProviderToCompetitions().Only(ctx)
+		entUpdatedProvider, err = client.Provider.Query().Where(provider.IDEQ(entUpdatedProvider.ID)).WithProviderToCompetitions().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query updated provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query updated provider", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, ProviderEntToModel(entUpdatedProvider))
-		ctx.Next()
+		c.JSON(http.StatusCreated, ProviderEntToModel(entUpdatedProvider))
+		c.Next()
 	}
 }
 
@@ -225,25 +238,25 @@ func UpdateProvider(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/provider/{id} [delete]
 func DeleteProvider(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		providerID := ctx.Param("id")
+	return func(c *gin.Context) {
+		providerID := c.Param("id")
 		providerUuid, err := uuid.Parse(providerID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
 			return
 		}
 
-		err = client.Provider.DeleteOneID(providerUuid).Exec(ctx)
+		err = client.Provider.DeleteOneID(providerUuid).Exec(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "provider not found", err)
+			api.ReturnError(c, http.StatusNotFound, "provider not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to delete provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to delete provider", err)
 			return
 		}
 
-		ctx.Status(http.StatusNoContent)
-		ctx.Next()
+		c.Status(http.StatusNoContent)
+		c.Next()
 	}
 }

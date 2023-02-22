@@ -350,6 +350,15 @@ definitions:
         example: team01.dc.comp.co
         type: string
     type: object
+  rest.VmObjectIdentifierInput:
+    description: Used as an input model for updating VM Object identifiers
+    properties:
+      identifier:
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        type: string
+    required:
+    - identifier
+    type: object
   rest.VmObjectInput:
     description: Used as an input model for creating/updating VM Objects
     properties:
@@ -640,6 +649,17 @@ paths:
   /rest/provider:
     get:
       description: List all Providers
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - name
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
@@ -801,6 +821,18 @@ paths:
   /rest/team:
     get:
       description: List all Teams
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - name
+        - number
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
@@ -1022,6 +1054,19 @@ paths:
   /rest/user:
     get:
       description: List all Users
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - username
+        - first_name
+        - last_name
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
@@ -1183,6 +1228,18 @@ paths:
   /rest/vm-object:
     get:
       description: List all VM Objects
+      parameters:
+      - description: Field to search by (optional)
+        enum:
+        - identifier
+        - name
+        in: query
+        name: field
+        type: string
+      - description: Search text (optional)
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
@@ -1339,6 +1396,47 @@ paths:
       security:
       - ServiceAuth: []
       summary: Update a VM Object
+      tags:
+      - Service API
+  /rest/vm-object/{id}/identifier:
+    put:
+      description: Update the Identifier of a VM Object
+      parameters:
+      - description: The id of the vm object
+        example: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The updated vm object identifier
+        in: body
+        name: identifier
+        required: true
+        schema:
+          $ref: '#/definitions/rest.VmObjectIdentifierInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.VmObjectModel'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.APIError'
+      security:
+      - ServiceAuth: []
+      summary: Update the Identifier of a VM Object
       tags:
       - Service API
 securityDefinitions:
