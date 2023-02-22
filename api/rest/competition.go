@@ -23,10 +23,10 @@ import (
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition [get]
 func ListCompetitions(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		entCompetitions, err := client.Competition.Query().WithCompetitionToTeams().WithCompetitionToProvider().All(ctx)
+	return func(c *gin.Context) {
+		entCompetitions, err := client.Competition.Query().WithCompetitionToTeams().WithCompetitionToProvider().All(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competitions", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for competitions", err)
 			return
 		}
 
@@ -35,8 +35,8 @@ func ListCompetitions(client *ent.Client) gin.HandlerFunc {
 			competitionModels[i] = CompetitionEntToModel(entCompetition)
 		}
 
-		ctx.JSON(http.StatusOK, competitionModels)
-		ctx.Next()
+		c.JSON(http.StatusOK, competitionModels)
+		c.Next()
 	}
 }
 
@@ -55,11 +55,11 @@ func ListCompetitions(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition/{id} [get]
 func GetCompetition(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		competitionID := ctx.Param("id")
+	return func(c *gin.Context) {
+		competitionID := c.Param("id")
 		competitionUuid, err := uuid.Parse(competitionID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
 			return
 		}
 
@@ -69,18 +69,18 @@ func GetCompetition(client *ent.Client) gin.HandlerFunc {
 			).
 			WithCompetitionToTeams().
 			WithCompetitionToProvider().
-			Only(ctx)
+			Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "competition not found", err)
+			api.ReturnError(c, http.StatusNotFound, "competition not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for competition", err)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, CompetitionEntToModel(entCompetition))
-		ctx.Next()
+		c.JSON(http.StatusOK, CompetitionEntToModel(entCompetition))
+		c.Next()
 	}
 }
 
@@ -99,48 +99,48 @@ func GetCompetition(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition [post]
 func CreateCompetition(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		var newCompetition CompetitionInput
-		if err := ctx.ShouldBind(&newCompetition); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to competition data", err)
+		if err := c.ShouldBind(&newCompetition); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to competition data", err)
 			return
 		}
 
 		providerUuid, err := uuid.Parse(newCompetition.CompetitionToProvider)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
 			return
 		}
 		entProvider, err := client.Provider.Query().
 			Where(
 				provider.IDEQ(providerUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "provider not found", err)
+			api.ReturnError(c, http.StatusNotFound, "provider not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for provider", err)
 			return
 		}
 
 		entCompetition, err := client.Competition.Create().
 			SetName(newCompetition.Name).
 			SetCompetitionToProvider(entProvider).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to create competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to create competition", err)
 			return
 		}
 
-		entCompetition, err = client.Competition.Query().Where(competition.IDEQ(entCompetition.ID)).WithCompetitionToTeams().WithCompetitionToProvider().Only(ctx)
+		entCompetition, err = client.Competition.Query().Where(competition.IDEQ(entCompetition.ID)).WithCompetitionToTeams().WithCompetitionToProvider().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query new competition", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, CompetitionEntToModel(entCompetition))
-		ctx.Next()
+		c.JSON(http.StatusCreated, CompetitionEntToModel(entCompetition))
+		c.Next()
 	}
 }
 
@@ -160,68 +160,68 @@ func CreateCompetition(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition/{id} [put]
 func UpdateCompetition(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		competitionID := ctx.Param("id")
+	return func(c *gin.Context) {
+		competitionID := c.Param("id")
 		competitionUuid, err := uuid.Parse(competitionID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
 			return
 		}
 
 		entCompetition, err := client.Competition.Query().
 			Where(
 				competition.IDEQ(competitionUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "competition not found", err)
+			api.ReturnError(c, http.StatusNotFound, "competition not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for competition", err)
 			return
 		}
 
 		var updatedCompetition CompetitionInput
-		if err := ctx.ShouldBind(&updatedCompetition); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to competition data", err)
+		if err := c.ShouldBind(&updatedCompetition); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to competition data", err)
 			return
 		}
 
 		providerUuid, err := uuid.Parse(updatedCompetition.CompetitionToProvider)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse provider uuid", err)
 			return
 		}
 		entProvider, err := client.Provider.Query().
 			Where(
 				provider.IDEQ(providerUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "provider not found", err)
+			api.ReturnError(c, http.StatusNotFound, "provider not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for provider", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for provider", err)
 			return
 		}
 
 		entUpdatedCompetition, err := entCompetition.Update().
 			SetName(updatedCompetition.Name).
 			SetCompetitionToProvider(entProvider).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to update competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to update competition", err)
 			return
 		}
 
-		entUpdatedCompetition, err = client.Competition.Query().Where(competition.IDEQ(entUpdatedCompetition.ID)).WithCompetitionToTeams().WithCompetitionToProvider().Only(ctx)
+		entUpdatedCompetition, err = client.Competition.Query().Where(competition.IDEQ(entUpdatedCompetition.ID)).WithCompetitionToTeams().WithCompetitionToProvider().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query updated competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query updated competition", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, CompetitionEntToModel(entUpdatedCompetition))
-		ctx.Next()
+		c.JSON(http.StatusCreated, CompetitionEntToModel(entUpdatedCompetition))
+		c.Next()
 	}
 }
 
@@ -240,25 +240,25 @@ func UpdateCompetition(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/competition/{id} [delete]
 func DeleteCompetition(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		competitionID := ctx.Param("id")
+	return func(c *gin.Context) {
+		competitionID := c.Param("id")
 		competitionUuid, err := uuid.Parse(competitionID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
 			return
 		}
 
-		err = client.Competition.DeleteOneID(competitionUuid).Exec(ctx)
+		err = client.Competition.DeleteOneID(competitionUuid).Exec(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "competition not found", err)
+			api.ReturnError(c, http.StatusNotFound, "competition not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to delete competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to delete competition", err)
 			return
 		}
 
-		ctx.Status(http.StatusNoContent)
-		ctx.Next()
+		c.Status(http.StatusNoContent)
+		c.Next()
 	}
 }

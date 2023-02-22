@@ -23,10 +23,10 @@ import (
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team [get]
 func ListTeams(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		entTeams, err := client.Team.Query().WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().All(ctx)
+	return func(c *gin.Context) {
+		entTeams, err := client.Team.Query().WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().All(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for teams", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for teams", err)
 			return
 		}
 
@@ -35,8 +35,8 @@ func ListTeams(client *ent.Client) gin.HandlerFunc {
 			teamModels[i] = TeamEntToModel(entTeam)
 		}
 
-		ctx.JSON(http.StatusOK, teamModels)
-		ctx.Next()
+		c.JSON(http.StatusOK, teamModels)
+		c.Next()
 	}
 }
 
@@ -55,11 +55,11 @@ func ListTeams(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team/{id} [get]
 func GetTeam(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		teamID := ctx.Param("id")
+	return func(c *gin.Context) {
+		teamID := c.Param("id")
 		teamUuid, err := uuid.Parse(teamID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
 			return
 		}
 
@@ -70,18 +70,18 @@ func GetTeam(client *ent.Client) gin.HandlerFunc {
 			WithTeamToCompetition().
 			WithTeamToVmObjects().
 			WithTeamToUsers().
-			Only(ctx)
+			Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "team not found", err)
+			api.ReturnError(c, http.StatusNotFound, "team not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for team", err)
 			return
 		}
 
-		ctx.JSON(http.StatusOK, TeamEntToModel(entTeam))
-		ctx.Next()
+		c.JSON(http.StatusOK, TeamEntToModel(entTeam))
+		c.Next()
 	}
 }
 
@@ -100,28 +100,28 @@ func GetTeam(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team [post]
 func CreateTeam(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
 		var newTeam TeamInput
-		if err := ctx.ShouldBind(&newTeam); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to team data", err)
+		if err := c.ShouldBind(&newTeam); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to team data", err)
 			return
 		}
 
 		competitionUuid, err := uuid.Parse(newTeam.TeamToCompetition)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
 			return
 		}
 		entCompetition, err := client.Competition.Query().
 			Where(
 				competition.IDEQ(competitionUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "competition not found", err)
+			api.ReturnError(c, http.StatusNotFound, "competition not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for competition", err)
 			return
 		}
 
@@ -129,20 +129,20 @@ func CreateTeam(client *ent.Client) gin.HandlerFunc {
 			SetName(newTeam.Name).
 			SetTeamNumber(newTeam.TeamNumber).
 			SetTeamToCompetition(entCompetition).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to create team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to create team", err)
 			return
 		}
 
-		entTeam, err = client.Team.Query().Where(team.IDEQ(entTeam.ID)).WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().Only(ctx)
+		entTeam, err = client.Team.Query().Where(team.IDEQ(entTeam.ID)).WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query new team", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, TeamEntToModel(entTeam))
-		ctx.Next()
+		c.JSON(http.StatusCreated, TeamEntToModel(entTeam))
+		c.Next()
 	}
 }
 
@@ -162,48 +162,48 @@ func CreateTeam(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team/{id} [put]
 func UpdateTeam(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		teamID := ctx.Param("id")
+	return func(c *gin.Context) {
+		teamID := c.Param("id")
 		teamUuid, err := uuid.Parse(teamID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
 			return
 		}
 
 		entTeam, err := client.Team.Query().
 			Where(
 				team.IDEQ(teamUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "team not found", err)
+			api.ReturnError(c, http.StatusNotFound, "team not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for team", err)
 			return
 		}
 
 		var updatedTeam TeamInput
-		if err := ctx.ShouldBind(&updatedTeam); err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to bind to team data", err)
+		if err := c.ShouldBind(&updatedTeam); err != nil {
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to bind to team data", err)
 			return
 		}
 
 		competitionUuid, err := uuid.Parse(updatedTeam.TeamToCompetition)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse competition uuid", err)
 			return
 		}
 		entCompetition, err := client.Competition.Query().
 			Where(
 				competition.IDEQ(competitionUuid),
-			).Only(ctx)
+			).Only(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "competition not found", err)
+			api.ReturnError(c, http.StatusNotFound, "competition not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query for competition", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query for competition", err)
 			return
 		}
 
@@ -211,20 +211,20 @@ func UpdateTeam(client *ent.Client) gin.HandlerFunc {
 			SetName(updatedTeam.Name).
 			SetTeamNumber(updatedTeam.TeamNumber).
 			SetTeamToCompetition(entCompetition).
-			Save(ctx)
+			Save(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to update team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to update team", err)
 			return
 		}
 
-		entUpdatedTeam, err = client.Team.Query().Where(team.IDEQ(entUpdatedTeam.ID)).WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().Only(ctx)
+		entUpdatedTeam, err = client.Team.Query().Where(team.IDEQ(entUpdatedTeam.ID)).WithTeamToCompetition().WithTeamToVmObjects().WithTeamToUsers().Only(c)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to query new team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to query new team", err)
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, TeamEntToModel(entUpdatedTeam))
-		ctx.Next()
+		c.JSON(http.StatusCreated, TeamEntToModel(entUpdatedTeam))
+		c.Next()
 	}
 }
 
@@ -243,25 +243,25 @@ func UpdateTeam(client *ent.Client) gin.HandlerFunc {
 //	@Failure		500	{object}	api.APIError
 //	@Router			/rest/team/{id} [delete]
 func DeleteTeam(client *ent.Client) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		teamID := ctx.Param("id")
+	return func(c *gin.Context) {
+		teamID := c.Param("id")
 		teamUuid, err := uuid.Parse(teamID)
 		if err != nil {
-			api.ReturnError(ctx, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
+			api.ReturnError(c, http.StatusUnprocessableEntity, "failed to parse team uuid", err)
 			return
 		}
 
-		err = client.Team.DeleteOneID(teamUuid).Exec(ctx)
+		err = client.Team.DeleteOneID(teamUuid).Exec(c)
 		if ent.IsNotFound(err) {
-			api.ReturnError(ctx, http.StatusNotFound, "team not found", err)
+			api.ReturnError(c, http.StatusNotFound, "team not found", err)
 			return
 		}
 		if err != nil {
-			api.ReturnError(ctx, http.StatusInternalServerError, "failed to delete team", err)
+			api.ReturnError(c, http.StatusInternalServerError, "failed to delete team", err)
 			return
 		}
 
-		ctx.Status(http.StatusNoContent)
-		ctx.Next()
+		c.Status(http.StatusNoContent)
+		c.Next()
 	}
 }
