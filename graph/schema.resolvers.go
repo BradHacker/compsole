@@ -1958,7 +1958,7 @@ func (r *queryResolver) MyVMObjects(ctx context.Context) ([]*ent.VmObject, error
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	entVmObjects, err := entUser.QueryUserToTeam().QueryTeamToVmObjects().All(ctx)
+	entVmObjects, err := entUser.QueryUserToTeam().QueryTeamToVmObjects().Order(ent.Asc(vmobject.FieldName)).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects from user: %v", err)
 	}
@@ -2112,7 +2112,7 @@ func (r *queryResolver) VMObjects(ctx context.Context) ([]*ent.VmObject, error) 
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	entVmObjects, err := r.client.VmObject.Query().Order(ent.Asc(vmobject.FieldID)).All(ctx)
+	entVmObjects, err := r.client.VmObject.Query().Order(ent.Asc(vmobject.FieldName)).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query vm objects: %v", err)
 	}
