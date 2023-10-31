@@ -273,7 +273,11 @@ export const Console: React.FC = (): React.ReactElement => {
 
   const shouldShowConsole = (): boolean => {
     // If the vm is locked
-    if (getVmObjectData?.vmObject.Locked || lockoutData?.lockout.Locked)
+    if (
+      getVmObjectData?.vmObject.ID &&
+      getVmObjectData.vmObject.Locked &&
+      user.Role !== Role.Admin
+    )
       return false;
     // If the vm is not powered on
     if (powerStateData?.powerState.State !== PowerState.PoweredOn) return false;
