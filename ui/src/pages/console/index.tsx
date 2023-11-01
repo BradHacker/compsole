@@ -271,10 +271,21 @@ export const Console: React.FC = (): React.ReactElement => {
     }
   };
 
+  const isVmLocked = (): boolean => {
+    // Never lock VM's for admins
+    if (user.Role === Role.Admin) return false;
+    // VM is still loading
+    if (getVmObjectData === undefined) return false;
+    // Got lockout message from websocket
+    if (lockoutData?.lockout.Locked) return true;
+    // If it's loaded and locked
+    if (getVmObjectData.vmObject.Locked) return true;
+    else return false;
+  };
+
   const shouldShowConsole = (): boolean => {
     // If the vm is locked
-    if (getVmObjectData?.vmObject.Locked || lockoutData?.lockout.Locked)
-      return false;
+    if (isVmLocked()) return false;
     // If the vm is not powered on
     if (powerStateData?.powerState.State !== PowerState.PoweredOn) return false;
     return true;
@@ -291,10 +302,7 @@ export const Console: React.FC = (): React.ReactElement => {
   }, [id, getVmObject]);
 
   useEffect(() => {
-    if (
-      getVmObjectData?.vmObject.ID &&
-      (!getVmObjectData.vmObject.Locked || user.Role === Role.Admin)
-    ) {
+    if (getVmObjectData?.vmObject.ID && !isVmLocked()) {
       if (!prevGetVmConsoleData?.console)
         getVmConsole({
           variables: {
@@ -483,12 +491,7 @@ export const Console: React.FC = (): React.ReactElement => {
               }
               loadingPosition="start"
               onClick={handleRefreshConsoleClick}
-              disabled={
-                !(user.Role === Role.Admin) &&
-                (lockoutData?.lockout.Locked ||
-                  getVmObjectData?.vmObject.Locked ||
-                  false)
-              }
+              disabled={isVmLocked()}
               sx={VmButtonStyles}
             >
               Refresh Console
@@ -501,12 +504,7 @@ export const Console: React.FC = (): React.ReactElement => {
               loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
               loadingPosition="start"
               onClick={handlePowerOffClick}
-              disabled={
-                !(user.Role === Role.Admin) &&
-                (lockoutData?.lockout.Locked ||
-                  getVmObjectData?.vmObject.Locked ||
-                  false)
-              }
+              disabled={isVmLocked()}
               sx={VmButtonStyles}
             >
               Shutdown
@@ -519,12 +517,7 @@ export const Console: React.FC = (): React.ReactElement => {
               loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
               loadingPosition="start"
               onClick={handlePowerOnClick}
-              disabled={
-                !(user.Role === Role.Admin) &&
-                (lockoutData?.lockout.Locked ||
-                  getVmObjectData?.vmObject.Locked ||
-                  false)
-              }
+              disabled={isVmLocked()}
               sx={VmButtonStyles}
             >
               Power On
@@ -538,12 +531,7 @@ export const Console: React.FC = (): React.ReactElement => {
               loadingPosition="start"
               onClick={handleRebootClick}
               ref={rebootTypeMenuAnchorRef}
-              disabled={
-                !(user.Role === Role.Admin) &&
-                (lockoutData?.lockout.Locked ||
-                  getVmObjectData?.vmObject.Locked ||
-                  false)
-              }
+              disabled={isVmLocked()}
               sx={VmButtonStyles}
             >
               {options[selectedRebootType].title}
@@ -558,12 +546,7 @@ export const Console: React.FC = (): React.ReactElement => {
               aria-label="select merge strategy"
               aria-haspopup="menu"
               onClick={handleToggleRebootTypeMenu}
-              disabled={
-                !(user.Role === Role.Admin) &&
-                (lockoutData?.lockout.Locked ||
-                  getVmObjectData?.vmObject.Locked ||
-                  false)
-              }
+              disabled={isVmLocked()}
             >
               <ArrowDropDown />
             </Button>
@@ -635,7 +618,7 @@ export const Console: React.FC = (): React.ReactElement => {
             flexDirection: "column",
           }}
         >
-          {lockoutData?.lockout.Locked || getVmObjectData?.vmObject.Locked ? (
+          {isVmLocked() ? (
             <>
               <LockTwoTone />
               <Typography variant="subtitle1">VM is Locked</Typography>
@@ -787,12 +770,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     }
                     loadingPosition="start"
                     onClick={handleRefreshConsoleClick}
-                    disabled={
-                      !(user.Role === Role.Admin) &&
-                      (lockoutData?.lockout.Locked ||
-                        getVmObjectData?.vmObject.Locked ||
-                        false)
-                    }
+                    disabled={isVmLocked()}
                     sx={VmButtonStyles}
                   >
                     Refresh Console
@@ -807,12 +785,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     }
                     loadingPosition="start"
                     onClick={handlePowerOffClick}
-                    disabled={
-                      !(user.Role === Role.Admin) &&
-                      (lockoutData?.lockout.Locked ||
-                        getVmObjectData?.vmObject.Locked ||
-                        false)
-                    }
+                    disabled={isVmLocked()}
                     sx={VmButtonStyles}
                   >
                     Shutdown
@@ -827,12 +800,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     }
                     loadingPosition="start"
                     onClick={handlePowerOnClick}
-                    disabled={
-                      !(user.Role === Role.Admin) &&
-                      (lockoutData?.lockout.Locked ||
-                        getVmObjectData?.vmObject.Locked ||
-                        false)
-                    }
+                    disabled={isVmLocked()}
                     sx={VmButtonStyles}
                   >
                     Power On
@@ -848,12 +816,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     loadingPosition="start"
                     onClick={handleRebootClick}
                     ref={rebootTypeMenuAnchorRef}
-                    disabled={
-                      !(user.Role === Role.Admin) &&
-                      (lockoutData?.lockout.Locked ||
-                        getVmObjectData?.vmObject.Locked ||
-                        false)
-                    }
+                    disabled={isVmLocked()}
                     sx={VmButtonStyles}
                   >
                     {options[selectedRebootType].title}
@@ -868,12 +831,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     aria-label="select merge strategy"
                     aria-haspopup="menu"
                     onClick={handleToggleRebootTypeMenu}
-                    disabled={
-                      !(user.Role === Role.Admin) &&
-                      (lockoutData?.lockout.Locked ||
-                        getVmObjectData?.vmObject.Locked ||
-                        false)
-                    }
+                    disabled={isVmLocked()}
                   >
                     <ArrowDropDown />
                   </Button>
@@ -952,8 +910,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     flexDirection: "column",
                   }}
                 >
-                  {lockoutData?.lockout.Locked ||
-                  getVmObjectData?.vmObject.Locked ? (
+                  {isVmLocked() ? (
                     <>
                       <LockTwoTone />
                       <Typography variant="subtitle1">VM is Locked</Typography>
