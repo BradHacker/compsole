@@ -140,6 +140,11 @@ export const Logs: React.FC = (): React.ReactElement => {
     },
   });
 
+  // Set the title of the tab only on first load
+  useEffect(() => {
+    document.title = "Logs - Compsole";
+  }, []);
+
   useEffect(() => {
     if (listActionsError)
       enqueueSnackbar(`Couldn't get actions: ${listActionsError.message}`, {

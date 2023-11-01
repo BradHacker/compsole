@@ -205,6 +205,11 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
     });
   };
 
+  // Set the title of the tab only on first load
+  useEffect(() => {
+    document.title = "Admin - Compsole";
+  }, []);
+
   return (
     <Box
       sx={{

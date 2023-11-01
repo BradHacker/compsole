@@ -125,6 +125,11 @@ export const Dashboard: React.FC = (): React.ReactElement => {
     MyVmObjectsQuery["myVmObjects"] | AllVmObjectsQuery["vmObjects"]
   >([]);
 
+  // Set the title of the tab only on first load
+  useEffect(() => {
+    document.title = "Dashboard - Compsole";
+  }, []);
+
   useEffect(() => {
     if (user.Role === Role.User) getMyVmObjects();
     else if (user.Role === Role.Admin) {
