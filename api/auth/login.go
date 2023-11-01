@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BradHacker/compsole/api"
@@ -61,7 +62,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
 			return
 		} else {
-			username = loginVals.Username
+			username = strings.ToLower(loginVals.Username) // Always lowercase username
 			password = loginVals.Password
 		}
 
