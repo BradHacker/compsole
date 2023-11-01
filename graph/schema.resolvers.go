@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BradHacker/compsole/api"
@@ -24,7 +25,6 @@ import (
 	"github.com/BradHacker/compsole/graph/generated"
 	"github.com/BradHacker/compsole/graph/model"
 	"github.com/google/uuid"
-	"github.com/iancoleman/strcase"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -355,7 +355,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	usernameExists, err := r.client.User.Query().Where(user.UsernameEQ(input.Username)).Exist(ctx)
+	usernameExists, err := r.client.User.Query().Where(
+		user.UsernameEQ(strings.ToLower(input.Username)), // Lowercase username
+	).Exist(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query if username is already in use: %v", err)
 	}
@@ -375,7 +377,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 		}
 	}
 	entUserCreate := r.client.User.Create().
-		SetUsername(input.Username).
+		SetUsername(strings.ToLower(input.Username)).
 		SetPassword("").
 		SetFirstName(input.FirstName).
 		SetLastName(input.LastName).
@@ -621,18 +623,31 @@ func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competi
 			// user details:
 			// username = [comp_name][team_num][user_letter]
 			//   ex. comp01a
+			username := fmt.Sprintf(
+				"%s%02d%c",
+				entCompetition.Name,
+				entTeam.TeamNumber, rune('a'+i),
+			)
+			if usersPerTeam == 1 {
+				// Don't use a letter at the end if only 1 per team
+				username = fmt.Sprintf(
+					"%s%02d",
+					entCompetition.Name,
+					entTeam.TeamNumber,
+				)
+			}
 			// password = randomly generated (noun + num + adj + num + noun)
+			password := utils.NewPassword()
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+			if err != nil {
+				logrus.Errorf("failed to create user: %v", err)
+				continue
+			}
 			entUser, err := r.client.User.Create().
 				SetFirstName("Team").
 				SetLastName(strconv.Itoa(entTeam.TeamNumber)).
-				SetUsername(
-					fmt.Sprintf(
-						"%s%02d%c",
-						strcase.ToCamel(entCompetition.Name),
-						entTeam.TeamNumber, rune('a'+i),
-					),
-				).
-				SetPassword(utils.NewPassword()).
+				SetUsername(strings.ToLower(username)).
+				SetPassword(string(hashedPassword)).
 				SetProvider(user.ProviderLOCAL).
 				SetRole(user.RoleUSER).
 				SetUserToTeam(entTeam).
@@ -645,7 +660,7 @@ func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competi
 			competitionUsers = append(competitionUsers, &model.CompetitionUser{
 				ID:         entUser.ID.String(),
 				Username:   entUser.Username,
-				Password:   entUser.Password,
+				Password:   password,
 				UserToTeam: entTeam,
 			})
 		}
