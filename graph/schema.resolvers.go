@@ -2496,27 +2496,6 @@ func (r *queryResolver) GetServiceAccount(ctx context.Context, id string) (*ent.
 
 // Actions is the resolver for the actions field.
 func (r *queryResolver) Actions(ctx context.Context, offset int, limit int, types []model.ActionType) (*model.ActionsResult, error) {
-	authUser, err := api.ForContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user from context: %v", err)
-	}
-	gCtx, err := GinContextFromContext(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get gin context from resolver context")
-	}
-	clientIp, err := api.ForContextIp(gCtx)
-	if err != nil {
-		logrus.Warnf("unable to get ip from context: %v", err)
-	}
-	err = r.client.Action.Create().
-		SetIPAddress(clientIp).
-		SetType(action.TypeAPI_CALL).
-		SetMessage("called \"Actions\" endpoint").
-		SetActionToUser(authUser).
-		Exec(ctx)
-	if err != nil {
-		logrus.Warnf("failed to log API_CALL: %v", err)
-	}
 	entTypes := make([]action.Type, 0)
 	for _, t := range types {
 		entTypes = append(entTypes, action.Type(t))
