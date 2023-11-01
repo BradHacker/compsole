@@ -32,7 +32,7 @@ import {
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   ConsoleType,
@@ -107,7 +107,9 @@ export const Console: React.FC = (): React.ReactElement => {
   );
   const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false);
   const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = useState(false);
-  const rebootTypeMenuAnchorRef = useRef<HTMLButtonElement>(null);
+  // const rebootTypeMenuAnchorRef = useRef<HTMLButtonElement>(null);
+  const [rebootTypeMenuAnchor, setRebootTypeMenuAnchor] =
+    useState<null | HTMLElement>(null);
   const options = [
     {
       title: "Hard Reboot",
@@ -189,20 +191,25 @@ export const Console: React.FC = (): React.ReactElement => {
     setRebootTypeMenuOpen(false);
   };
 
-  const handleToggleRebootTypeMenu = () => {
-    setRebootTypeMenuOpen((prevOpen) => !prevOpen);
+  const handleToggleRebootTypeMenu = (
+    e: React.MouseEvent<HTMLElement> | null
+  ) => {
+    // setRebootTypeMenuOpen((prevOpen) => !prevOpen);
+    setRebootTypeMenuAnchor(
+      rebootTypeMenuAnchor ? null : e?.currentTarget ?? null
+    );
   };
 
-  const handleRebootTypeMenuClose = (event: Event) => {
-    if (
-      rebootTypeMenuAnchorRef.current &&
-      rebootTypeMenuAnchorRef.current.contains(event.target as HTMLElement)
-    ) {
-      return;
-    }
+  // const handleRebootTypeMenuClose = (event: Event) => {
+  //   if (
+  //     rebootTypeMenuAnchorRef.current &&
+  //     rebootTypeMenuAnchorRef.current.contains(event.target as HTMLElement)
+  //   ) {
+  //     return;
+  //   }
 
-    setRebootTypeMenuOpen(false);
-  };
+  //   setRebootTypeMenuOpen(false);
+  // };
 
   const getPowerStateString = (powerState: PowerState | undefined): string => {
     if (!powerStateData) return "Loading VM State...";
@@ -520,7 +527,6 @@ export const Console: React.FC = (): React.ReactElement => {
               loading={rebootVmLoading || powerOnVmLoading || powerOffVmLoading}
               loadingPosition="start"
               onClick={handleRebootClick}
-              ref={rebootTypeMenuAnchorRef}
               disabled={isVmLocked()}
               sx={VmButtonStyles}
             >
@@ -542,8 +548,8 @@ export const Console: React.FC = (): React.ReactElement => {
             </Button>
           </ButtonGroup>
           <Popper
-            open={rebootTypeMenuOpen}
-            anchorEl={rebootTypeMenuAnchorRef.current}
+            open={Boolean(rebootTypeMenuAnchor)}
+            anchorEl={rebootTypeMenuAnchor}
             role={undefined}
             transition
             disablePortal
@@ -560,7 +566,9 @@ export const Console: React.FC = (): React.ReactElement => {
                 }}
               >
                 <Paper>
-                  <ClickAwayListener onClickAway={handleRebootTypeMenuClose}>
+                  <ClickAwayListener
+                    onClickAway={() => handleToggleRebootTypeMenu(null)}
+                  >
                     <MenuList id="split-button-menu" autoFocusItem>
                       {options.map((option, index) => (
                         <MenuItem
@@ -811,7 +819,6 @@ export const Console: React.FC = (): React.ReactElement => {
                     }
                     loadingPosition="start"
                     onClick={handleRebootClick}
-                    ref={rebootTypeMenuAnchorRef}
                     disabled={isVmLocked()}
                     sx={VmButtonStyles}
                   >
@@ -833,8 +840,8 @@ export const Console: React.FC = (): React.ReactElement => {
                   </Button>
                 </ButtonGroup>
                 <Popper
-                  open={rebootTypeMenuOpen}
-                  anchorEl={rebootTypeMenuAnchorRef.current}
+                  open={Boolean(rebootTypeMenuAnchor)}
+                  anchorEl={rebootTypeMenuAnchor}
                   role={undefined}
                   transition
                   disablePortal
@@ -854,7 +861,7 @@ export const Console: React.FC = (): React.ReactElement => {
                     >
                       <Paper>
                         <ClickAwayListener
-                          onClickAway={handleRebootTypeMenuClose}
+                          onClickAway={() => handleToggleRebootTypeMenu(null)}
                         >
                           <MenuList id="split-button-menu" autoFocusItem>
                             {options.map((option, index) => (
