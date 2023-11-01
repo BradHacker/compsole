@@ -242,32 +242,18 @@ export const Console: React.FC = (): React.ReactElement => {
     }
   };
 
-  const getPowerStateColor = (
-    powerState: PowerState | undefined
-  ):
-    | "error"
-    | "success"
-    | "warning"
-    | "info"
-    | "disabled"
-    | "action"
-    | "inherit"
-    | "primary"
-    | "secondary"
-    | undefined => {
+  const getPowerStateColor = (powerState: PowerState | undefined): string => {
     switch (powerState) {
       case PowerState.PoweredOff:
-        return "disabled";
+        return "#ff0000";
       case PowerState.PoweredOn:
-        return "success";
+        return "#00ff00";
       case PowerState.Rebooting:
-        return "info";
+        return "#ffc400";
       case PowerState.ShuttingDown:
-        return "warning";
-      case PowerState.Suspended:
-        return "disabled";
+        return "#ffc400";
       default:
-        return undefined;
+        return "rgba(255, 255, 255, 0.3)";
     }
   };
 
@@ -434,8 +420,12 @@ export const Console: React.FC = (): React.ReactElement => {
             }}
           >
             <FiberManualRecord
-              sx={{ height: "1rem", width: "1rem", mr: 1 }}
-              color={getPowerStateColor(powerStateData?.powerState.State)}
+              sx={{
+                height: "1rem",
+                width: "1rem",
+                mr: 1,
+                color: getPowerStateColor(powerStateData?.powerState.State),
+              }}
               titleAccess={getPowerStateString(
                 powerStateData?.powerState.State
               )}
@@ -705,8 +695,14 @@ export const Console: React.FC = (): React.ReactElement => {
                   }}
                 >
                   <FiberManualRecord
-                    sx={{ height: "1rem", width: "1rem", mr: 1 }}
-                    color={getPowerStateColor(powerStateData?.powerState.State)}
+                    sx={{
+                      height: "1rem",
+                      width: "1rem",
+                      mr: 1,
+                      color: getPowerStateColor(
+                        powerStateData?.powerState.State
+                      ),
+                    }}
                     titleAccess={getPowerStateString(
                       powerStateData?.powerState.State
                     )}
