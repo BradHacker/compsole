@@ -12,6 +12,7 @@ import * as React from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LocalLogin } from "../../api";
 import Logo from "../../res/logo512.png";
+import { useEffect } from "react";
 
 export const Auth: React.FC = (): React.ReactElement => {
   return (
@@ -58,6 +59,11 @@ export const Signin: React.FC = (): React.ReactElement => {
       } else navigate("/");
     }, console.error);
   };
+
+  // Set the title of the tab only on first load
+  useEffect(() => {
+    document.title = "Sign In - Compsole";
+  }, []);
 
   return (
     <React.Fragment>

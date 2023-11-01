@@ -200,17 +200,6 @@ export const Console: React.FC = (): React.ReactElement => {
     );
   };
 
-  // const handleRebootTypeMenuClose = (event: Event) => {
-  //   if (
-  //     rebootTypeMenuAnchorRef.current &&
-  //     rebootTypeMenuAnchorRef.current.contains(event.target as HTMLElement)
-  //   ) {
-  //     return;
-  //   }
-
-  //   setRebootTypeMenuOpen(false);
-  // };
-
   const getPowerStateString = (powerState: PowerState | undefined): string => {
     if (!powerStateData) return "Loading VM State...";
     switch (powerState) {
@@ -284,6 +273,11 @@ export const Console: React.FC = (): React.ReactElement => {
     return true;
   };
 
+  // Set the title of the tab only on first load
+  useEffect(() => {
+    document.title = "VM Console - Compsole";
+  }, []);
+
   useEffect(() => {
     if (id) {
       getVmObject({
@@ -295,6 +289,8 @@ export const Console: React.FC = (): React.ReactElement => {
   }, [id, getVmObject]);
 
   useEffect(() => {
+    if (getVmObjectData?.vmObject.Name)
+      document.title = `${getVmObjectData.vmObject.Name} - Compsole`;
     if (getVmObjectData?.vmObject.ID && !isVmLocked()) {
       if (!prevGetVmConsoleData?.console)
         getVmConsole({

@@ -46,6 +46,11 @@ export const Account: React.FC = (): React.ReactElement => {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const { enqueueSnackbar } = useSnackbar();
 
+  // Set the title of the tab only on first load
+  useEffect(() => {
+    document.title = "Account - Compsole";
+  }, []);
+
   useEffect(() => {
     if (updateAccountError)
       enqueueSnackbar(updateAccountError.message, {
