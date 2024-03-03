@@ -71,7 +71,7 @@ func playgroundHandler() gin.HandlerFunc {
 func graphqlHandler(client *ent.Client, rdb *redis.Client) gin.HandlerFunc {
 	// NewExecutableSchema and Config are in the generated.go file
 	// Resolver is in the resolver.go file
-	h := handler.New(graph.NewSchema(client, rdb))
+	h := handler.New(graph.NewSchema(context.Background(), client, rdb))
 
 	h.AddTransport(&transport.Websocket{
 		Upgrader: websocket.Upgrader{
