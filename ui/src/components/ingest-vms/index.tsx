@@ -1,4 +1,4 @@
-import { CloudDownload, Save } from "@mui/icons-material";
+import { CloudDownload, Save } from '@mui/icons-material'
 import {
   TextField,
   Typography,
@@ -14,10 +14,10 @@ import {
   ListItem,
   ListItemText,
   Box,
-} from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ListCompetitionsQuery,
   useBatchCreateTeamsMutation,
@@ -26,7 +26,7 @@ import {
   useListProviderVmsLazyQuery,
   useBatchCreateVmObjectsMutation,
   VmObjectInput,
-} from "../../api/generated/graphql";
+} from '../../api/generated/graphql'
 
 export const IngestVMs: React.FC = (): React.ReactElement => {
   const {
@@ -34,8 +34,8 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
     error: listCompetitionsError,
     refetch: refetchListCompetitions,
   } = useListCompetitionsQuery({
-    fetchPolicy: "no-cache",
-  });
+    fetchPolicy: 'no-cache',
+  })
   const [
     batchCreateTeams,
     {
@@ -43,7 +43,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       loading: batchCreateTeamsLoading,
       error: batchCreateTeamsError,
     },
-  ] = useBatchCreateTeamsMutation();
+  ] = useBatchCreateTeamsMutation()
   const [
     listProviderVms,
     {
@@ -51,7 +51,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       loading: listProviderVmsLoading,
       error: listProviderVmsError,
     },
-  ] = useListProviderVmsLazyQuery();
+  ] = useListProviderVmsLazyQuery()
   const [
     batchCreateVms,
     {
@@ -59,46 +59,46 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       loading: batchCreateVmsLoading,
       error: batchCreateVmsError,
     },
-  ] = useBatchCreateVmObjectsMutation();
+  ] = useBatchCreateVmObjectsMutation()
   const [selectedCompetition, setSelectedCompetition] = useState<
-    ListCompetitionsQuery["competitions"][0] | null
-  >(null);
-  const [numberOfTeams, setNumberOfTeams] = useState<string>("1");
+    ListCompetitionsQuery['competitions'][0] | null
+  >(null)
+  const [numberOfTeams, setNumberOfTeams] = useState<string>('1')
   const [teamAssignments, setTeamAssignments] = useState<{
-    [key: string]: string;
-  }>({});
-  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const navigate = useNavigate();
+    [key: string]: string
+  }>({})
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (listCompetitionsError)
       enqueueSnackbar(
         `Couldn't get competitions: ${listCompetitionsError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (listProviderVmsError)
       enqueueSnackbar(`Couldn't get vms: ${listProviderVmsError.message}`, {
-        variant: "error",
-      });
-  }, [listCompetitionsError, listProviderVmsError, enqueueSnackbar]);
+        variant: 'error',
+      })
+  }, [listCompetitionsError, listProviderVmsError, enqueueSnackbar])
 
   useEffect(() => {
     if (batchCreateTeamsError)
       enqueueSnackbar(
         `Error creating teams: ${batchCreateTeamsError.message}`,
-        { variant: "error" }
-      );
+        { variant: 'error' }
+      )
     else if (
       batchCreateTeamsData &&
       batchCreateTeamsData.batchCreateTeams.length > 0
     ) {
       enqueueSnackbar(`Successfully created ${numberOfTeams} teams!`, {
-        variant: "success",
-      });
-      refetchListCompetitions();
-      setSelectedCompetition(null);
+        variant: 'success',
+      })
+      refetchListCompetitions()
+      setSelectedCompetition(null)
     }
   }, [
     batchCreateTeamsData,
@@ -106,56 +106,56 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
     numberOfTeams,
     refetchListCompetitions,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (batchCreateVmsError)
       enqueueSnackbar(`Error creating VMs: ${batchCreateVmsError.message}`, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     else if (
       batchCreateVmsData &&
       batchCreateVmsData.batchCreateVmObjects.length > 0
     ) {
       enqueueSnackbar(`Successfully ingested VMs!`, {
-        variant: "success",
-      });
-      navigate("/admin");
+        variant: 'success',
+      })
+      navigate('/admin')
     }
-  }, [batchCreateVmsData, batchCreateVmsError, enqueueSnackbar, navigate]);
+  }, [batchCreateVmsData, batchCreateVmsError, enqueueSnackbar, navigate])
 
   useEffect(() => {
     if (listProviderVmsData?.listProviderVms) {
-      let snackbarId = enqueueSnackbar("Attempting to sort VM's", {
-        variant: "info",
+      const snackbarId = enqueueSnackbar("Attempting to sort VM's", {
+        variant: 'info',
         persist: true,
         preventDuplicate: true,
-      });
-      let newTeamAssignments: {
-        [key: string]: string;
-      } = {};
+      })
+      const newTeamAssignments: {
+        [key: string]: string
+      } = {}
       listProviderVmsData.listProviderVms.forEach((vmObject) => {
         if (selectedCompetition?.CompetitionToTeams) {
-          for (let team of selectedCompetition.CompetitionToTeams) {
+          for (const team of selectedCompetition.CompetitionToTeams) {
             if (team) {
               if (
-                new RegExp(`[^1-9]${team.TeamNumber}[^0-9]`, "g").test(
+                new RegExp(`[^1-9]${team.TeamNumber}[^0-9]`, 'g').test(
                   vmObject.Name
                 )
               ) {
-                newTeamAssignments[vmObject.Identifier] = team.ID;
+                newTeamAssignments[vmObject.Identifier] = team.ID
               }
             }
           }
         }
         if (!newTeamAssignments[vmObject.Identifier])
-          newTeamAssignments[vmObject.Identifier] = "skip";
-      });
-      setTeamAssignments(newTeamAssignments);
-      closeSnackbar(snackbarId);
-      enqueueSnackbar("Please validate auto-sorting", {
-        variant: "warning",
-      });
+          newTeamAssignments[vmObject.Identifier] = 'skip'
+      })
+      setTeamAssignments(newTeamAssignments)
+      closeSnackbar(snackbarId)
+      enqueueSnackbar('Please validate auto-sorting', {
+        variant: 'warning',
+      })
     }
   }, [
     listProviderVmsData,
@@ -164,31 +164,31 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
     refetchListCompetitions,
     closeSnackbar,
     enqueueSnackbar,
-  ]);
+  ])
 
   const createTeams = () => {
     const teams: TeamInput[] = [
       {
-        ID: "",
-        Name: "unsorted",
+        ID: '',
+        Name: 'unsorted',
         TeamNumber: 0,
-        TeamToCompetition: selectedCompetition?.ID ?? "",
+        TeamToCompetition: selectedCompetition?.ID ?? '',
       },
-    ];
+    ]
     for (let i = 1; i <= parseInt(numberOfTeams); i++) {
       teams.push({
-        ID: "",
+        ID: '',
         Name: `Team ${i}`,
         TeamNumber: i,
-        TeamToCompetition: selectedCompetition?.ID ?? "",
-      });
+        TeamToCompetition: selectedCompetition?.ID ?? '',
+      })
     }
     batchCreateTeams({
       variables: {
         teams,
       },
-    });
-  };
+    })
+  }
 
   const listVms = () => {
     if (selectedCompetition)
@@ -196,47 +196,47 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
         variables: {
           id: selectedCompetition.CompetitionToProvider.ID,
         },
-        fetchPolicy: "no-cache",
-      });
-  };
+        fetchPolicy: 'no-cache',
+      })
+  }
 
   const ingestVms = () => {
     if (listProviderVmsData) {
-      const vmObjects: VmObjectInput[] = [];
+      const vmObjects: VmObjectInput[] = []
       listProviderVmsData.listProviderVms.forEach((vmObject) => {
         if (
           teamAssignments[vmObject.Identifier] &&
-          teamAssignments[vmObject.Identifier] !== "skip"
+          teamAssignments[vmObject.Identifier] !== 'skip'
         )
           vmObjects.push({
             ...vmObject,
             VmObjectToTeam: teamAssignments[vmObject.Identifier],
-          } as VmObjectInput);
-      });
+          } as VmObjectInput)
+      })
       if (vmObjects.length === 0) {
-        enqueueSnackbar("Must select at least 1 VM to ingest", {
-          variant: "warning",
-        });
-        return;
+        enqueueSnackbar('Must select at least 1 VM to ingest', {
+          variant: 'warning',
+        })
+        return
       }
       batchCreateVms({
         variables: {
           vmObjects,
         },
-      });
+      })
     }
-  };
+  }
 
   return (
     <Box>
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -255,18 +255,18 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           )}
           onChange={(event, value) => {
             setSelectedCompetition(
-              value as ListCompetitionsQuery["competitions"][0]
-            );
+              value as ListCompetitionsQuery['competitions'][0]
+            )
           }}
           isOptionEqualToValue={(option, value) => option.ID === value.ID}
           value={selectedCompetition}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
-            "& .MuiTextField-root": {
+            '& .MuiTextField-root': {
               m: 0,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             },
           }}
@@ -275,10 +275,10 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           selectedCompetition.CompetitionToTeams.length === 0 && (
             <Box
               sx={{
-                minWidth: "100%",
-                display: "flex",
-                alignItems: "center",
-                flexWrap: "wrap",
+                minWidth: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
               }}
             >
               <TextField
@@ -301,14 +301,14 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                 onClick={createTeams}
                 sx={{
                   m: 1,
-                  minWidth: "80%",
+                  minWidth: '80%',
                   flexGrow: 1,
                 }}
               >
                 {batchCreateTeamsLoading ? (
                   <CircularProgress />
                 ) : (
-                  "Create Teams"
+                  'Create Teams'
                 )}
               </Button>
             </Box>
@@ -322,11 +322,11 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -338,7 +338,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
             variant="caption"
             align="center"
             sx={{
-              minWidth: "100%",
+              minWidth: '100%',
               mx: 1,
             }}
             hidden={
@@ -353,7 +353,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
             variant="caption"
             align="center"
             sx={{
-              minWidth: "100%",
+              minWidth: '100%',
               mx: 1,
             }}
             hidden={
@@ -374,7 +374,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           onClick={listVms}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
           }}
         >
@@ -388,8 +388,8 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
       </Box>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <List>
@@ -408,14 +408,14 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                   <FormControl
                     variant="filled"
                     sx={{
-                      width: "100%",
+                      width: '100%',
                     }}
                   >
                     <InputLabel id="team-select-label">Team</InputLabel>
                     <Select
                       labelId="team-select-label"
                       id="team-select"
-                      value={teamAssignments[vmObject.Identifier] || ""}
+                      value={teamAssignments[vmObject.Identifier] || ''}
                       label="Team"
                       onChange={(e) =>
                         setTeamAssignments({
@@ -442,14 +442,14 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
                   </FormControl>
                 }
                 sx={{
-                  "& .MuiListItemSecondaryAction-root": {
-                    minWidth: "25%",
+                  '& .MuiListItemSecondaryAction-root': {
+                    minWidth: '25%',
                   },
                 }}
               >
                 <ListItemText
                   primary={vmObject.Name}
-                  secondary={vmObject.IPAddresses.join(", ")}
+                  secondary={vmObject.IPAddresses.join(', ')}
                 />
               </ListItem>
             ))}
@@ -465,7 +465,7 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
           onClick={ingestVms}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
           }}
         >
@@ -478,5 +478,5 @@ export const IngestVMs: React.FC = (): React.ReactElement => {
         </Button>
       </Box>
     </Box>
-  );
-};
+  )
+}

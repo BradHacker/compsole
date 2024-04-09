@@ -4,7 +4,7 @@ import {
   LockResetTwoTone,
   Save,
   SupervisorAccountTwoTone,
-} from "@mui/icons-material";
+} from '@mui/icons-material'
 import {
   Container,
   ToggleButtonGroup,
@@ -18,10 +18,10 @@ import {
   CircularProgress,
   Button,
   Box,
-} from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   GetCompTeamSearchValuesQuery,
   Role,
@@ -32,20 +32,20 @@ import {
   useUpdateUserMutation,
   useChangePasswordMutation,
   AuthProvider,
-} from "../../api/generated/graphql";
+} from '../../api/generated/graphql'
 
 export const UserForm: React.FC = (): React.ReactElement => {
-  const { id } = useParams();
+  const { id } = useParams()
   const [
     getUser,
     { data: getUserData, loading: getUserLoading, error: getUserError },
-  ] = useGetUserLazyQuery();
+  ] = useGetUserLazyQuery()
   const {
     data: getCompTeamSearchValuesData,
     error: getCompTeamSearchValuesError,
   } = useGetCompTeamSearchValuesQuery({
-    fetchPolicy: "no-cache",
-  });
+    fetchPolicy: 'no-cache',
+  })
   const [
     updateUser,
     {
@@ -53,7 +53,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
       loading: updateUserLoading,
       error: updateUserError,
     },
-  ] = useUpdateUserMutation();
+  ] = useUpdateUserMutation()
   const [
     createUser,
     {
@@ -61,7 +61,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
       loading: createUserLoading,
       error: createUserError,
     },
-  ] = useCreateUserMutation();
+  ] = useCreateUserMutation()
   const [
     changePassword,
     {
@@ -69,23 +69,23 @@ export const UserForm: React.FC = (): React.ReactElement => {
       loading: changePasswordLoading,
       error: changePasswordError,
     },
-  ] = useChangePasswordMutation();
+  ] = useChangePasswordMutation()
   const [user, setUser] = useState<UserInput>({
-    ID: "",
-    Username: "",
-    FirstName: "",
-    LastName: "",
+    ID: '',
+    Username: '',
+    FirstName: '',
+    LastName: '',
     Provider: AuthProvider.Local, // TODO: Add other providers
     Role: Role.Undefined,
     UserToTeam: undefined,
-  });
+  })
   const [viewTeam, setViewTeam] = useState<
-    GetCompTeamSearchValuesQuery["teams"][0] | null
-  >(null);
-  const [newPassword, setNewPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
+    GetCompTeamSearchValuesQuery['teams'][0] | null
+  >(null)
+  const [newPassword, setNewPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (id)
@@ -93,36 +93,36 @@ export const UserForm: React.FC = (): React.ReactElement => {
         variables: {
           id,
         },
-      });
-  }, [id, getUser]);
+      })
+  }, [id, getUser])
 
   useEffect(() => {
     if (getCompTeamSearchValuesError)
       enqueueSnackbar(
         `Couldn't get competitions and teams: ${getCompTeamSearchValuesError.message}`
-      );
-  }, [getCompTeamSearchValuesError, enqueueSnackbar]);
+      )
+  }, [getCompTeamSearchValuesError, enqueueSnackbar])
 
   useEffect(() => {
     if (!updateUserLoading && updateUserData)
       enqueueSnackbar(`Updated user "${updateUserData.updateUser.Username}"`, {
-        variant: "success",
-      });
+        variant: 'success',
+      })
     if (!createUserLoading && createUserData) {
       enqueueSnackbar(`Created user "${createUserData.createUser.Username}"`, {
-        variant: "success",
-      });
+        variant: 'success',
+      })
       setTimeout(
         () => navigate(`/admin/user/${createUserData?.createUser.ID}`),
         1000
-      );
+      )
     }
     if (!changePasswordLoading && changePasswordData) {
       enqueueSnackbar(`Password successfully changed!`, {
-        variant: "success",
-      });
-      setNewPassword("");
-      setConfirmPassword("");
+        variant: 'success',
+      })
+      setNewPassword('')
+      setConfirmPassword('')
     }
   }, [
     updateUserData,
@@ -133,58 +133,58 @@ export const UserForm: React.FC = (): React.ReactElement => {
     changePasswordLoading,
     enqueueSnackbar,
     navigate,
-  ]);
+  ])
 
   useEffect(() => {
     if (getUserError)
       enqueueSnackbar(`Failed to get user: ${getUserError.message}`, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (updateUserError)
       enqueueSnackbar(`Failed to update user: ${updateUserError.message}`, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (createUserError)
       enqueueSnackbar(`Failed to create user: ${createUserError.message}`, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (changePasswordError)
       enqueueSnackbar(
         `Failed to change password: ${changePasswordError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
   }, [
     getUserError,
     updateUserError,
     createUserError,
     changePasswordError,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (getUserData) {
       setUser({
         ...getUserData.getUser,
         UserToTeam: getUserData.getUser.UserToTeam?.ID,
-      } as UserInput);
+      } as UserInput)
       if (getUserData?.getUser.UserToTeam && getCompTeamSearchValuesData)
         setViewTeam(
           getCompTeamSearchValuesData.teams.find(
             (v) => v.ID === getUserData.getUser.UserToTeam?.ID
-          ) as GetCompTeamSearchValuesQuery["teams"][0]
-        );
+          ) as GetCompTeamSearchValuesQuery['teams'][0]
+        )
     } else
       setUser({
-        ID: "",
-        Username: "",
-        FirstName: "",
-        LastName: "",
+        ID: '',
+        Username: '',
+        FirstName: '',
+        LastName: '',
         Provider: AuthProvider.Local, // TODO: Add other providers
         Role: Role.Undefined,
-      });
-  }, [getUserData, getCompTeamSearchValuesData]);
+      })
+  }, [getUserData, getCompTeamSearchValuesData])
 
   const submitUser = () => {
     if (user.ID)
@@ -192,52 +192,52 @@ export const UserForm: React.FC = (): React.ReactElement => {
         variables: {
           user,
         },
-      });
+      })
     else
       createUser({
         variables: {
           user,
         },
-      });
-  };
+      })
+  }
 
   const submitPasswordChange = () => {
     if (newPassword !== confirmPassword) {
-      enqueueSnackbar("Confirm Password must match New Password", {
-        variant: "error",
-      });
-    } else if (!id || id === "new") {
-      enqueueSnackbar("Please save the new user prior to setting a password", {
-        variant: "warning",
-      });
+      enqueueSnackbar('Confirm Password must match New Password', {
+        variant: 'error',
+      })
+    } else if (!id || id === 'new') {
+      enqueueSnackbar('Please save the new user prior to setting a password', {
+        variant: 'warning',
+      })
     } else {
       changePassword({
         variables: {
           id,
           newPassword,
         },
-      });
+      })
     }
-  };
+  }
 
   return (
     <Container component="main" sx={{ p: 2 }}>
       {id && (getUserLoading || getUserError) ? (
         <Skeleton>
-          <Box sx={{ width: "100%" }}></Box>
+          <Box sx={{ width: '100%' }}></Box>
         </Skeleton>
       ) : (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
           <Button
             variant="text"
             sx={{ mr: 1 }}
             onClick={() =>
-              navigate("/admin", {
+              navigate('/admin', {
                 state: {
                   tab: 0,
                 },
@@ -247,11 +247,11 @@ export const UserForm: React.FC = (): React.ReactElement => {
             <ArrowBackTwoTone />
           </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>
-            {id ? `Edit User: ` : "New User"}
+            {id ? `Edit User: ` : 'New User'}
           </Typography>
           {id && !getUserLoading && !getUserError && (
             <Typography variant="h5" component="code">
-              {getUserData?.getUser.Username ?? "N/A"}
+              {getUserData?.getUser.Username ?? 'N/A'}
             </Typography>
           )}
         </Box>
@@ -264,11 +264,11 @@ export const UserForm: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -303,9 +303,10 @@ export const UserForm: React.FC = (): React.ReactElement => {
         <ToggleButtonGroup
           value={user.Role}
           exclusive
-          onChange={(e: any, newRole: Role) =>
-            setUser({ ...user, Role: newRole })
-          }
+          onChange={(
+            e: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            newRole: Role
+          ) => setUser({ ...user, Role: newRole })}
           aria-label="text alignment"
           id="user-type"
           sx={{
@@ -328,36 +329,36 @@ export const UserForm: React.FC = (): React.ReactElement => {
             [...(getCompTeamSearchValuesData?.teams || [])].sort((a, b) =>
               `${a.TeamToCompetition.Name}${String(a.TeamNumber).padStart(
                 2,
-                "0"
+                '0'
               )}`.localeCompare(
                 `${b.TeamToCompetition.Name}${String(b.TeamNumber).padStart(
                   2,
-                  "0"
+                  '0'
                 )}`
               )
             ) ?? []
           }
-          groupBy={(t) => t.TeamToCompetition?.Name ?? "N/A"}
+          groupBy={(t) => t.TeamToCompetition?.Name ?? 'N/A'}
           getOptionLabel={(t) =>
             `${t.TeamToCompetition.Name} - ${t.Name || `Team ${t.TeamNumber}`}`
           }
           renderInput={(params) => <TextField {...params} label="Team" />}
           onChange={(event, value) => {
-            setViewTeam(value);
+            setViewTeam(value)
             setUser({
               ...user,
               UserToTeam: value?.ID,
-            });
+            })
           }}
           isOptionEqualToValue={(option, value) => option.ID === value.ID}
           value={viewTeam}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
-            "& .MuiTextField-root": {
+            '& .MuiTextField-root': {
               m: 0,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             },
           }}
@@ -372,11 +373,11 @@ export const UserForm: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "45%",
+            minWidth: '45%',
             flexGrow: 1,
           },
         }}
@@ -415,7 +416,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
       </Box>
       <Box
         sx={{
-          position: "fixed",
+          position: 'fixed',
           bottom: 24,
           right: 24,
           m: 1,
@@ -433,8 +434,8 @@ export const UserForm: React.FC = (): React.ReactElement => {
           <CircularProgress
             size={68}
             sx={{
-              color: "primary",
-              position: "absolute",
+              color: 'primary',
+              position: 'absolute',
               top: -6,
               left: -6,
               zIndex: 1,
@@ -443,5 +444,5 @@ export const UserForm: React.FC = (): React.ReactElement => {
         )}
       </Box>
     </Container>
-  );
-};
+  )
+}

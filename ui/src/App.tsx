@@ -10,18 +10,18 @@ import {
   Toolbar,
   Tooltip,
   Typography,
-} from "@mui/material";
-import React, { MouseEvent, useEffect, useState } from "react";
-import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Role, useGetCurrentUserQuery, User } from "./api/generated/graphql";
-import { Loading } from "./pages/loading";
-import { UserContext } from "./user-context";
-import SettingsIcon from "@mui/icons-material/Settings";
-import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
-import { Logout } from "./api";
+} from '@mui/material'
+import React, { MouseEvent, useEffect, useState } from 'react'
+import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Role, useGetCurrentUserQuery, User } from './api/generated/graphql'
+import { Loading } from './pages/loading'
+import { UserContext } from './user-context'
+import SettingsIcon from '@mui/icons-material/Settings'
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew'
+import { Logout } from './api'
 
-import Logo from "./res/logo_200.png";
-import { useSnackbar } from "notistack";
+import Logo from './res/logo_200.png'
+import { useSnackbar } from 'notistack'
 
 function App() {
   const {
@@ -30,58 +30,58 @@ function App() {
     error: currentUserError,
     refetch: refetchCurrentUser,
   } = useGetCurrentUserQuery({
-    fetchPolicy: "no-cache",
-  });
-  let navigate = useNavigate();
-  let location = useLocation();
-  const { enqueueSnackbar } = useSnackbar();
-  let [user, setUser] = useState<User | null | undefined>();
-  let [userMenuOpen, setUserMenuOpen] = useState<boolean>(false);
+    fetchPolicy: 'no-cache',
+  })
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { enqueueSnackbar } = useSnackbar()
+  const [user, setUser] = useState<User | null | undefined>()
+  const [userMenuOpen, setUserMenuOpen] = useState<boolean>(false)
   const [userMenuAnchorEl, setUserMenuAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
+    React.useState<HTMLButtonElement | null>(null)
 
-  let handleOpenUserMenu = (e: MouseEvent<HTMLButtonElement>) => {
-    setUserMenuAnchorEl(e.currentTarget);
-    setUserMenuOpen(true);
-  };
-  let handleCloseUserMenu = () => setUserMenuOpen(false);
+  const handleOpenUserMenu = (e: MouseEvent<HTMLButtonElement>) => {
+    setUserMenuAnchorEl(e.currentTarget)
+    setUserMenuOpen(true)
+  }
+  const handleCloseUserMenu = () => setUserMenuOpen(false)
 
   // Ensure the user cannot access protected App without authentication
   useEffect(() => {
     if (!currentUserLoading && (currentUserError || !currentUser))
-      navigate("/auth/signin", {
+      navigate('/auth/signin', {
         state: {
           from: location.pathname,
         },
-      });
+      })
     else if (!currentUserLoading && !currentUserError && currentUser)
-      setUser(currentUser.me);
-  }, [currentUser, currentUserLoading, currentUserError, navigate, location]);
+      setUser(currentUser.me)
+  }, [currentUser, currentUserLoading, currentUserError, navigate, location])
 
   const handleAccountSettings = () => {
-    navigate("/account");
-    setUserMenuOpen(false);
-  };
+    navigate('/account')
+    setUserMenuOpen(false)
+  }
 
   const handleSignOut = () => {
     Logout().then(
       () => {
-        enqueueSnackbar("Logged out successfully", {
-          variant: "success",
-        });
-        navigate("/auth/signin", {
+        enqueueSnackbar('Logged out successfully', {
+          variant: 'success',
+        })
+        navigate('/auth/signin', {
           state: {
-            from: "/",
+            from: '/',
           },
-        });
+        })
       },
       (err) => {
         enqueueSnackbar(`Failed to logout: ${err}`, {
-          variant: "error",
-        });
+          variant: 'error',
+        })
       }
-    );
-  };
+    )
+  }
 
   return !currentUserLoading && user ? (
     <UserContext.Provider
@@ -91,46 +91,46 @@ function App() {
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
-        <AppBar position="static" sx={{ position: "fixed", zIndex: 1301 }}>
+        <AppBar position="static" sx={{ position: 'fixed', zIndex: 1301 }}>
           <Toolbar>
             <Link
               to="/"
               style={{
                 flexGrow: 1,
-                textDecoration: "none",
-                color: "inherit",
-                display: "flex",
-                alignItems: "center",
+                textDecoration: 'none',
+                color: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               <img
                 src={Logo}
                 alt="Logo"
-                style={{ height: "2.5rem", marginRight: "0.5rem" }}
+                style={{ height: '2.5rem', marginRight: '0.5rem' }}
               />
               <Typography variant="h6">Compsole</Typography>
             </Link>
             <Box
               sx={{
-                display: "flex",
+                display: 'flex',
                 flex: 1,
-                alignItems: "center",
-                justifyContent: "flex-end",
-                "& hr": {
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                '& hr': {
                   mx: 0.5,
                 },
               }}
             >
-              <Button onClick={() => navigate("/")} color="inherit">
+              <Button onClick={() => navigate('/')} color="inherit">
                 Dashboard
               </Button>
               {user && user.Role === Role.Admin && (
                 <>
-                  <Button onClick={() => navigate("/admin")} color="inherit">
+                  <Button onClick={() => navigate('/admin')} color="inherit">
                     Admin
                   </Button>
                   <Button
-                    onClick={() => navigate("/admin/logs")}
+                    onClick={() => navigate('/admin/logs')}
                     color="inherit"
                   >
                     Logs
@@ -153,7 +153,7 @@ function App() {
                     <Avatar
                       alt={`${user.FirstName} ${user.LastName}`}
                       sx={{
-                        bgcolor: "#F7B374",
+                        bgcolor: '#F7B374',
                       }}
                     >
                       {user.FirstName.at(0)}
@@ -162,23 +162,23 @@ function App() {
                   </IconButton>
                 </Tooltip>
                 <Menu
-                  sx={{ mt: "45px" }}
+                  sx={{ mt: '45px' }}
                   id="menu-appbar"
                   anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
+                    vertical: 'top',
+                    horizontal: 'right',
                   }}
                   anchorEl={userMenuAnchorEl}
                   keepMounted
                   transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
+                    vertical: 'top',
+                    horizontal: 'right',
                   }}
                   open={userMenuOpen}
                   onClose={handleCloseUserMenu}
                 >
                   <MenuItem disabled>
-                    <Typography textAlign="center" sx={{ color: "white" }}>
+                    <Typography textAlign="center" sx={{ color: 'white' }}>
                       Hello, {user.FirstName} {user.LastName}
                     </Typography>
                   </MenuItem>
@@ -196,13 +196,13 @@ function App() {
           </Toolbar>
         </AppBar>
       </Box>
-      <Box sx={{ pt: "64px" }}>
+      <Box sx={{ pt: '64px' }}>
         <Outlet />
       </Box>
     </UserContext.Provider>
   ) : (
     <Loading />
-  );
+  )
 }
 
-export default App;
+export default App

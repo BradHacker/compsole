@@ -3,7 +3,7 @@ import {
   LockOpenTwoTone,
   LockTwoTone,
   Save,
-} from "@mui/icons-material";
+} from '@mui/icons-material'
 import {
   Container,
   TextField,
@@ -16,10 +16,10 @@ import {
   Button,
   ButtonGroup,
   Box,
-} from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   useGetCompetitionLazyQuery,
   useUpdateCompetitionMutation,
@@ -28,10 +28,10 @@ import {
   ListProvidersQuery,
   useCreateCompetitionMutation,
   useLockoutCompetitionMutation,
-} from "../../api/generated/graphql";
+} from '../../api/generated/graphql'
 
 export const CompetitionForm: React.FC = (): React.ReactElement => {
-  const { id } = useParams();
+  const { id } = useParams()
   const [
     getCompetition,
     {
@@ -39,7 +39,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       loading: getCompetitionLoading,
       error: getCompetitionError,
     },
-  ] = useGetCompetitionLazyQuery();
+  ] = useGetCompetitionLazyQuery()
   const [
     updateCompetition,
     {
@@ -47,7 +47,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       loading: updateCompetitionLoading,
       error: updateCompetitionError,
     },
-  ] = useUpdateCompetitionMutation();
+  ] = useUpdateCompetitionMutation()
   const [
     createCompetition,
     {
@@ -55,11 +55,11 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       loading: createCompetitionLoading,
       error: createCompetitionError,
     },
-  ] = useCreateCompetitionMutation();
+  ] = useCreateCompetitionMutation()
   const { data: listProvidersData, error: listProvidersError } =
     useListProvidersQuery({
-      fetchPolicy: "no-cache",
-    });
+      fetchPolicy: 'no-cache',
+    })
   const [
     lockoutCompetition,
     {
@@ -67,17 +67,17 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       loading: lockoutCompetitionLoading,
       error: lockoutCompetitionError,
     },
-  ] = useLockoutCompetitionMutation();
+  ] = useLockoutCompetitionMutation()
   const [competition, setCompetition] = useState<CompetitionInput>({
-    ID: "",
-    Name: "",
-    CompetitionToProvider: "",
-  });
+    ID: '',
+    Name: '',
+    CompetitionToProvider: '',
+  })
   const [viewProvider, setViewProvider] = useState<
-    ListProvidersQuery["providers"][0] | null
-  >(null);
-  const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
+    ListProvidersQuery['providers'][0] | null
+  >(null)
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (id)
@@ -85,31 +85,31 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
         variables: {
           id,
         },
-      });
-  }, [id, getCompetition]);
+      })
+  }, [id, getCompetition])
 
   useEffect(() => {
     if (!updateCompetitionLoading && updateCompetitionData)
       enqueueSnackbar(
         `Updated competition "${updateCompetitionData.updateCompetition.Name}"`,
         {
-          variant: "success",
+          variant: 'success',
         }
-      );
+      )
     if (!createCompetitionLoading && createCompetitionData) {
       enqueueSnackbar(
         `Created competition "${createCompetitionData.createCompetition.Name}"`,
         {
-          variant: "success",
+          variant: 'success',
         }
-      );
+      )
       setTimeout(
         () =>
           navigate(
             `/admin/competition/${createCompetitionData?.createCompetition.ID}`
           ),
         1000
-      );
+      )
     }
   }, [
     updateCompetitionData,
@@ -118,44 +118,44 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
     createCompetitionLoading,
     enqueueSnackbar,
     navigate,
-  ]);
+  ])
 
   useEffect(() => {
     if (getCompetitionError)
       enqueueSnackbar(
         `Failed to get competition: ${getCompetitionError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (updateCompetitionError)
       enqueueSnackbar(
         `Failed to update competition: ${updateCompetitionError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (createCompetitionError)
       enqueueSnackbar(
         `Failed to create competition: ${createCompetitionError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (listProvidersError)
       enqueueSnackbar(
         `Failed to list competitions: ${listProvidersError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
   }, [
     getCompetitionError,
     updateCompetitionError,
     createCompetitionError,
     listProvidersError,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (getCompetitionData) {
@@ -163,36 +163,36 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
         ...getCompetitionData.getCompetition,
         CompetitionToProvider:
           getCompetitionData.getCompetition.CompetitionToProvider.ID,
-      } as CompetitionInput);
+      } as CompetitionInput)
       if (listProvidersData)
         setViewProvider(
           listProvidersData.providers.find(
             (v) =>
               v.ID ===
               getCompetitionData.getCompetition.CompetitionToProvider.ID
-          ) as ListProvidersQuery["providers"][0]
-        );
+          ) as ListProvidersQuery['providers'][0]
+        )
     } else
       setCompetition({
-        ID: "",
-        Name: "",
-        CompetitionToProvider: "",
-      });
-  }, [getCompetitionData, listProvidersData]);
+        ID: '',
+        Name: '',
+        CompetitionToProvider: '',
+      })
+  }, [getCompetitionData, listProvidersData])
 
   useEffect(() => {
     if (lockoutCompetitionError)
       enqueueSnackbar(
         `Failed to update competition lockout: ${lockoutCompetitionError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     else if (lockoutCompetitionData?.lockoutCompetition)
-      enqueueSnackbar("Competition lockout updated", {
-        variant: "success",
-      });
-  }, [lockoutCompetitionData, lockoutCompetitionError, enqueueSnackbar]);
+      enqueueSnackbar('Competition lockout updated', {
+        variant: 'success',
+      })
+  }, [lockoutCompetitionData, lockoutCompetitionError, enqueueSnackbar])
 
   const submitCompetition = () => {
     if (competition.ID)
@@ -200,33 +200,33 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
         variables: {
           competition,
         },
-      });
+      })
     else
       createCompetition({
         variables: {
           competition,
         },
-      });
-  };
+      })
+  }
 
   return (
     <Container component="main" sx={{ p: 2 }}>
       {id && (getCompetitionLoading || getCompetitionError) ? (
         <Skeleton>
-          <Box sx={{ width: "100%" }}></Box>
+          <Box sx={{ width: '100%' }}></Box>
         </Skeleton>
       ) : (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
           <Button
             variant="text"
             sx={{ mr: 1 }}
             onClick={() =>
-              navigate("/admin", {
+              navigate('/admin', {
                 state: {
                   tab: 1,
                 },
@@ -236,11 +236,11 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
             <ArrowBackTwoTone />
           </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>
-            {id ? `Edit Competition: ` : "New Competition"}
+            {id ? `Edit Competition: ` : 'New Competition'}
           </Typography>
           {id && !getCompetitionLoading && !getCompetitionError && (
             <Typography variant="h5" component="code">
-              {getCompetitionData?.getCompetition.Name ?? "N/A"}
+              {getCompetitionData?.getCompetition.Name ?? 'N/A'}
             </Typography>
           )}
         </Box>
@@ -253,11 +253,11 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -277,21 +277,21 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
           getOptionLabel={(p) => `${p.Name} (${p.Type})`}
           renderInput={(params) => <TextField {...params} label="Provider" />}
           onChange={(event, value) => {
-            setViewProvider(value);
+            setViewProvider(value)
             setCompetition({
               ...competition,
-              CompetitionToProvider: value?.ID ?? "",
-            });
+              CompetitionToProvider: value?.ID ?? '',
+            })
           }}
           isOptionEqualToValue={(option, value) => option.ID === value.ID}
           value={viewProvider}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
-            "& .MuiTextField-root": {
+            '& .MuiTextField-root': {
               m: 0,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             },
           }}
@@ -301,11 +301,11 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
         <Box
           component="form"
           sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            "& .MuiButtonGroup-root": {
+            display: 'flex',
+            flexWrap: 'wrap',
+            '& .MuiButtonGroup-root': {
               m: 1,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             },
           }}
@@ -316,9 +316,9 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
             variant="outlined"
             aria-label="lockout controls"
             sx={{
-              display: "flex",
-              "& .MuiButton-root": {
-                minWidth: "40%",
+              display: 'flex',
+              '& .MuiButton-root': {
+                minWidth: '40%',
                 flexGrow: 1,
                 padding: 2,
               },
@@ -333,14 +333,14 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
                     competitionId: id,
                     locked: true,
                   },
-                });
+                })
               }}
             >
               {lockoutCompetitionLoading ? (
                 <CircularProgress />
               ) : (
                 <LockTwoTone sx={{ mr: 1 }} />
-              )}{" "}
+              )}{' '}
               Lockout Competition
             </Button>
             <Button
@@ -352,14 +352,14 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
                     competitionId: id,
                     locked: false,
                   },
-                });
+                })
               }}
             >
               {lockoutCompetitionLoading ? (
                 <CircularProgress />
               ) : (
                 <LockOpenTwoTone sx={{ mr: 1 }} />
-              )}{" "}
+              )}{' '}
               Unlock Competition
             </Button>
           </ButtonGroup>
@@ -367,7 +367,7 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
       )}
       <Box
         sx={{
-          position: "fixed",
+          position: 'fixed',
           bottom: 24,
           right: 24,
           m: 1,
@@ -385,8 +385,8 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
           <CircularProgress
             size={68}
             sx={{
-              color: "primary",
-              position: "absolute",
+              color: 'primary',
+              position: 'absolute',
               top: -6,
               left: -6,
               zIndex: 1,
@@ -395,5 +395,5 @@ export const CompetitionForm: React.FC = (): React.ReactElement => {
         )}
       </Box>
     </Container>
-  );
-};
+  )
+}

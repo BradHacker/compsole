@@ -1,4 +1,4 @@
-import { LockTwoTone, Terminal } from "@mui/icons-material";
+import { LockTwoTone, Terminal } from '@mui/icons-material'
 import {
   Autocomplete,
   Box,
@@ -14,9 +14,9 @@ import {
   TextField,
   Tooltip,
   Typography,
-} from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useContext, useEffect } from "react";
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
+import React, { useContext, useEffect } from 'react'
 import {
   AllVmObjectsQuery,
   MyVmObjectsQuery,
@@ -25,22 +25,22 @@ import {
   useAllVmObjectsLazyQuery,
   useGetCompTeamSearchValuesLazyQuery,
   useMyVmObjectsLazyQuery,
-} from "../../api/generated/graphql";
-import { UserContext } from "../../user-context";
+} from '../../api/generated/graphql'
+import { UserContext } from '../../user-context'
 
 const VmCard: React.FC<{
   vmObject?:
-    | MyVmObjectsQuery["myVmObjects"][0]
-    | AllVmObjectsQuery["vmObjects"][0];
-  isAdmin?: boolean;
+    | MyVmObjectsQuery['myVmObjects'][0]
+    | AllVmObjectsQuery['vmObjects'][0]
+  isAdmin?: boolean
 }> = ({ vmObject, isAdmin }): React.ReactElement => {
   return (
     <Card>
       <CardContent>
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             mb: 1,
           }}
         >
@@ -59,10 +59,10 @@ const VmCard: React.FC<{
           >
             <Chip
               label={
-                (vmObject as AllVmObjectsQuery["vmObjects"][0]).VmObjectToTeam
+                (vmObject as AllVmObjectsQuery['vmObjects'][0]).VmObjectToTeam
                   ?.Name ||
                 `Team ${
-                  (vmObject as AllVmObjectsQuery["vmObjects"][0]).VmObjectToTeam
+                  (vmObject as AllVmObjectsQuery['vmObjects'][0]).VmObjectToTeam
                     ?.TeamNumber
                 }`
               }
@@ -71,8 +71,8 @@ const VmCard: React.FC<{
             />
             <Chip
               label={
-                (vmObject as AllVmObjectsQuery["vmObjects"][0]).VmObjectToTeam
-                  ?.TeamToCompetition.Name || "default"
+                (vmObject as AllVmObjectsQuery['vmObjects'][0]).VmObjectToTeam
+                  ?.TeamToCompetition.Name || 'default'
               }
               color="secondary"
               size="small"
@@ -80,86 +80,86 @@ const VmCard: React.FC<{
           </Stack>
         )}
         <Typography color="text.secondary">
-          {vmObject?.IPAddresses?.join(", ") ?? <Skeleton />}
+          {vmObject?.IPAddresses?.join(', ') ?? <Skeleton />}
         </Typography>
       </CardContent>
       <CardActions>
         <Tooltip title="Console">
           <IconButton
             aria-label="Console"
-            href={`/console/${vmObject?.ID ?? "undefined"}`}
+            href={`/console/${vmObject?.ID ?? 'undefined'}`}
           >
             <Terminal />
           </IconButton>
         </Tooltip>
       </CardActions>
     </Card>
-  );
-};
+  )
+}
 
 export const Dashboard: React.FC = (): React.ReactElement => {
-  let { user } = useContext(UserContext);
-  const { enqueueSnackbar } = useSnackbar();
-  let [
+  const { user } = useContext(UserContext)
+  const { enqueueSnackbar } = useSnackbar()
+  const [
     getMyVmObjects,
     {
       data: myVmObjectsData,
       loading: myVmObjectsLoading,
       error: myVmObjectsError,
     },
-  ] = useMyVmObjectsLazyQuery();
-  let [
+  ] = useMyVmObjectsLazyQuery()
+  const [
     getAllVmObjects,
     {
       data: allVmObjectsData,
       loading: allVmObjectsLoading,
       error: allVmObjectsError,
     },
-  ] = useAllVmObjectsLazyQuery();
-  let [
+  ] = useAllVmObjectsLazyQuery()
+  const [
     getSearchValues,
     { data: getSearchValuesData, error: getSearchValuesError },
-  ] = useGetCompTeamSearchValuesLazyQuery();
-  const [teamFilter, setTeamFilter] = React.useState<Team | null>(null);
+  ] = useGetCompTeamSearchValuesLazyQuery()
+  const [teamFilter, setTeamFilter] = React.useState<Team | null>(null)
   const [filteredVmObjects, setFilteredVmObjects] = React.useState<
-    MyVmObjectsQuery["myVmObjects"] | AllVmObjectsQuery["vmObjects"]
-  >([]);
+    MyVmObjectsQuery['myVmObjects'] | AllVmObjectsQuery['vmObjects']
+  >([])
 
   // Set the title of the tab only on first load
   useEffect(() => {
-    document.title = "Dashboard - Compsole";
-  }, []);
+    document.title = 'Dashboard - Compsole'
+  }, [])
 
   useEffect(() => {
-    if (user.Role === Role.User) getMyVmObjects();
+    if (user.Role === Role.User) getMyVmObjects()
     else if (user.Role === Role.Admin) {
-      getAllVmObjects();
-      getSearchValues();
+      getAllVmObjects()
+      getSearchValues()
     }
-  }, [user, getMyVmObjects, getAllVmObjects, getSearchValues]);
+  }, [user, getMyVmObjects, getAllVmObjects, getSearchValues])
 
   useEffect(() => {
     if (myVmObjectsError || allVmObjectsError)
       enqueueSnackbar(
         (myVmObjectsError || allVmObjectsError)?.message ??
-          "Unknown error occurred",
+          'Unknown error occurred',
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (getSearchValuesError)
       enqueueSnackbar(
         `Couldn't get competitions and teams: ${getSearchValuesError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
   }, [
     myVmObjectsError,
     allVmObjectsError,
     getSearchValuesError,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (myVmObjectsData?.myVmObjects || allVmObjectsData?.vmObjects) {
@@ -169,17 +169,17 @@ export const Dashboard: React.FC = (): React.ReactElement => {
             myVmObjectsData?.myVmObjects ||
             allVmObjectsData?.vmObjects ||
             []
-          ).filter((vm) => (vm.VmObjectToTeam?.ID ?? "") === teamFilter.ID),
-        ]);
+          ).filter((vm) => (vm.VmObjectToTeam?.ID ?? '') === teamFilter.ID),
+        ])
       } else {
         setFilteredVmObjects([
           ...(myVmObjectsData?.myVmObjects ||
             allVmObjectsData?.vmObjects ||
             []),
-        ]);
+        ])
       }
     }
-  }, [teamFilter, myVmObjectsData, allVmObjectsData]);
+  }, [teamFilter, myVmObjectsData, allVmObjectsData])
 
   return (
     <Container
@@ -195,16 +195,16 @@ export const Dashboard: React.FC = (): React.ReactElement => {
               [...(getSearchValuesData?.teams || [])].sort((a, b) =>
                 `${a.TeamToCompetition.Name}${String(a.TeamNumber).padStart(
                   2,
-                  "0"
+                  '0'
                 )}`.localeCompare(
                   `${b.TeamToCompetition.Name}${String(b.TeamNumber).padStart(
                     2,
-                    "0"
+                    '0'
                   )}`
                 )
               ) ?? []
             }
-            groupBy={(t) => t.TeamToCompetition?.Name ?? "N/A"}
+            groupBy={(t) => t.TeamToCompetition?.Name ?? 'N/A'}
             getOptionLabel={(t) =>
               `${t.TeamToCompetition.Name} - ${
                 t.Name || `Team ${t.TeamNumber}`
@@ -214,7 +214,7 @@ export const Dashboard: React.FC = (): React.ReactElement => {
               <TextField {...params} label="With categories" />
             )}
             onChange={(event, value) => {
-              setTeamFilter(value as Team);
+              setTeamFilter(value as Team)
             }}
           />
         )}
@@ -241,5 +241,5 @@ export const Dashboard: React.FC = (): React.ReactElement => {
         )}
       </Stack>
     </Container>
-  );
-};
+  )
+}

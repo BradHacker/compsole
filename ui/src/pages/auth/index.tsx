@@ -6,13 +6,13 @@ import {
   Grid,
   TextField,
   Typography,
-} from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import * as React from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LocalLogin } from "../../api";
-import Logo from "../../res/logo512.png";
-import { useEffect } from "react";
+} from '@mui/material'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import * as React from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { LocalLogin } from '../../api'
+import Logo from '../../res/logo512.png'
+import { useEffect } from 'react'
 
 export const Auth: React.FC = (): React.ReactElement => {
   return (
@@ -20,54 +20,59 @@ export const Auth: React.FC = (): React.ReactElement => {
       <Box
         sx={{
           marginTop: 8,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "space-evenly",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-evenly',
         }}
       >
-        <img src={Logo} alt="Logo" style={{ maxWidth: "80%" }} />
+        <img src={Logo} alt="Logo" style={{ maxWidth: '80%' }} />
         <Outlet />
       </Box>
     </Container>
-  );
-};
+  )
+}
 
 export const Signin: React.FC = (): React.ReactElement => {
-  let navigate = useNavigate();
-  let location = useLocation();
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
     LocalLogin(
-      data.get("username")?.toString() ?? "",
-      data.get("password")?.toString() ?? ""
+      data.get('username')?.toString() ?? '',
+      data.get('password')?.toString() ?? ''
     ).then(() => {
       if (location?.state) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((location.state as any).from instanceof Location) {
           if (
             location.state &&
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ((location?.state as any).from as Location).pathname.indexOf(
-              "/auth/"
+              '/auth/'
             ) >= 0
           ) {
-            navigate("/");
-          } else navigate((location.state as any).from as Location);
-        } else if (typeof (location.state as any).from === "string")
-          navigate((location.state as any).from);
-      } else navigate("/");
-    }, console.error);
-  };
+            navigate('/')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } else navigate((location.state as any).from as Location)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } else if (typeof (location.state as any).from === 'string')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          navigate((location.state as any).from)
+      } else navigate('/')
+    }, console.error)
+  }
 
   // Set the title of the tab only on first load
   useEffect(() => {
-    document.title = "Sign In - Compsole";
-  }, []);
+    document.title = 'Sign In - Compsole'
+  }, [])
 
   return (
     <React.Fragment>
-      <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+      <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
         <LockOutlinedIcon />
       </Avatar>
       <Typography component="h1" variant="h5">
@@ -111,5 +116,5 @@ export const Signin: React.FC = (): React.ReactElement => {
         </Grid>
       </Box>
     </React.Fragment>
-  );
-};
+  )
+}
