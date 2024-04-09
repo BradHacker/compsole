@@ -117,6 +117,7 @@ export type Mutation = {
   deleteUser: Scalars['Boolean'];
   deleteVmObject: Scalars['Boolean'];
   generateCompetitionUsers: Array<CompetitionUser>;
+  loadProvider: Scalars['Boolean'];
   lockoutCompetition: Scalars['Boolean'];
   lockoutVm: Scalars['Boolean'];
   powerOff: Scalars['Boolean'];
@@ -225,6 +226,11 @@ export type MutationGenerateCompetitionUsersArgs = {
 };
 
 
+export type MutationLoadProviderArgs = {
+  id: Scalars['ID'];
+};
+
+
 export type MutationLockoutCompetitionArgs = {
   id: Scalars['ID'];
   locked: Scalars['Boolean'];
@@ -306,6 +312,7 @@ export type Provider = {
   __typename?: 'Provider';
   Config: Scalars['String'];
   ID: Scalars['ID'];
+  Loaded: Scalars['Boolean'];
   Name: Scalars['String'];
   Type: Scalars['String'];
 };
@@ -579,19 +586,19 @@ export type DeleteCompetitionMutationVariables = Exact<{
 
 export type DeleteCompetitionMutation = { __typename?: 'Mutation', deleteCompetition: boolean };
 
-export type ProviderFragmentFragment = { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string };
+export type ProviderFragmentFragment = { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean };
 
 export type ListProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string }> };
+export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean }> };
 
 export type GetProviderQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type GetProviderQuery = { __typename?: 'Query', getProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
+export type GetProviderQuery = { __typename?: 'Query', getProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean } };
 
 export type ValidateConfigQueryVariables = Exact<{
   type: Scalars['String'];
@@ -613,14 +620,14 @@ export type UpdateProviderMutationVariables = Exact<{
 }>;
 
 
-export type UpdateProviderMutation = { __typename?: 'Mutation', updateProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
+export type UpdateProviderMutation = { __typename?: 'Mutation', updateProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean } };
 
 export type CreateProviderMutationVariables = Exact<{
   provider: ProviderInput;
 }>;
 
 
-export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string } };
+export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean } };
 
 export type DeleteProviderMutationVariables = Exact<{
   providerId: Scalars['ID'];
@@ -628,6 +635,13 @@ export type DeleteProviderMutationVariables = Exact<{
 
 
 export type DeleteProviderMutation = { __typename?: 'Mutation', deleteProvider: boolean };
+
+export type LoadProviderMutationVariables = Exact<{
+  providerId: Scalars['ID'];
+}>;
+
+
+export type LoadProviderMutation = { __typename?: 'Mutation', loadProvider: boolean };
 
 export type ServiceAccountFragmentFragment = { __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean };
 
@@ -935,6 +949,7 @@ export const ProviderFragmentFragmentDoc = gql`
   Name
   Type
   Config
+  Loaded
 }
     `;
 export const ServiceAccountFragmentFragmentDoc = gql`
@@ -1532,6 +1547,37 @@ export function useDeleteProviderMutation(baseOptions?: Apollo.MutationHookOptio
 export type DeleteProviderMutationHookResult = ReturnType<typeof useDeleteProviderMutation>;
 export type DeleteProviderMutationResult = Apollo.MutationResult<DeleteProviderMutation>;
 export type DeleteProviderMutationOptions = Apollo.BaseMutationOptions<DeleteProviderMutation, DeleteProviderMutationVariables>;
+export const LoadProviderDocument = gql`
+    mutation LoadProvider($providerId: ID!) {
+  loadProvider(id: $providerId)
+}
+    `;
+export type LoadProviderMutationFn = Apollo.MutationFunction<LoadProviderMutation, LoadProviderMutationVariables>;
+
+/**
+ * __useLoadProviderMutation__
+ *
+ * To run a mutation, you first call `useLoadProviderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLoadProviderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [loadProviderMutation, { data, loading, error }] = useLoadProviderMutation({
+ *   variables: {
+ *      providerId: // value for 'providerId'
+ *   },
+ * });
+ */
+export function useLoadProviderMutation(baseOptions?: Apollo.MutationHookOptions<LoadProviderMutation, LoadProviderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LoadProviderMutation, LoadProviderMutationVariables>(LoadProviderDocument, options);
+      }
+export type LoadProviderMutationHookResult = ReturnType<typeof useLoadProviderMutation>;
+export type LoadProviderMutationResult = Apollo.MutationResult<LoadProviderMutation>;
+export type LoadProviderMutationOptions = Apollo.BaseMutationOptions<LoadProviderMutation, LoadProviderMutationVariables>;
 export const ListServiceAccountsDocument = gql`
     query ListServiceAccounts {
   serviceAccounts {
