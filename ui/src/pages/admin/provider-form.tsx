@@ -204,7 +204,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
   };
 
   useEffect(() => {
-    let delayDebounce: NodeJS.Timeout;
+    let delayDebounce: number;
     if (provider.Type && provider.Config)
       delayDebounce = setTimeout(() => {
         validateConfig({

@@ -1,17 +1,15 @@
 import { ApolloClient, HttpLink, InMemoryCache, split } from "@apollo/client";
 import { User } from "./generated/graphql";
-import { WebSocketLink } from "@apollo/client/link/ws";
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 
-const wsLink = new WebSocketLink({
-  uri: `${import.meta.env.VITE_APP_WS_URL}/api/graphql/query`,
-  options: {
-    reconnect: true,
-    timeout: 30000,
-    minTimeout: 30000,
+const wsLink = new GraphQLWsLink(
+  createClient({
+    url: `${import.meta.env.VITE_APP_WS_URL}/api/graphql/query`,
     lazy: true,
-  },
-});
+  })
+);
 
 const httpLink = new HttpLink({
   uri: `${import.meta.env.VITE_APP_SERVER_URL}/api/graphql/query`,
