@@ -1,4 +1,4 @@
-import { Check, Download, Factory } from "@mui/icons-material";
+import { Check, Download, Factory } from '@mui/icons-material'
 import {
   TextField,
   Typography,
@@ -10,22 +10,22 @@ import {
   ListItem,
   ListItemText,
   Box,
-} from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useState } from 'react'
 import {
   ListCompetitionsQuery,
   useListCompetitionsQuery,
   useGenerateCompetitionUsersMutation,
   GenerateCompetitionUsersMutation,
-} from "../../api/generated/graphql";
+} from '../../api/generated/graphql'
 
 const downloadUsers = ({
   data,
   filename,
 }: {
-  data: GenerateCompetitionUsersMutation["generateCompetitionUsers"];
-  filename: string;
+  data: GenerateCompetitionUsersMutation['generateCompetitionUsers']
+  filename: string
 }) => {
   const rawData = data
     .map(
@@ -35,22 +35,22 @@ const downloadUsers = ({
         },${u.Username},${u.Password}`
     )
     .reduce(
-      (prev, curr) => prev.concat("\n" + curr),
-      "Competition,Team,Username,Password"
-    );
+      (prev, curr) => prev.concat('\n' + curr),
+      'Competition,Team,Username,Password'
+    )
 
-  const blob = new Blob([rawData], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.download = filename;
-  a.href = window.URL.createObjectURL(blob);
-  const clickEvt = new MouseEvent("click", {
+  const blob = new Blob([rawData], { type: 'text/csv' })
+  const a = document.createElement('a')
+  a.download = filename
+  a.href = window.URL.createObjectURL(blob)
+  const clickEvt = new MouseEvent('click', {
     view: window,
     bubbles: true,
     cancelable: true,
-  });
-  a.dispatchEvent(clickEvt);
-  a.remove();
-};
+  })
+  a.dispatchEvent(clickEvt)
+  a.remove()
+}
 
 export const GenerateUsers: React.FC = (): React.ReactElement => {
   const {
@@ -59,8 +59,8 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
     loading: listCompetitionsLoading,
     refetch: refetchListCompetitions,
   } = useListCompetitionsQuery({
-    fetchPolicy: "no-cache",
-  });
+    fetchPolicy: 'no-cache',
+  })
   const [
     generateCompetitionUsers,
     {
@@ -69,47 +69,47 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
       error: generateCompetitionUsersError,
       reset: resetGenerateCompetitionUsers,
     },
-  ] = useGenerateCompetitionUsersMutation();
+  ] = useGenerateCompetitionUsersMutation()
   const [selectedCompetition, setSelectedCompetition] = useState<
-    ListCompetitionsQuery["competitions"][0] | null
-  >(null);
-  const [usersPerTeam, setUsersPerTeam] = useState<string>("1");
-  const [hasDownloadedUsers, setHasDownloadedUsers] = useState<boolean>(false);
-  const { enqueueSnackbar } = useSnackbar();
+    ListCompetitionsQuery['competitions'][0] | null
+  >(null)
+  const [usersPerTeam, setUsersPerTeam] = useState<string>('1')
+  const [hasDownloadedUsers, setHasDownloadedUsers] = useState<boolean>(false)
+  const { enqueueSnackbar } = useSnackbar()
 
   useEffect(() => {
     if (listCompetitionsError)
       enqueueSnackbar(
         `Couldn't get competitions: ${listCompetitionsError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (generateCompetitionUsersError)
       enqueueSnackbar(
         `Couldn't generate users: ${generateCompetitionUsersError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
-  }, [listCompetitionsError, generateCompetitionUsersError, enqueueSnackbar]);
+      )
+  }, [listCompetitionsError, generateCompetitionUsersError, enqueueSnackbar])
 
   useEffect(() => {
     if (generateCompetitionUsersData?.generateCompetitionUsers !== undefined)
       enqueueSnackbar(
         `Generated users for competition "${selectedCompetition?.Name}". Please note these down`,
         {
-          variant: "success",
+          variant: 'success',
         }
-      );
-  }, [generateCompetitionUsersData, selectedCompetition, enqueueSnackbar]);
+      )
+  }, [generateCompetitionUsersData, selectedCompetition, enqueueSnackbar])
 
   const generateUsers = () => {
     if (parseInt(usersPerTeam) <= 0) {
-      enqueueSnackbar("Users per team must be > 0", {
-        variant: "warning",
-      });
-      return;
+      enqueueSnackbar('Users per team must be > 0', {
+        variant: 'warning',
+      })
+      return
     }
     if (selectedCompetition)
       generateCompetitionUsers({
@@ -117,27 +117,27 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
           usersPerTeam: parseInt(usersPerTeam),
           competitionId: selectedCompetition.ID,
         },
-      });
-  };
+      })
+  }
 
   const resetForm = () => {
-    setSelectedCompetition(null);
-    setUsersPerTeam("1");
-    refetchListCompetitions();
-    resetGenerateCompetitionUsers();
-    setHasDownloadedUsers(false);
-  };
+    setSelectedCompetition(null)
+    setUsersPerTeam('1')
+    refetchListCompetitions()
+    resetGenerateCompetitionUsers()
+    setHasDownloadedUsers(false)
+  }
 
   return (
     <Box>
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -156,18 +156,18 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
           )}
           onChange={(event, value) => {
             setSelectedCompetition(
-              value as ListCompetitionsQuery["competitions"][0]
-            );
+              value as ListCompetitionsQuery['competitions'][0]
+            )
           }}
           isOptionEqualToValue={(option, value) => option.ID === value.ID}
           value={selectedCompetition}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
-            "& .MuiTextField-root": {
+            '& .MuiTextField-root': {
               m: 0,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             },
           }}
@@ -184,11 +184,11 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
           },
         }}
@@ -199,7 +199,7 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
           variant="caption"
           align="center"
           sx={{
-            minWidth: "100%",
+            minWidth: '100%',
             mx: 1,
           }}
           hidden={
@@ -229,7 +229,7 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
           onClick={generateUsers}
           sx={{
             m: 1,
-            minWidth: "50%",
+            minWidth: '50%',
             flexGrow: 1,
           }}
         >
@@ -243,8 +243,8 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
       </Box>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <List>
@@ -281,7 +281,7 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
             )
           )}
         </List>
-        <Box sx={{ display: "flex" }}>
+        <Box sx={{ display: 'flex' }}>
           <Button
             variant="contained"
             disabled={
@@ -292,12 +292,12 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
                 data:
                   generateCompetitionUsersData?.generateCompetitionUsers ?? [],
                 filename: `${selectedCompetition?.Name.toLocaleLowerCase()}_users.csv`,
-              });
-              setHasDownloadedUsers(true);
+              })
+              setHasDownloadedUsers(true)
             }}
             sx={{
               m: 1,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             }}
           >
@@ -318,7 +318,7 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
             onClick={resetForm}
             sx={{
               m: 1,
-              minWidth: "40%",
+              minWidth: '40%',
               flexGrow: 1,
             }}
           >
@@ -332,5 +332,5 @@ export const GenerateUsers: React.FC = (): React.ReactElement => {
         </Box>
       </Box>
     </Box>
-  );
-};
+  )
+}

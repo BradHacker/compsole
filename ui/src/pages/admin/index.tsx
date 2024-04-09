@@ -10,7 +10,7 @@ import {
   Factory,
   Lock,
   Engineering,
-} from "@mui/icons-material";
+} from '@mui/icons-material'
 import {
   Box,
   Button,
@@ -27,29 +27,29 @@ import {
   TextField,
   Toolbar,
   Typography,
-} from "@mui/material";
-import React, { useContext, useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Role } from "../../api/generated/graphql";
-import { UserContext } from "../../user-context";
-import { IngestVMs } from "../../components/ingest-vms";
-import { UserList } from "../../components/user-list";
-import { CompetitionList } from "../../components/competition-list";
-import { TeamList } from "../../components/team-list";
-import { VmObjectList } from "../../components/vm-object-list/index";
-import { ProviderList } from "../../components/provider-list";
-import { GenerateUsers } from "../../components/generate-users";
-import { LockoutForm } from "../../components/lockout-form";
-import { ServiceAccountList } from "../../components/service-account-list";
+} from '@mui/material'
+import React, { useContext, useEffect, useState } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Role } from '../../api/generated/graphql'
+import { UserContext } from '../../user-context'
+import { IngestVMs } from '../../components/ingest-vms'
+import { UserList } from '../../components/user-list'
+import { CompetitionList } from '../../components/competition-list'
+import { TeamList } from '../../components/team-list'
+import { VmObjectList } from '../../components/vm-object-list/index'
+import { ProviderList } from '../../components/provider-list'
+import { GenerateUsers } from '../../components/generate-users'
+import { LockoutForm } from '../../components/lockout-form'
+import { ServiceAccountList } from '../../components/service-account-list'
 
 interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+  children?: React.ReactNode
+  index: number
+  value: number
 }
 
 function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, ...other } = props
 
   return (
     <div
@@ -65,14 +65,14 @@ function TabPanel(props: TabPanelProps) {
         </Box>
       )}
     </div>
-  );
+  )
 }
 
 interface DeleteObjectModalProps {
-  objectName: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: () => void;
+  objectName: string
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: () => void
 }
 
 const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
@@ -81,30 +81,30 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
   onClose,
   onSubmit,
 }): React.ReactElement => {
-  const [inputName, setInputName] = useState<string>("");
-  const [isValid, setIsValid] = useState<boolean>(false);
+  const [inputName, setInputName] = useState<string>('')
+  const [isValid, setIsValid] = useState<boolean>(false)
   const checkObjectName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputName(e.target.value);
-    setIsValid(e.target.value === objectName);
-  };
+    setInputName(e.target.value)
+    setIsValid(e.target.value === objectName)
+  }
 
   return (
     <Modal open={isOpen} onClose={onClose}>
       <Box
         sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "50%",
-          bgcolor: "#2a273f",
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '50%',
+          bgcolor: '#2a273f',
           borderRadius: 2,
-          boxShadow: "0 0 2rem #000",
+          boxShadow: '0 0 2rem #000',
           p: 4,
         }}
       >
         <Typography variant="h6" component="h2">
-          Do you want to delete{" "}
+          Do you want to delete{' '}
           <Typography variant="h6" component="code">
             {objectName}
           </Typography>
@@ -119,7 +119,7 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
         <TextField
           label="Confirm deletion"
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{ width: '100%' }}
           value={inputName}
           onChange={checkObjectName}
         />
@@ -127,93 +127,93 @@ const DeleteObjectModal: React.FC<DeleteObjectModalProps> = ({
           type="button"
           variant="contained"
           startIcon={<DeleteTwoTone />}
-          sx={{ width: "100%", mt: 2 }}
+          sx={{ width: '100%', mt: 2 }}
           disabled={!isValid}
           onClick={() => {
-            setInputName("");
-            onSubmit();
+            setInputName('')
+            onSubmit()
           }}
         >
           Delete Forever
         </Button>
       </Box>
     </Modal>
-  );
-};
+  )
+}
 
 export const AdminProtected: React.FC = (): React.ReactElement => {
-  const [selectedTab, setSelectedTab] = React.useState(0);
+  const [selectedTab, setSelectedTab] = React.useState(0)
   const [deleteModalData, setDeleteModalData] = useState<{
-    objectName: string;
-    isOpen: boolean;
-    onClose: () => void;
-    onSubmit: () => void;
+    objectName: string
+    isOpen: boolean
+    onClose: () => void
+    onSubmit: () => void
   }>({
-    objectName: "",
+    objectName: '',
     isOpen: false,
     onClose: () => undefined,
     onSubmit: () => undefined,
-  });
-  let location = useLocation();
-  const navigate = useNavigate();
+  })
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (
       location?.state &&
-      (location.state as any).tab &&
-      typeof (location.state as any).tab === "number"
+      (location.state as any).tab && // eslint-disable-line @typescript-eslint/no-explicit-any
+      typeof (location.state as any).tab === 'number' // eslint-disable-line @typescript-eslint/no-explicit-any
     )
-      setSelectedTab((location.state as any).tab);
-  }, [location, setSelectedTab]);
+      setSelectedTab((location.state as any).tab) // eslint-disable-line @typescript-eslint/no-explicit-any
+  }, [location, setSelectedTab])
 
   const handleTabChange = (newValue: number) => {
-    setSelectedTab(newValue);
-  };
+    setSelectedTab(newValue)
+  }
 
   const addObject = () => {
     switch (selectedTab) {
       case 0:
-        navigate("/admin/user/new");
-        break;
+        navigate('/admin/user/new')
+        break
       case 1:
-        navigate("/admin/competition/new");
-        break;
+        navigate('/admin/competition/new')
+        break
       case 2:
-        navigate("/admin/team/new");
-        break;
+        navigate('/admin/team/new')
+        break
       case 3:
-        navigate("/admin/vm-object/new");
-        break;
+        navigate('/admin/vm-object/new')
+        break
       case 4:
-        navigate("/admin/provider/new");
-        break;
+        navigate('/admin/provider/new')
+        break
       case 5:
-        navigate("/admin/service-account/new");
-        break;
+        navigate('/admin/service-account/new')
+        break
       default:
-        navigate("/admin");
-        break;
+        navigate('/admin')
+        break
     }
-  };
+  }
 
   const resetDeleteModal = () => {
     setDeleteModalData({
-      objectName: "",
+      objectName: '',
       isOpen: false,
       onClose: () => undefined,
       onSubmit: () => undefined,
-    });
-  };
+    })
+  }
 
   // Set the title of the tab only on first load
   useEffect(() => {
-    document.title = "Admin - Compsole";
-  }, []);
+    document.title = 'Admin - Compsole'
+  }, [])
 
   return (
     <Box
       sx={{
-        display: "flex",
+        display: 'flex',
       }}
     >
       <Drawer
@@ -223,12 +223,12 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: {
             width: 240,
-            boxSizing: "border-box",
+            boxSizing: 'border-box',
           },
         }}
       >
         <Toolbar />
-        <Box sx={{ overflow: "auto" }}>
+        <Box sx={{ overflow: 'auto' }}>
           <List>
             <ListItem disablePadding>
               <ListItemButton
@@ -384,7 +384,7 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         {selectedTab < 6 && (
           <Fab
             sx={{
-              position: "fixed",
+              position: 'fixed',
               bottom: 24,
               right: 24,
             }}
@@ -398,11 +398,11 @@ export const AdminProtected: React.FC = (): React.ReactElement => {
         <DeleteObjectModal {...deleteModalData} />
       </Box>
     </Box>
-  );
-};
+  )
+}
 
 export const Admin: React.FC = (): React.ReactElement => {
-  const { user } = useContext(UserContext);
+  const { user } = useContext(UserContext)
   return (
     <React.Fragment>
       {user && user.Role === Role.Admin ? (
@@ -412,9 +412,9 @@ export const Admin: React.FC = (): React.ReactElement => {
           component="main"
           sx={{
             p: 2,
-            display: "flex",
-            alignItems: "center",
-            flexDirection: "column",
+            display: 'flex',
+            alignItems: 'center',
+            flexDirection: 'column',
           }}
         >
           <Typography variant="body1">
@@ -423,5 +423,5 @@ export const Admin: React.FC = (): React.ReactElement => {
         </Container>
       )}
     </React.Fragment>
-  );
-};
+  )
+}

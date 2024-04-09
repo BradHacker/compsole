@@ -21,111 +21,111 @@ import {
   TableRow,
   TextField,
   Typography,
-} from "@mui/material";
-import { GRAPHQL_MAX_INT } from "graphql";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
+} from '@mui/material'
+import { GRAPHQL_MAX_INT } from 'graphql'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useState } from 'react'
 import {
   ActionType,
   ListActionsQuery,
   useListActionsQuery,
-} from "../../api/generated/graphql";
+} from '../../api/generated/graphql'
 
 const createActionData = (
-  action: ListActionsQuery["actions"]["results"][0]
+  action: ListActionsQuery['actions']['results'][0]
 ): {
-  id: string;
-  ipAddress: string;
-  type: ActionType;
-  message: string;
-  performedAt: Date;
-  username: string;
+  id: string
+  ipAddress: string
+  type: ActionType
+  message: string
+  performedAt: Date
+  username: string
 } => {
   return {
-    id: action?.ID ?? "",
-    ipAddress: action?.IpAddress ?? "",
+    id: action?.ID ?? '',
+    ipAddress: action?.IpAddress ?? '',
     type: action?.Type ?? ActionType.Undefined,
-    message: action?.Message ?? "",
-    performedAt: new Date(action?.PerformedAt ?? ""),
-    username: action?.ActionToUser?.Username ?? "",
-  };
-};
+    message: action?.Message ?? '',
+    performedAt: new Date(action?.PerformedAt ?? ''),
+    username: action?.ActionToUser?.Username ?? '',
+  }
+}
 
 const getActionTypeColor = (
   type: ActionType
 ):
-  | "error"
-  | "default"
-  | "info"
-  | "secondary"
-  | "primary"
-  | "success"
-  | "warning"
+  | 'error'
+  | 'default'
+  | 'info'
+  | 'secondary'
+  | 'primary'
+  | 'success'
+  | 'warning'
   | undefined => {
   switch (type) {
     // Logins
     case ActionType.SignIn:
-      return "info";
+      return 'info'
     case ActionType.FailedSignIn:
-      return "info";
+      return 'info'
     case ActionType.SignOut:
-      return "info";
+      return 'info'
     // Consoles
     case ActionType.ConsoleAccess:
-      return "secondary";
+      return 'secondary'
     case ActionType.Reboot:
-      return "secondary";
+      return 'secondary'
     case ActionType.Shutdown:
-      return "secondary";
+      return 'secondary'
     case ActionType.PowerOn:
-      return "secondary";
+      return 'secondary'
     case ActionType.PowerOff:
-      return "secondary";
+      return 'secondary'
     case ActionType.UpdateLockout:
-      return "secondary";
+      return 'secondary'
     // Account
     case ActionType.ChangeSelfPassword:
-      return "success";
+      return 'success'
     case ActionType.ChangePassword:
-      return "success";
+      return 'success'
     // Database
     case ActionType.CreateObject:
-      return "primary";
+      return 'primary'
     case ActionType.UpdateObject:
-      return "primary";
+      return 'primary'
     case ActionType.DeleteObject:
-      return "primary";
+      return 'primary'
     default:
-      return "default";
+      return 'default'
   }
-};
+}
 
 const ActionTypeMap: { [key in ActionType]: string } = {
-  API_CALL: "API Call",
-  SIGN_IN: "Sign IN",
-  FAILED_SIGN_IN: "Failed Sign In",
-  SIGN_OUT: "Sign Out",
-  CONSOLE_ACCESS: "Console Access",
-  REBOOT: "Reboot",
-  SHUTDOWN: "Shutdown",
-  POWER_ON: "Power On",
-  POWER_OFF: "Power Off",
-  CHANGE_SELF_PASSWORD: "Change Self Password",
-  CHANGE_PASSWORD: "Change Password",
-  CREATE_OBJECT: "Create Object",
-  UPDATE_OBJECT: "Update Object",
-  DELETE_OBJECT: "Delete Object",
-  UPDATE_LOCKOUT: "Update Lockout",
-  UNDEFINED: "Undefined",
-};
+  API_CALL: 'API Call',
+  SIGN_IN: 'Sign IN',
+  FAILED_SIGN_IN: 'Failed Sign In',
+  SIGN_OUT: 'Sign Out',
+  CONSOLE_ACCESS: 'Console Access',
+  REBOOT: 'Reboot',
+  SHUTDOWN: 'Shutdown',
+  POWER_ON: 'Power On',
+  POWER_OFF: 'Power Off',
+  CHANGE_SELF_PASSWORD: 'Change Self Password',
+  CHANGE_PASSWORD: 'Change Password',
+  CREATE_OBJECT: 'Create Object',
+  UPDATE_OBJECT: 'Update Object',
+  DELETE_OBJECT: 'Delete Object',
+  UPDATE_LOCKOUT: 'Update Lockout',
+  UNDEFINED: 'Undefined',
+}
 
 export const Logs: React.FC = (): React.ReactElement => {
-  const [resultsPerPage, setResultsPerPage] = useState<number>(10);
-  const [page, setPage] = useState<number>(1);
+  const [resultsPerPage, setResultsPerPage] = useState<number>(10)
+  const [page, setPage] = useState<number>(1)
   const [logTypes, setLogTypes] = useState<ActionType[]>(
     Object.keys(ActionTypeMap).map((k) => k as ActionType)
-  );
-  const { enqueueSnackbar } = useSnackbar();
+  )
+  const { enqueueSnackbar } = useSnackbar()
   const {
     data: listActionsData,
     previousData: listActionsPrevData,
@@ -138,19 +138,19 @@ export const Logs: React.FC = (): React.ReactElement => {
       limit: resultsPerPage,
       types: logTypes,
     },
-  });
+  })
 
   // Set the title of the tab only on first load
   useEffect(() => {
-    document.title = "Logs - Compsole";
-  }, []);
+    document.title = 'Logs - Compsole'
+  }, [])
 
   useEffect(() => {
     if (listActionsError)
       enqueueSnackbar(`Couldn't get actions: ${listActionsError.message}`, {
-        variant: "error",
-      });
-  }, [listActionsError, enqueueSnackbar]);
+        variant: 'error',
+      })
+  }, [listActionsError, enqueueSnackbar])
 
   useEffect(() => {
     // If we change the results per page or log types, reset the page to 0
@@ -158,15 +158,15 @@ export const Logs: React.FC = (): React.ReactElement => {
       listActionsPrevData?.actions.limit !== resultsPerPage ||
       !listActionsPrevData.actions.types.every((v) => logTypes.includes(v))
     ) {
-      setPage(1); // This should retrigger this effect
-      return;
+      setPage(1) // This should retrigger this effect
+      return
     }
     if (!listActionsLoading) {
       refetchActions({
         offset: resultsPerPage * (page - 1),
         limit: resultsPerPage,
         types: logTypes,
-      });
+      })
     }
   }, [
     page,
@@ -175,36 +175,36 @@ export const Logs: React.FC = (): React.ReactElement => {
     listActionsLoading,
     listActionsPrevData,
     refetchActions,
-  ]);
+  ])
 
   const handleLogTypeChange = (event: SelectChangeEvent<typeof logTypes>) => {
     setLogTypes(
-      typeof event.target.value === "string"
-        ? event.target.value.split(",").map((v) => v as ActionType)
+      typeof event.target.value === 'string'
+        ? event.target.value.split(',').map((v) => v as ActionType)
         : event.target.value
-    );
-  };
+    )
+  }
 
   return (
     <Container component="main" sx={{ p: 2 }}>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="subtitle2">Showing</Typography>
           <TextField
             variant="filled"
             size="small"
             hiddenLabel
-            inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
             value={resultsPerPage}
             onChange={(e) =>
               setResultsPerPage(
-                typeof e.target.value === "number"
+                typeof e.target.value === 'number'
                   ? e.target.value
                   : resultsPerPage
               )
@@ -220,7 +220,7 @@ export const Logs: React.FC = (): React.ReactElement => {
           <Typography variant="subtitle2">results per page</Typography>
         </Box>
         <Typography variant="subtitle2">
-          Showing{" "}
+          Showing{' '}
           {page === 1
             ? `first ${
                 resultsPerPage >
@@ -233,8 +233,8 @@ export const Logs: React.FC = (): React.ReactElement => {
                 (listActionsData?.actions.totalResults ?? GRAPHQL_MAX_INT)
                   ? listActionsData?.actions.totalResults ?? 0
                   : page * resultsPerPage
-              }`}{" "}
-          of {listActionsData?.actions.totalResults ?? "N/A"}
+              }`}{' '}
+          of {listActionsData?.actions.totalResults ?? 'N/A'}
         </Typography>
         <Pagination
           count={listActionsData?.actions.totalPages ?? 1}
@@ -244,7 +244,7 @@ export const Logs: React.FC = (): React.ReactElement => {
         ></Pagination>
       </Box>
       <TableContainer component={Paper}>
-        <Table sx={{ width: "100%" }} aria-label="users table">
+        <Table sx={{ width: '100%' }} aria-label="users table">
           <TableHead>
             <TableRow>
               <TableCell align="center">ID</TableCell>
@@ -261,7 +261,7 @@ export const Logs: React.FC = (): React.ReactElement => {
               .map((row) => (
                 <TableRow
                   key={row.id}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
                   <TableCell component="th" scope="row" align="center">
                     {row.id}
@@ -281,12 +281,12 @@ export const Logs: React.FC = (): React.ReactElement => {
                   </TableCell>
                 </TableRow>
               )) ?? (
-              <TableCell colSpan={6} sx={{ textAlign: "center" }}>
+              <TableCell colSpan={6} sx={{ textAlign: 'center' }}>
                 No Actions Found
               </TableCell>
             )}
             {listActionsLoading && (
-              <TableCell colSpan={6} sx={{ textAlign: "center" }}>
+              <TableCell colSpan={6} sx={{ textAlign: 'center' }}>
                 <CircularProgress />
               </TableCell>
             )}
@@ -295,9 +295,9 @@ export const Logs: React.FC = (): React.ReactElement => {
       </TableContainer>
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <FormControl sx={{ m: 1, width: 300 }}>
@@ -309,7 +309,7 @@ export const Logs: React.FC = (): React.ReactElement => {
             value={logTypes}
             onChange={handleLogTypeChange}
             input={<OutlinedInput label="Tag" />}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) => selected.join(', ')}
             // MenuProps={MenuProps}
           >
             {Object.keys(ActionTypeMap).map((type) => (
@@ -328,5 +328,5 @@ export const Logs: React.FC = (): React.ReactElement => {
         ></Pagination>
       </Box>
     </Container>
-  );
-};
+  )
+}

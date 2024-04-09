@@ -14,7 +14,7 @@ import {
   RestartAltTwoTone,
   SyncTwoTone,
   TerminalTwoTone,
-} from "@mui/icons-material";
+} from '@mui/icons-material'
 import {
   Button,
   ButtonGroup,
@@ -31,11 +31,11 @@ import {
   Typography,
   Box,
   SxProps,
-} from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { useSnackbar } from "notistack";
-import React, { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+} from '@mui/material'
+import { LoadingButton } from '@mui/lab'
+import { useSnackbar } from 'notistack'
+import React, { useContext, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import {
   ConsoleType,
   PowerState,
@@ -48,30 +48,30 @@ import {
   usePowerOnVmMutation,
   usePowerStateSubscription,
   useRebootVmMutation,
-} from "../../api/generated/graphql";
-import { UserContext } from "../../user-context";
+} from '../../api/generated/graphql'
+import { UserContext } from '../../user-context'
 
 const VmButtonStyles: SxProps<Theme> = {
-  ".MuiButton-startIcon": {
+  '.MuiButton-startIcon': {
     display: {
-      xs: "none",
-      md: "inherit",
+      xs: 'none',
+      md: 'inherit',
     },
   },
   fontSize: {
-    xs: "0.65rem",
-    md: "0.8125rem",
+    xs: '0.65rem',
+    md: '0.8125rem',
   },
   flexShrink: {
-    xs: "0",
-    md: "1",
+    xs: '0',
+    md: '1',
   },
-};
+}
 
 export const Console: React.FC = (): React.ReactElement => {
-  let { user } = useContext(UserContext);
-  let { id } = useParams();
-  let [
+  const { user } = useContext(UserContext)
+  const { id } = useParams()
+  const [
     getVmObject,
     {
       data: getVmObjectData,
@@ -79,8 +79,8 @@ export const Console: React.FC = (): React.ReactElement => {
       error: getVmObjectError,
       refetch: refetchVmObject,
     },
-  ] = useGetVmObjectLazyQuery();
-  let [
+  ] = useGetVmObjectLazyQuery()
+  const [
     getVmConsole,
     {
       previousData: prevGetVmConsoleData,
@@ -89,47 +89,47 @@ export const Console: React.FC = (): React.ReactElement => {
       error: getVmConsoleError,
       refetch: getVmConsoleRefetch,
     },
-  ] = useGetVmConsoleLazyQuery();
-  let { data: lockoutData, error: lockoutError } = useLockoutSubscription({
+  ] = useGetVmConsoleLazyQuery()
+  const { data: lockoutData, error: lockoutError } = useLockoutSubscription({
     variables: {
-      vmObjectId: id || "",
+      vmObjectId: id || '',
     },
-  });
-  let { data: powerStateData, error: powerStateError } =
+  })
+  const { data: powerStateData, error: powerStateError } =
     usePowerStateSubscription({
       variables: {
-        vmObjectId: id || "",
+        vmObjectId: id || '',
       },
-    });
-  const { enqueueSnackbar } = useSnackbar();
-  let [consoleUrl, setConsoleUrl] = useState<string>("");
+    })
+  const { enqueueSnackbar } = useSnackbar()
+  const [consoleUrl, setConsoleUrl] = useState<string>('')
   const [consoleType, _setConsoleType] = useState<ConsoleType>(
     ConsoleType.Novnc
-  );
-  const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false);
-  const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = useState(false);
+  )
+  const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false)
+  const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = useState(false)
   // const rebootTypeMenuAnchorRef = useRef<HTMLButtonElement>(null);
   const [rebootTypeMenuAnchor, setRebootTypeMenuAnchor] =
-    useState<null | HTMLElement>(null);
+    useState<null | HTMLElement>(null)
   const options = [
     {
-      title: "Hard Reboot",
+      title: 'Hard Reboot',
       value: RebootType.Hard,
     },
     {
-      title: "Soft Reboot",
+      title: 'Soft Reboot',
       value: RebootType.Soft,
     },
-  ];
-  const [selectedRebootType, setSelectedRebootType] = useState<number>(1);
+  ]
+  const [selectedRebootType, setSelectedRebootType] = useState<number>(1)
   const [
     rebootVm,
     { data: rebootVmData, loading: rebootVmLoading, error: rebootVmError },
-  ] = useRebootVmMutation();
+  ] = useRebootVmMutation()
   const [
     powerOn,
     { data: powerOnVmData, loading: powerOnVmLoading, error: powerOnVmError },
-  ] = usePowerOnVmMutation();
+  ] = usePowerOnVmMutation()
   const [
     powerOff,
     {
@@ -137,7 +137,7 @@ export const Console: React.FC = (): React.ReactElement => {
       loading: powerOffVmLoading,
       error: powerOffVmError,
     },
-  ] = usePowerOffVmMutation();
+  ] = usePowerOffVmMutation()
 
   const handleRefreshConsoleClick = () => {
     if (id)
@@ -146,15 +146,15 @@ export const Console: React.FC = (): React.ReactElement => {
         consoleType,
       }).then(
         () =>
-          enqueueSnackbar("Refreshed Console", {
-            variant: "success",
+          enqueueSnackbar('Refreshed Console', {
+            variant: 'success',
           }),
         (err) =>
           enqueueSnackbar(`Failed to Refresh Console: ${err}`, {
-            variant: "error",
+            variant: 'error',
           })
-      );
-  };
+      )
+  }
 
   const handleRebootClick = () => {
     if (id)
@@ -163,8 +163,8 @@ export const Console: React.FC = (): React.ReactElement => {
           vmObjectId: id,
           rebootType: options[selectedRebootType].value,
         },
-      });
-  };
+      })
+  }
 
   const handlePowerOnClick = () => {
     if (id)
@@ -172,8 +172,8 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      });
-  };
+      })
+  }
 
   const handlePowerOffClick = () => {
     if (id)
@@ -181,16 +181,16 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      });
-  };
+      })
+  }
 
   const handleRebootTypeClick = (
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
     index: number
   ) => {
-    setSelectedRebootType(index);
-    setRebootTypeMenuOpen(false);
-  };
+    setSelectedRebootType(index)
+    setRebootTypeMenuOpen(false)
+  }
 
   const handleToggleRebootTypeMenu = (
     e: React.MouseEvent<HTMLElement> | null
@@ -198,86 +198,86 @@ export const Console: React.FC = (): React.ReactElement => {
     // setRebootTypeMenuOpen((prevOpen) => !prevOpen);
     setRebootTypeMenuAnchor(
       rebootTypeMenuAnchor ? null : e?.currentTarget ?? null
-    );
-  };
+    )
+  }
 
   const getPowerStateString = (powerState: PowerState | undefined): string => {
-    if (!powerStateData) return "Loading VM State...";
+    if (!powerStateData) return 'Loading VM State...'
     switch (powerState) {
       case PowerState.PoweredOff:
-        return "VM is Powered Off";
+        return 'VM is Powered Off'
       case PowerState.PoweredOn:
-        return "VM is Powered On";
+        return 'VM is Powered On'
       case PowerState.Rebooting:
-        return "VM is Rebooting";
+        return 'VM is Rebooting'
       case PowerState.ShuttingDown:
-        return "VM is Shutting Down";
+        return 'VM is Shutting Down'
       case PowerState.Suspended:
-        return "VM is Suspended";
+        return 'VM is Suspended'
       default:
-        return "VM is in an Unknown State";
+        return 'VM is in an Unknown State'
     }
-  };
+  }
 
   const getPowerStateIcon = (
     powerState: PowerState | undefined
   ): React.ReactElement => {
-    if (!powerStateData) return <SyncTwoTone />;
+    if (!powerStateData) return <SyncTwoTone />
     switch (powerState) {
       case PowerState.PoweredOff:
-        return <PowerOffTwoTone />;
+        return <PowerOffTwoTone />
       case PowerState.PoweredOn:
-        return <PowerTwoTone />;
+        return <PowerTwoTone />
       case PowerState.Rebooting:
-        return <RestartAltTwoTone />;
+        return <RestartAltTwoTone />
       case PowerState.ShuttingDown:
-        return <HourglassBottomTwoTone />;
+        return <HourglassBottomTwoTone />
       case PowerState.Suspended:
-        return <HotelTwoTone />;
+        return <HotelTwoTone />
       default:
-        return <BatteryUnknownTwoTone />;
+        return <BatteryUnknownTwoTone />
     }
-  };
+  }
 
   const getPowerStateColor = (powerState: PowerState | undefined): string => {
     switch (powerState) {
       case PowerState.PoweredOff:
-        return "#ff0000";
+        return '#ff0000'
       case PowerState.PoweredOn:
-        return "#00ff00";
+        return '#00ff00'
       case PowerState.Rebooting:
-        return "#ffc400";
+        return '#ffc400'
       case PowerState.ShuttingDown:
-        return "#ffc400";
+        return '#ffc400'
       default:
-        return "rgba(255, 255, 255, 0.3)";
+        return 'rgba(255, 255, 255, 0.3)'
     }
-  };
+  }
 
   const isVmLocked = (): boolean => {
     // Never lock VM's for admins
-    if (user.Role === Role.Admin) return false;
+    if (user.Role === Role.Admin) return false
     // VM is still loading
-    if (getVmObjectData === undefined) return false;
+    if (getVmObjectData === undefined) return false
     // Got lockout message from websocket
-    if (lockoutData?.lockout.Locked) return true;
+    if (lockoutData?.lockout.Locked) return true
     // If it's loaded and locked
-    if (getVmObjectData.vmObject.Locked) return true;
-    else return false;
-  };
+    if (getVmObjectData.vmObject.Locked) return true
+    else return false
+  }
 
   const shouldShowConsole = (): boolean => {
     // If the vm is locked
-    if (isVmLocked()) return false;
+    if (isVmLocked()) return false
     // If the vm is not powered on
-    if (powerStateData?.powerState.State !== PowerState.PoweredOn) return false;
-    return true;
-  };
+    if (powerStateData?.powerState.State !== PowerState.PoweredOn) return false
+    return true
+  }
 
   // Set the title of the tab only on first load
   useEffect(() => {
-    document.title = "VM Console - Compsole";
-  }, []);
+    document.title = 'VM Console - Compsole'
+  }, [])
 
   useEffect(() => {
     if (id) {
@@ -285,13 +285,13 @@ export const Console: React.FC = (): React.ReactElement => {
         variables: {
           vmObjectId: id,
         },
-      });
+      })
     }
-  }, [id, getVmObject]);
+  }, [id, getVmObject])
 
   useEffect(() => {
     if (getVmObjectData?.vmObject.Name)
-      document.title = `${getVmObjectData.vmObject.Name} - Compsole`;
+      document.title = `${getVmObjectData.vmObject.Name} - Compsole`
     if (getVmObjectData?.vmObject.ID && !isVmLocked()) {
       if (!prevGetVmConsoleData?.console)
         getVmConsole({
@@ -299,21 +299,21 @@ export const Console: React.FC = (): React.ReactElement => {
             vmObjectId: getVmObjectData?.vmObject.ID,
             consoleType,
           },
-        });
+        })
       else
         getVmConsoleRefetch({
           vmObjectId: id,
           consoleType,
         }).then(
           () =>
-            enqueueSnackbar("Refreshed Console", {
-              variant: "success",
+            enqueueSnackbar('Refreshed Console', {
+              variant: 'success',
             }),
           (err) =>
             enqueueSnackbar(`Failed to Refresh Console: ${err}`, {
-              variant: "error",
+              variant: 'error',
             })
-        );
+        )
     }
   }, [
     id,
@@ -323,37 +323,37 @@ export const Console: React.FC = (): React.ReactElement => {
     getVmConsole,
     getVmConsoleRefetch,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (getVmObjectError)
       enqueueSnackbar(getVmObjectError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (getVmConsoleError)
       enqueueSnackbar(getVmConsoleError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (rebootVmError)
       enqueueSnackbar(rebootVmError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (powerOnVmError)
       enqueueSnackbar(powerOnVmError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (powerOffVmError)
       enqueueSnackbar(powerOffVmError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (lockoutError)
       enqueueSnackbar(lockoutError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (powerStateError)
       enqueueSnackbar(powerStateError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
   }, [
     getVmObjectError,
     getVmConsoleError,
@@ -363,43 +363,43 @@ export const Console: React.FC = (): React.ReactElement => {
     lockoutError,
     powerStateError,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (rebootVmData?.reboot)
-      enqueueSnackbar("Rebooting VM.", {
-        variant: "success",
-      });
+      enqueueSnackbar('Rebooting VM.', {
+        variant: 'success',
+      })
     if (powerOffVmData?.powerOff)
-      enqueueSnackbar("Powering Off VM.", {
-        variant: "success",
-      });
+      enqueueSnackbar('Powering Off VM.', {
+        variant: 'success',
+      })
     if (powerOnVmData?.powerOn)
-      enqueueSnackbar("Powering On VM.", {
-        variant: "success",
-      });
-  }, [rebootVmData, powerOnVmData, powerOffVmData, enqueueSnackbar]);
+      enqueueSnackbar('Powering On VM.', {
+        variant: 'success',
+      })
+  }, [rebootVmData, powerOnVmData, powerOffVmData, enqueueSnackbar])
 
   useEffect(() => {
     if (lockoutData?.lockout.Locked && user.Role !== Role.Admin) {
-      enqueueSnackbar("VM Locked", {
-        variant: "warning",
+      enqueueSnackbar('VM Locked', {
+        variant: 'warning',
         autoHideDuration: 2000,
-      });
+      })
     } else if (getVmObjectData && user.Role !== Role.Admin) {
-      enqueueSnackbar("VM Unlocked", {
-        variant: "success",
+      enqueueSnackbar('VM Unlocked', {
+        variant: 'success',
         autoHideDuration: 2000,
-      });
+      })
       refetchVmObject({
         vmObjectId: getVmObjectData.vmObject.ID,
-      });
+      })
     }
-  }, [lockoutData, getVmObjectData, refetchVmObject, enqueueSnackbar]);
+  }, [lockoutData, getVmObjectData, refetchVmObject, enqueueSnackbar])
 
   useEffect(() => {
-    if (getVmConsoleData) setConsoleUrl(getVmConsoleData.console);
-  }, [getVmConsoleData]);
+    if (getVmConsoleData) setConsoleUrl(getVmConsoleData.console)
+  }, [getVmConsoleData])
 
   return (
     <Container
@@ -419,14 +419,14 @@ export const Console: React.FC = (): React.ReactElement => {
           <Typography
             variant="h5"
             sx={{
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
             <FiberManualRecord
               sx={{
-                height: "1rem",
-                width: "1rem",
+                height: '1rem',
+                width: '1rem',
                 mr: 1,
                 color: getPowerStateColor(powerStateData?.powerState.State),
               }}
@@ -444,8 +444,8 @@ export const Console: React.FC = (): React.ReactElement => {
             {getVmObjectLoading || !getVmObjectData ? (
               <Skeleton />
             ) : (
-              getVmObjectData.vmObject.IPAddresses?.join(", ") ??
-              "No IP Addresses Found"
+              getVmObjectData.vmObject.IPAddresses?.join(', ') ??
+              'No IP Addresses Found'
             )}
           </Typography>
         </Grid>
@@ -454,11 +454,11 @@ export const Console: React.FC = (): React.ReactElement => {
           md={8}
           xs={12}
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: {
-              sm: "flex-start",
-              md: "flex-end",
+              sm: 'flex-start',
+              md: 'flex-end',
             },
           }}
         >
@@ -533,9 +533,9 @@ export const Console: React.FC = (): React.ReactElement => {
               color="warning"
               size="small"
               aria-controls={
-                rebootTypeMenuOpen ? "split-button-menu" : undefined
+                rebootTypeMenuOpen ? 'split-button-menu' : undefined
               }
-              aria-expanded={rebootTypeMenuOpen ? "true" : undefined}
+              aria-expanded={rebootTypeMenuOpen ? 'true' : undefined}
               aria-label="select merge strategy"
               aria-haspopup="menu"
               onClick={handleToggleRebootTypeMenu}
@@ -559,7 +559,7 @@ export const Console: React.FC = (): React.ReactElement => {
                 {...TransitionProps}
                 style={{
                   transformOrigin:
-                    placement === "bottom" ? "center top" : "center bottom",
+                    placement === 'bottom' ? 'center top' : 'center bottom',
                 }}
               >
                 <Paper>
@@ -594,8 +594,8 @@ export const Console: React.FC = (): React.ReactElement => {
             title="console"
             src={consoleUrl}
             style={{
-              width: "100%",
-              height: "calc(100vh - 10rem)",
+              width: '100%',
+              height: 'calc(100vh - 10rem)',
             }}
           />
         ) : (
@@ -605,12 +605,12 @@ export const Console: React.FC = (): React.ReactElement => {
         <Paper
           elevation={2}
           sx={{
-            width: "100%",
-            height: "calc(100vh - 10rem)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
+            width: '100%',
+            height: 'calc(100vh - 10rem)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
           }}
         >
           {isVmLocked() ? (
@@ -630,35 +630,35 @@ export const Console: React.FC = (): React.ReactElement => {
       )}
       <Box
         sx={{
-          opacity: fullscreenConsole ? "100%" : 0,
-          position: "absolute",
-          pointerEvents: "none",
+          opacity: fullscreenConsole ? '100%' : 0,
+          position: 'absolute',
+          pointerEvents: 'none',
           top: 0,
           left: 0,
-          width: "100vw",
-          height: "100vh",
-          background: "rgba(0,0,0,0.75)",
-          transition: "all 0.5s ease-in-out",
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.75)',
+          transition: 'all 0.5s ease-in-out',
           zIndex: 1302,
         }}
       ></Box>
       <Box
         sx={{
-          top: fullscreenConsole ? 0 : "100vh",
-          width: "100vw",
-          height: fullscreenConsole ? "100vh" : 0,
+          top: fullscreenConsole ? 0 : '100vh',
+          width: '100vw',
+          height: fullscreenConsole ? '100vh' : 0,
           left: 0,
-          position: "absolute",
-          transition: "all 0.3s ease-in-out",
-          overflow: "hidden",
+          position: 'absolute',
+          transition: 'all 0.3s ease-in-out',
+          overflow: 'hidden',
           zIndex: 1303,
         }}
       >
         <Paper
           elevation={2}
           sx={{
-            width: "100%",
-            height: "100%",
+            width: '100%',
+            height: '100%',
             padding: 1,
           }}
         >
@@ -667,7 +667,7 @@ export const Console: React.FC = (): React.ReactElement => {
             spacing={1}
             direction="column"
             sx={{
-              height: "100%",
+              height: '100%',
             }}
           >
             {/* VM Metadata */}
@@ -675,9 +675,9 @@ export const Console: React.FC = (): React.ReactElement => {
               item
               container
               spacing={2}
-              md={"auto"}
+              md={'auto'}
               xs={4}
-              sx={{ width: "100%" }}
+              sx={{ width: '100%' }}
             >
               {/* VM Name/IP */}
               <Grid
@@ -686,23 +686,23 @@ export const Console: React.FC = (): React.ReactElement => {
                 xs={12}
                 sx={{
                   padding: 1,
-                  boxSizing: "border-box",
-                  display: "flex",
-                  alignItems: "center",
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  alignItems: 'center',
                 }}
               >
                 <Typography
                   variant="h5"
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     mr: 2,
                   }}
                 >
                   <FiberManualRecord
                     sx={{
-                      height: "1rem",
-                      width: "1rem",
+                      height: '1rem',
+                      width: '1rem',
                       mr: 1,
                       color: getPowerStateColor(
                         powerStateData?.powerState.State
@@ -725,13 +725,13 @@ export const Console: React.FC = (): React.ReactElement => {
                     variant="caption"
                     component="code"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       flexShrink: 1,
                     }}
                   >
-                    {getVmObjectData.vmObject.IPAddresses?.join(", ") ??
-                      "No IP Addresses Found"}
+                    {getVmObjectData.vmObject.IPAddresses?.join(', ') ??
+                      'No IP Addresses Found'}
                   </Typography>
                 )}
               </Grid>
@@ -741,9 +741,9 @@ export const Console: React.FC = (): React.ReactElement => {
                 md={8}
                 xs={12}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
                   flexShrink: 0,
                   flexGrow: 0,
                 }}
@@ -825,9 +825,9 @@ export const Console: React.FC = (): React.ReactElement => {
                     color="warning"
                     size="small"
                     aria-controls={
-                      rebootTypeMenuOpen ? "split-button-menu" : undefined
+                      rebootTypeMenuOpen ? 'split-button-menu' : undefined
                     }
-                    aria-expanded={rebootTypeMenuOpen ? "true" : undefined}
+                    aria-expanded={rebootTypeMenuOpen ? 'true' : undefined}
                     aria-label="select merge strategy"
                     aria-haspopup="menu"
                     onClick={handleToggleRebootTypeMenu}
@@ -851,9 +851,9 @@ export const Console: React.FC = (): React.ReactElement => {
                       {...TransitionProps}
                       style={{
                         transformOrigin:
-                          placement === "bottom"
-                            ? "center top"
-                            : "center bottom",
+                          placement === 'bottom'
+                            ? 'center top'
+                            : 'center bottom',
                       }}
                     >
                       <Paper>
@@ -882,7 +882,7 @@ export const Console: React.FC = (): React.ReactElement => {
               </Grid>
             </Grid>
             {/* VM Console */}
-            <Grid item md={true} xs={8} sx={{ width: "100%", padding: 0 }}>
+            <Grid item md={true} xs={8} sx={{ width: '100%', padding: 0 }}>
               {shouldShowConsole() ? (
                 fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
                   <iframe
@@ -890,9 +890,9 @@ export const Console: React.FC = (): React.ReactElement => {
                     title="console"
                     src={consoleUrl}
                     style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "100%",
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
                     }}
                   />
                 ) : (
@@ -902,12 +902,12 @@ export const Console: React.FC = (): React.ReactElement => {
                 <Paper
                   elevation={6}
                   sx={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "column",
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
                   }}
                 >
                   {isVmLocked() ? (
@@ -930,5 +930,5 @@ export const Console: React.FC = (): React.ReactElement => {
         </Paper>
       </Box>
     </Container>
-  );
-};
+  )
+}

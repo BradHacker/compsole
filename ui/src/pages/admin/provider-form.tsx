@@ -3,7 +3,7 @@ import {
   FiberManualRecord,
   Replay,
   Save,
-} from "@mui/icons-material";
+} from '@mui/icons-material'
 import {
   Container,
   TextField,
@@ -19,10 +19,10 @@ import {
   Select,
   InputAdornment,
   Box,
-} from "@mui/material";
-import { useSnackbar } from "notistack";
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+} from '@mui/material'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   useGetProviderLazyQuery,
   useUpdateProviderMutation,
@@ -30,11 +30,11 @@ import {
   ProviderInput,
   useValidateConfigLazyQuery,
   useLoadProviderMutation,
-} from "../../api/generated/graphql";
-import { LoadingButton } from "@mui/lab";
+} from '../../api/generated/graphql'
+import { LoadingButton } from '@mui/lab'
 
 export const ProviderForm: React.FC = (): React.ReactElement => {
-  const { id } = useParams();
+  const { id } = useParams()
   // Queries
   const [
     getProvider,
@@ -44,7 +44,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       error: getProviderError,
       refetch: refetchGetProvider,
     },
-  ] = useGetProviderLazyQuery();
+  ] = useGetProviderLazyQuery()
   const [
     updateProvider,
     {
@@ -52,7 +52,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       loading: updateProviderLoading,
       error: updateProviderError,
     },
-  ] = useUpdateProviderMutation();
+  ] = useUpdateProviderMutation()
   const [
     createProvider,
     {
@@ -60,7 +60,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       loading: createProviderLoading,
       error: createProviderError,
     },
-  ] = useCreateProviderMutation();
+  ] = useCreateProviderMutation()
   const [
     loadProvider,
     {
@@ -69,7 +69,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       error: loadProviderError,
       reset: resetLoadProvider,
     },
-  ] = useLoadProviderMutation();
+  ] = useLoadProviderMutation()
   const [
     validateConfig,
     {
@@ -77,16 +77,16 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       loading: validateConfigLoading,
       error: validateConfigError,
     },
-  ] = useValidateConfigLazyQuery();
+  ] = useValidateConfigLazyQuery()
   // State
   const [provider, setProvider] = useState<ProviderInput>({
-    ID: "",
-    Name: "",
-    Type: "",
-    Config: "",
-  });
-  const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
+    ID: '',
+    Name: '',
+    Type: '',
+    Config: '',
+  })
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (id)
@@ -94,33 +94,33 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
         variables: {
           id,
         },
-      });
-  }, [id, getProvider]);
+      })
+  }, [id, getProvider])
 
   useEffect(() => {
     if (!loadProviderLoading && loadProviderData)
-      enqueueSnackbar("Loaded provider", {
-        variant: "success",
-      });
+      enqueueSnackbar('Loaded provider', {
+        variant: 'success',
+      })
     if (!updateProviderLoading && updateProviderData)
       enqueueSnackbar(
         `Updated provider "${updateProviderData.updateProvider.Name}"`,
         {
-          variant: "success",
+          variant: 'success',
         }
-      );
+      )
     if (!createProviderLoading && createProviderData) {
       enqueueSnackbar(
         `Created provider "${createProviderData.createProvider.Name}"`,
         {
-          variant: "success",
+          variant: 'success',
         }
-      );
+      )
       setTimeout(
         () =>
           navigate(`/admin/provider/${createProviderData?.createProvider.ID}`),
         1000
-      );
+      )
     }
   }, [
     updateProviderData,
@@ -131,38 +131,38 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
     createProviderLoading,
     enqueueSnackbar,
     navigate,
-  ]);
+  ])
 
   useEffect(() => {
     if (getProviderError)
       enqueueSnackbar(`Failed to get provider: ${getProviderError.message}`, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (updateProviderError)
       enqueueSnackbar(
         `Failed to update provider: ${updateProviderError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (createProviderError)
       enqueueSnackbar(
         `Failed to create provider: ${createProviderError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (loadProviderError)
       enqueueSnackbar(`Failed to load provider: ${loadProviderError.message}`, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
   }, [
     getProviderError,
     updateProviderError,
     createProviderError,
     loadProviderError,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     if (getProviderData)
@@ -171,22 +171,22 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
         Name: getProviderData.getProvider.Name,
         Type: getProviderData.getProvider.Type,
         ID: getProviderData.getProvider.ID,
-      } as ProviderInput);
+      } as ProviderInput)
     else
       setProvider({
-        ID: "",
-        Name: "",
-        Type: "",
-        Config: "",
-      });
-  }, [getProviderData]);
+        ID: '',
+        Name: '',
+        Type: '',
+        Config: '',
+      })
+  }, [getProviderData])
 
   useEffect(() => {
     if (loadProviderData?.loadProvider) {
-      resetLoadProvider();
-      refetchGetProvider();
+      resetLoadProvider()
+      refetchGetProvider()
     }
-  }, [loadProviderData]);
+  }, [loadProviderData])
 
   const submitProvider = () => {
     if (provider.ID)
@@ -194,17 +194,17 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
         variables: {
           provider,
         },
-      });
+      })
     else
       createProvider({
         variables: {
           provider,
         },
-      });
-  };
+      })
+  }
 
   useEffect(() => {
-    let delayDebounce: number;
+    let delayDebounce: number
     if (provider.Type && provider.Config)
       delayDebounce = setTimeout(() => {
         validateConfig({
@@ -212,30 +212,30 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
             type: provider.Type,
             config: provider.Config,
           },
-          fetchPolicy: "no-cache",
-        });
-      }, 1000);
-    return () => clearTimeout(delayDebounce);
-  }, [provider, validateConfig]);
+          fetchPolicy: 'no-cache',
+        })
+      }, 1000)
+    return () => clearTimeout(delayDebounce)
+  }, [provider, validateConfig])
 
   return (
     <Container component="main" sx={{ p: 2 }}>
       {id && (getProviderLoading || getProviderError) ? (
         <Skeleton>
-          <Box sx={{ width: "100%" }}></Box>
+          <Box sx={{ width: '100%' }}></Box>
         </Skeleton>
       ) : (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
           }}
         >
           <Button
             variant="text"
             sx={{ mr: 1 }}
             onClick={() =>
-              navigate("/admin", {
+              navigate('/admin', {
                 state: {
                   tab: 4,
                 },
@@ -245,28 +245,28 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
             <ArrowBackTwoTone />
           </Button>
           <Typography variant="h4" sx={{ mr: 2 }}>
-            {id ? `Edit Provider: ` : "New Provider"}
+            {id ? `Edit Provider: ` : 'New Provider'}
           </Typography>
           {id && !getProviderLoading && getProviderData && (
             <>
               <Typography variant="h5" component="code">
-                {getProviderData.getProvider.Name ?? "N/A"}
+                {getProviderData.getProvider.Name ?? 'N/A'}
               </Typography>
               <Typography variant="h6" component="span" sx={{ ml: 2 }}>
                 <FiberManualRecord
                   sx={{
-                    height: "1rem",
-                    width: "1rem",
+                    height: '1rem',
+                    width: '1rem',
                     mr: 1,
                     color: getProviderData.getProvider.Loaded
-                      ? "#00ff00"
-                      : "#ff0000",
+                      ? '#00ff00'
+                      : '#ff0000',
                   }}
                   titleAccess={
-                    getProviderData.getProvider.Loaded ? "Loaded" : "Not Loaded"
+                    getProviderData.getProvider.Loaded ? 'Loaded' : 'Not Loaded'
                   }
                 />
-                {getProviderData.getProvider.Loaded ? "Loaded" : "Not Loaded"}
+                {getProviderData.getProvider.Loaded ? 'Loaded' : 'Not Loaded'}
               </Typography>
             </>
           )}
@@ -279,11 +279,11 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
             loading={loadProviderLoading}
             loadingPosition="start"
             onClick={() =>
-              loadProvider({ variables: { providerId: id ?? "" } })
+              loadProvider({ variables: { providerId: id ?? '' } })
             }
             // disabled={isVmLocked()}
             // sx={VmButtonStyles}
-            sx={{ ml: "auto" }}
+            sx={{ ml: 'auto' }}
           >
             Load Provider
           </LoadingButton>
@@ -304,11 +304,11 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiFormControl-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiFormControl-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -332,7 +332,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
             label="Type"
             onChange={(e) => setProvider({ ...provider, Type: e.target.value })}
           >
-            <MenuItem value={"OPENSTACK"}>Openstack</MenuItem>
+            <MenuItem value={'OPENSTACK'}>Openstack</MenuItem>
           </Select>
         </FormControl>
         <TextField
@@ -344,8 +344,8 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           helperText={
             validateConfigError !== undefined ||
             validateConfigData?.validateConfig === false
-              ? validateConfigError?.message || "Invalid syntax"
-              : "Config is valid!"
+              ? validateConfigError?.message || 'Invalid syntax'
+              : 'Config is valid!'
           }
           InputProps={{
             endAdornment: validateConfigLoading ? (
@@ -354,7 +354,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
               </InputAdornment>
             ) : null,
           }}
-          color={validateConfigData?.validateConfig ? "success" : undefined}
+          color={validateConfigData?.validateConfig ? 'success' : undefined}
           error={
             validateConfigError !== undefined ||
             validateConfigData?.validateConfig === false
@@ -366,7 +366,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       </Box>
       <Box
         sx={{
-          position: "fixed",
+          position: 'fixed',
           bottom: 24,
           right: 24,
           m: 1,
@@ -384,8 +384,8 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           <CircularProgress
             size={68}
             sx={{
-              color: "primary",
-              position: "absolute",
+              color: 'primary',
+              position: 'absolute',
               top: -6,
               left: -6,
               zIndex: 1,
@@ -394,5 +394,5 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
         )}
       </Box>
     </Container>
-  );
-};
+  )
+}

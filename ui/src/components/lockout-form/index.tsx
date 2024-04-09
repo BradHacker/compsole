@@ -1,4 +1,4 @@
-import { LockTwoTone, LockOpenTwoTone, Clear } from "@mui/icons-material";
+import { LockTwoTone, LockOpenTwoTone, Clear } from '@mui/icons-material'
 import {
   TableContainer,
   Paper,
@@ -24,16 +24,16 @@ import {
   IconButton,
   ToggleButtonGroup,
   ToggleButton,
-} from "@mui/material";
-import React, { useEffect, useState } from "react";
+} from '@mui/material'
+import React, { useEffect, useState } from 'react'
 import {
   AllVmObjectsQuery,
   useAllVmObjectsQuery,
   useBatchLockoutMutation,
   useLockoutVmMutation,
-} from "../../api/generated/graphql";
-import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
+} from '../../api/generated/graphql'
+import { useNavigate } from 'react-router-dom'
+import { useSnackbar } from 'notistack'
 
 enum FilterType {
   IP_ADDRESS,
@@ -51,13 +51,13 @@ enum FilterMode {
 const isFilterValid = (filter: string, filterMode: FilterMode) => {
   if (filterMode === FilterMode.REGEX) {
     try {
-      let r = new RegExp(filter);
+      const r = new RegExp(filter)
     } catch {
-      return false;
+      return false
     }
   }
-  return true;
-};
+  return true
+}
 
 export const LockoutForm: React.FC = (): React.ReactElement => {
   const {
@@ -67,8 +67,8 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
     previousData: prevVmObjectsData,
     refetch: refetchVmObjects,
   } = useAllVmObjectsQuery({
-    fetchPolicy: "no-cache",
-  });
+    fetchPolicy: 'no-cache',
+  })
   const [
     lockoutVm,
     {
@@ -77,7 +77,7 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
       error: lockoutVmError,
       reset: resetLockoutVm,
     },
-  ] = useLockoutVmMutation();
+  ] = useLockoutVmMutation()
   const [
     batchLockout,
     {
@@ -86,67 +86,67 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
       error: batchLockoutError,
       reset: resetBatchLockout,
     },
-  ] = useBatchLockoutMutation();
-  const [filterType, setFilterType] = useState<FilterType>(FilterType.NAME);
-  const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.TEXT);
-  const [filter, setFilter] = useState<string>("");
+  ] = useBatchLockoutMutation()
+  const [filterType, setFilterType] = useState<FilterType>(FilterType.NAME)
+  const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.TEXT)
+  const [filter, setFilter] = useState<string>('')
   const [filteredVmObjects, setFilteredVmObjects] = useState<
-    AllVmObjectsQuery["vmObjects"]
-  >([]);
+    AllVmObjectsQuery['vmObjects']
+  >([])
   const [selectedVmObjects, setSelectedVmObjects] = useState<
-    AllVmObjectsQuery["vmObjects"]
-  >([]);
-  const navigate = useNavigate();
-  const { enqueueSnackbar } = useSnackbar();
+    AllVmObjectsQuery['vmObjects']
+  >([])
+  const navigate = useNavigate()
+  const { enqueueSnackbar } = useSnackbar()
 
   useEffect(() => {
     if (allVmObjectsError)
       enqueueSnackbar(`Couldn't get vm objects: ${allVmObjectsError.message}`, {
-        variant: "error",
-      });
-  }, [allVmObjectsError, enqueueSnackbar]);
+        variant: 'error',
+      })
+  }, [allVmObjectsError, enqueueSnackbar])
 
   useEffect(() => {
     if (batchLockoutError)
       enqueueSnackbar(
         `Couldn't update vm object lockouts: ${batchLockoutError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
+      )
     if (lockoutVmError)
       enqueueSnackbar(
         `Couldn't update vm object lockout: ${lockoutVmError.message}`,
         {
-          variant: "error",
+          variant: 'error',
         }
-      );
-  }, [batchLockoutError, lockoutVmError, enqueueSnackbar]);
+      )
+  }, [batchLockoutError, lockoutVmError, enqueueSnackbar])
 
   useEffect(() => {
     if (batchLockoutLoading)
-      enqueueSnackbar("Updating vm object lockouts...", {
-        variant: "info",
+      enqueueSnackbar('Updating vm object lockouts...', {
+        variant: 'info',
         autoHideDuration: 2500,
-      });
+      })
     if (batchLockoutData?.batchLockout) {
-      enqueueSnackbar("Successfully updated vm object lockouts!", {
-        variant: "success",
-      });
-      refetchVmObjects().then(() => setFilter(""));
-      resetBatchLockout();
+      enqueueSnackbar('Successfully updated vm object lockouts!', {
+        variant: 'success',
+      })
+      refetchVmObjects().then(() => setFilter(''))
+      resetBatchLockout()
     }
     if (lockoutVmLoading)
-      enqueueSnackbar("Updating vm object lockout...", {
-        variant: "info",
+      enqueueSnackbar('Updating vm object lockout...', {
+        variant: 'info',
         autoHideDuration: 2500,
-      });
+      })
     if (lockoutVmData?.lockoutVm) {
-      enqueueSnackbar("Successfully updated vm object lockout!", {
-        variant: "success",
-      });
-      refetchVmObjects();
-      resetLockoutVm();
+      enqueueSnackbar('Successfully updated vm object lockout!', {
+        variant: 'success',
+      })
+      refetchVmObjects()
+      resetLockoutVm()
     }
   }, [
     batchLockoutLoading,
@@ -157,143 +157,143 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
     resetBatchLockout,
     resetLockoutVm,
     enqueueSnackbar,
-  ]);
+  ])
 
   useEffect(() => {
     // If this is the first time we have data
     if (!prevVmObjectsData && allVmObjectsData?.vmObjects)
-      setFilteredVmObjects(allVmObjectsData.vmObjects);
-  }, [prevVmObjectsData, allVmObjectsData]);
+      setFilteredVmObjects(allVmObjectsData.vmObjects)
+  }, [prevVmObjectsData, allVmObjectsData])
 
   useEffect(() => {
     const filterVmObjects = () => {
-      if (!allVmObjectsData) return;
+      if (!allVmObjectsData) return
       if (filterMode === FilterMode.REGEX && !isFilterValid(filter, filterMode))
-        return;
+        return
       if (filter.length === 0) {
-        setFilteredVmObjects(allVmObjectsData?.vmObjects ?? []);
-        return;
+        setFilteredVmObjects(allVmObjectsData?.vmObjects ?? [])
+        return
       }
       setFilteredVmObjects(
         allVmObjectsData.vmObjects.filter((vmObject) => {
-          let field = "";
+          let field = ''
           switch (filterType) {
             case FilterType.COMPETITION:
-              field = vmObject.VmObjectToTeam?.TeamToCompetition.Name ?? "";
-              break;
+              field = vmObject.VmObjectToTeam?.TeamToCompetition.Name ?? ''
+              break
             case FilterType.ID:
-              field = vmObject.ID;
-              break;
+              field = vmObject.ID
+              break
             case FilterType.IP_ADDRESS:
-              field = vmObject.IPAddresses.join(",");
-              break;
+              field = vmObject.IPAddresses.join(',')
+              break
             case FilterType.NAME:
-              field = vmObject.Name;
-              break;
+              field = vmObject.Name
+              break
             case FilterType.TEAM:
               field =
                 (vmObject.VmObjectToTeam?.Name ||
                   `Team ${vmObject.VmObjectToTeam?.TeamNumber}`) ??
-                "";
-              break;
+                ''
+              break
           }
-          let passesFilter = false;
+          let passesFilter = false
           if (filterMode === FilterMode.REGEX) {
-            let regex = new RegExp(filter);
-            passesFilter = regex.test(field);
+            const regex = new RegExp(filter)
+            passesFilter = regex.test(field)
           } else if (filterMode === FilterMode.TEXT) {
             passesFilter =
-              field.toLowerCase().indexOf(filter.toLowerCase()) > -1;
+              field.toLowerCase().indexOf(filter.toLowerCase()) > -1
           }
-          return passesFilter;
+          return passesFilter
         })
-      );
-    };
+      )
+    }
 
-    let filterDebounce = setTimeout(() => filterVmObjects(), 1000);
+    const filterDebounce = setTimeout(() => filterVmObjects(), 1000)
 
-    return () => clearTimeout(filterDebounce);
-  }, [filter, filterMode, filterType, allVmObjectsData]);
+    return () => clearTimeout(filterDebounce)
+  }, [filter, filterMode, filterType, allVmObjectsData])
 
   const isSelected = (id: string): boolean => {
-    return selectedVmObjects.find((vm) => vm.ID === id) !== undefined;
-  };
+    return selectedVmObjects.find((vm) => vm.ID === id) !== undefined
+  }
 
   const areAllSelected = (): boolean[] => {
     // returns [checked, indeterminate]
-    if (selectedVmObjects.length === 0) return [false, false];
-    let selectedNotVisible = selectedVmObjects.filter(
+    if (selectedVmObjects.length === 0) return [false, false]
+    const selectedNotVisible = selectedVmObjects.filter(
       (selected) =>
         filteredVmObjects.findIndex((filtered) => filtered.ID === selected.ID) <
         0
-    );
-    let visibleNotSelected = filteredVmObjects.filter(
+    )
+    const visibleNotSelected = filteredVmObjects.filter(
       (filtered) =>
         selectedVmObjects.findIndex((selected) => filtered.ID === selected.ID) <
         0
-    );
-    if (visibleNotSelected.length > 0) return [false, true];
-    if (selectedNotVisible.length > 0) return [true, true];
-    return [true, false];
-  };
+    )
+    if (visibleNotSelected.length > 0) return [false, true]
+    if (selectedNotVisible.length > 0) return [true, true]
+    return [true, false]
+  }
 
   const clearSelection = () => {
-    setSelectedVmObjects([]);
-  };
+    setSelectedVmObjects([])
+  }
 
   const handleSelectVmObject = (
-    vmObject: AllVmObjectsQuery["vmObjects"][0]
+    vmObject: AllVmObjectsQuery['vmObjects'][0]
   ) => {
-    console.log(`selecting ${vmObject.ID}`);
+    console.log(`selecting ${vmObject.ID}`)
     if (!selectedVmObjects.find((vm) => vm.ID === vmObject.ID))
-      setSelectedVmObjects([...selectedVmObjects, vmObject]);
-  };
+      setSelectedVmObjects([...selectedVmObjects, vmObject])
+  }
 
   const handleDeselectVmObject = (
-    vmObject: AllVmObjectsQuery["vmObjects"][0]
+    vmObject: AllVmObjectsQuery['vmObjects'][0]
   ) => {
     setSelectedVmObjects(
       selectedVmObjects.filter((vm) => vm.ID !== vmObject.ID)
-    );
-  };
+    )
+  }
 
   const handleSelectAll = (
     event: React.ChangeEvent<HTMLInputElement>,
     checked: boolean
   ) => {
-    console.log(checked, filteredVmObjects);
+    console.log(checked, filteredVmObjects)
     if (checked)
       setSelectedVmObjects([
         ...selectedVmObjects,
         ...filteredVmObjects.filter(
           (vmObject) => !selectedVmObjects.find((vm) => vm.ID === vmObject.ID)
         ),
-      ]);
+      ])
     else
       setSelectedVmObjects(
         selectedVmObjects.filter(
           (vm) => !filteredVmObjects.find((fvm) => fvm.ID === vm.ID)
         )
-      );
-  };
+      )
+  }
 
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
           mb: 1,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="subtitle1" sx={{ mr: 1 }}>
             {selectedVmObjects.length} VM Objects Selected
           </Typography>
@@ -340,17 +340,17 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
       </Box>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "100%",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
         }}
       >
         <FormControl
           variant="outlined"
           sx={{
-            minWidth: "25%",
-            flex: "2",
+            minWidth: '25%',
+            flex: '2',
           }}
         >
           <InputLabel id="filter-type-select-label">Filter Type</InputLabel>
@@ -370,24 +370,24 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
         </FormControl>
 
         <FormControl
-          sx={{ m: 1, width: "25ch", minWidth: "25%", flex: "6" }}
+          sx={{ m: 1, width: '25ch', minWidth: '25%', flex: '6' }}
           variant="outlined"
         >
           <InputLabel htmlFor="filter-text">
-            {(filterMode === FilterMode.TEXT ? "Filter Text" : "Filter Regex") +
+            {(filterMode === FilterMode.TEXT ? 'Filter Text' : 'Filter Regex') +
               (isFilterValid(filter, filterMode)
-                ? ""
-                : " - Must be a valid regular expression")}
+                ? ''
+                : ' - Must be a valid regular expression')}
           </InputLabel>
           <OutlinedInput
             id="filter-text"
             label={
               (filterMode === FilterMode.TEXT
-                ? "Filter Text"
-                : "Filter Regex") +
+                ? 'Filter Text'
+                : 'Filter Regex') +
               (isFilterValid(filter, filterMode)
-                ? ""
-                : " - Must be a valid regular expression")
+                ? ''
+                : ' - Must be a valid regular expression')
             }
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -396,7 +396,7 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
               <InputAdornment position="end">
                 <IconButton
                   aria-label="clear filter"
-                  onClick={() => setFilter("")}
+                  onClick={() => setFilter('')}
                   edge="end"
                 >
                   <Clear />
@@ -408,8 +408,8 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
         <FormControl
           variant="outlined"
           sx={{
-            minWidth: "15%",
-            flex: "1",
+            minWidth: '15%',
+            flex: '1',
           }}
         >
           <InputLabel id="filter-mode-select-label">Filter Mode</InputLabel>
@@ -427,7 +427,7 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
       </Box>
       <Divider />
       <TableContainer component={Paper}>
-        <Table sx={{ width: "100%" }} aria-label="vm objects table">
+        <Table sx={{ width: '100%' }} aria-label="vm objects table">
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox">
@@ -437,7 +437,7 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
                   indeterminate={areAllSelected()[1]}
                   onChange={(event, checked) => handleSelectAll(event, checked)}
                   inputProps={{
-                    "aria-label": "select all desserts",
+                    'aria-label': 'select all desserts',
                   }}
                 />
               </TableCell>
@@ -452,20 +452,20 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
           </TableHead>
           <TableBody>
             {filteredVmObjects.map((vmObject) => {
-              const isItemSelected = isSelected(vmObject.ID);
+              const isItemSelected = isSelected(vmObject.ID)
 
               return (
                 <TableRow
                   key={vmObject.ID}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
                   <TableCell padding="checkbox" component="th" scope="row">
                     <Checkbox
                       color="primary"
                       checked={isItemSelected}
                       onChange={(e, checked) => {
-                        if (checked) handleSelectVmObject(vmObject);
-                        else handleDeselectVmObject(vmObject);
+                        if (checked) handleSelectVmObject(vmObject)
+                        else handleDeselectVmObject(vmObject)
                       }}
                       // inputProps={{
                       //   "aria-labelledby": labelId,
@@ -478,8 +478,8 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
                   <TableCell align="center">
                     <Box
                       sx={{
-                        display: "flex",
-                        flexDirection: "column",
+                        display: 'flex',
+                        flexDirection: 'column',
                       }}
                     >
                       {vmObject.IPAddresses.map((ip) => (
@@ -502,9 +502,9 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
                         vmObject.VmObjectToTeam
                           ? vmObject.VmObjectToTeam.Name ||
                             `Team ${vmObject.VmObjectToTeam.TeamNumber}`
-                          : "N/A"
+                          : 'N/A'
                       }
-                      color={vmObject.VmObjectToTeam ? "primary" : "default"}
+                      color={vmObject.VmObjectToTeam ? 'primary' : 'default'}
                       size="small"
                     />
                   </TableCell>
@@ -513,9 +513,9 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
                       label={
                         vmObject.VmObjectToTeam
                           ? vmObject.VmObjectToTeam.TeamToCompetition.Name
-                          : "N/A"
+                          : 'N/A'
                       }
-                      color={vmObject.VmObjectToTeam ? "secondary" : "default"}
+                      color={vmObject.VmObjectToTeam ? 'secondary' : 'default'}
                       size="small"
                     />
                   </TableCell>
@@ -556,14 +556,14 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
                     </ToggleButtonGroup>
                   </TableCell>
                 </TableRow>
-              );
+              )
             }) ?? (
-              <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+              <TableCell colSpan={5} sx={{ textAlign: 'center' }}>
                 No Vm Objects Found
               </TableCell>
             )}
             {allVmObjectsLoading && (
-              <TableCell colSpan={5} sx={{ textAlign: "center" }}>
+              <TableCell colSpan={5} sx={{ textAlign: 'center' }}>
                 <CircularProgress />
               </TableCell>
             )}
@@ -571,5 +571,5 @@ export const LockoutForm: React.FC = (): React.ReactElement => {
         </Table>
       </TableContainer>
     </Box>
-  );
-};
+  )
+}

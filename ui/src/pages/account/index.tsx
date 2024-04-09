@@ -7,23 +7,23 @@ import {
   TextField,
   Typography,
   Container,
-} from "@mui/material";
-import React, { useContext, useEffect, useState } from "react";
+} from '@mui/material'
+import React, { useContext, useEffect, useState } from 'react'
 import {
   AccountInput,
   useChangeSelfPasswordMutation,
   useUpdateAccountMutation,
-} from "../../api/generated/graphql";
-import { UserContext } from "../../user-context";
-import { useSnackbar } from "notistack";
-import { LockResetTwoTone, Save } from "@mui/icons-material";
+} from '../../api/generated/graphql'
+import { UserContext } from '../../user-context'
+import { useSnackbar } from 'notistack'
+import { LockResetTwoTone, Save } from '@mui/icons-material'
 
 export const Account: React.FC = (): React.ReactElement => {
-  const { user, refetchUser } = useContext(UserContext);
+  const { user, refetchUser } = useContext(UserContext)
   const [account, setAccount] = useState<AccountInput>({
     FirstName: user.FirstName,
     LastName: user.LastName,
-  });
+  })
   const [
     updateAccount,
     {
@@ -32,7 +32,7 @@ export const Account: React.FC = (): React.ReactElement => {
       error: updateAccountError,
       reset: resetUpdateAccount,
     },
-  ] = useUpdateAccountMutation();
+  ] = useUpdateAccountMutation()
   const [
     changeSelfPassword,
     {
@@ -41,46 +41,46 @@ export const Account: React.FC = (): React.ReactElement => {
       error: changeSelfPasswordError,
       reset: resetChangeSelfPassword,
     },
-  ] = useChangeSelfPasswordMutation();
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const { enqueueSnackbar } = useSnackbar();
+  ] = useChangeSelfPasswordMutation()
+  const [password, setPassword] = useState<string>('')
+  const [confirmPassword, setConfirmPassword] = useState<string>('')
+  const { enqueueSnackbar } = useSnackbar()
 
   // Set the title of the tab only on first load
   useEffect(() => {
-    document.title = "Account - Compsole";
-  }, []);
+    document.title = 'Account - Compsole'
+  }, [])
 
   useEffect(() => {
     if (updateAccountError)
       enqueueSnackbar(updateAccountError.message, {
-        variant: "error",
-      });
+        variant: 'error',
+      })
     if (changeSelfPasswordError)
       enqueueSnackbar(changeSelfPasswordError.message, {
-        variant: "error",
-      });
-  }, [updateAccountError, changeSelfPasswordError, enqueueSnackbar]);
+        variant: 'error',
+      })
+  }, [updateAccountError, changeSelfPasswordError, enqueueSnackbar])
 
   useEffect(() => {
     if (updateAccountData?.updateAccount) {
       setAccount({
         FirstName: updateAccountData.updateAccount.FirstName,
         LastName: updateAccountData.updateAccount.LastName,
-      });
-      enqueueSnackbar("Updated account settings", {
-        variant: "success",
-      });
-      resetUpdateAccount();
-      refetchUser();
+      })
+      enqueueSnackbar('Updated account settings', {
+        variant: 'success',
+      })
+      resetUpdateAccount()
+      refetchUser()
     }
     if (changeSelfPasswordData?.changeSelfPassword) {
-      setPassword("");
-      setConfirmPassword("");
-      enqueueSnackbar("Updated account password", {
-        variant: "success",
-      });
-      resetChangeSelfPassword();
+      setPassword('')
+      setConfirmPassword('')
+      enqueueSnackbar('Updated account password', {
+        variant: 'success',
+      })
+      resetChangeSelfPassword()
     }
   }, [
     updateAccountData,
@@ -92,34 +92,34 @@ export const Account: React.FC = (): React.ReactElement => {
     resetChangeSelfPassword,
     enqueueSnackbar,
     refetchUser,
-  ]);
+  ])
 
   const handleUpdateAccount = () => {
     updateAccount({
       variables: {
         input: account,
       },
-    });
-  };
+    })
+  }
 
   const handleChangePassword = () => {
     if (password !== confirmPassword)
-      return enqueueSnackbar("Passwords do not match", {
-        variant: "warning",
-      });
+      return enqueueSnackbar('Passwords do not match', {
+        variant: 'warning',
+      })
     changeSelfPassword({
       variables: {
         newPassword: password,
       },
-    });
-  };
+    })
+  }
 
   return (
     <Container component="main" sx={{ p: 2 }}>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
         <Typography variant="h4" sx={{ mr: 2 }}>
@@ -132,11 +132,11 @@ export const Account: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "40%",
+            minWidth: '40%',
             flexGrow: 1,
           },
         }}
@@ -169,11 +169,11 @@ export const Account: React.FC = (): React.ReactElement => {
       <Box
         component="form"
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          "& .MuiTextField-root": {
+          display: 'flex',
+          flexWrap: 'wrap',
+          '& .MuiTextField-root': {
             m: 1,
-            minWidth: "45%",
+            minWidth: '45%',
             flexGrow: 1,
           },
         }}
@@ -213,7 +213,7 @@ export const Account: React.FC = (): React.ReactElement => {
 
       <Box
         sx={{
-          position: "fixed",
+          position: 'fixed',
           bottom: 24,
           right: 24,
           m: 1,
@@ -231,8 +231,8 @@ export const Account: React.FC = (): React.ReactElement => {
           <CircularProgress
             size={68}
             sx={{
-              color: "primary",
-              position: "absolute",
+              color: 'primary',
+              position: 'absolute',
               top: -6,
               left: -6,
               zIndex: 1,
@@ -241,5 +241,5 @@ export const Account: React.FC = (): React.ReactElement => {
         )}
       </Box>
     </Container>
-  );
-};
+  )
+}
