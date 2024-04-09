@@ -97,9 +97,9 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 		return false, fmt.Errorf("failed to query provider from competition: %v", err)
 	}
 	// Generate the provider
-	provider, ok := r.providers[entProvider.ID]
-	if !ok {
-		return false, fmt.Errorf("failed to create provider from config: %v", err)
+	provider, err := r.providers.Get(entProvider.ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load provider: %v", err)
 	}
 	err = r.client.Action.Create().
 		SetIPAddress(clientIp).
@@ -167,9 +167,9 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 		return false, fmt.Errorf("failed to query provider from competition: %v", err)
 	}
 	// Generate the provider
-	provider, ok := r.providers[entProvider.ID]
-	if !ok {
-		return false, fmt.Errorf("failed to create provider from config: %v", err)
+	provider, err := r.providers.Get(entProvider.ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load provider: %v", err)
 	}
 	err = r.client.Action.Create().
 		SetIPAddress(clientIp).
@@ -237,9 +237,9 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 		return false, fmt.Errorf("failed to query provider from competition: %v", err)
 	}
 	// Generate the provider
-	provider, ok := r.providers[entProvider.ID]
-	if !ok {
-		return false, fmt.Errorf("failed to create provider from config: %v", err)
+	provider, err := r.providers.Get(entProvider.ID)
+	if err != nil {
+		return false, fmt.Errorf("failed to load provider: %v", err)
 	}
 	err = r.client.Action.Create().
 		SetIPAddress(clientIp).
@@ -1790,9 +1790,9 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 		return "", fmt.Errorf("failed to query provider from competition: %v", err)
 	}
 	// Generate the provider
-	provider, ok := r.providers[entProvider.ID]
-	if !ok {
-		return "", fmt.Errorf("failed to create provider from config: %v", err)
+	provider, err := r.providers.Get(entProvider.ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to load provider: %v", err)
 	}
 	err = r.client.Action.Create().
 		SetIPAddress(clientIp).
@@ -1930,9 +1930,9 @@ func (r *queryResolver) PowerState(ctx context.Context, vmObjectID string) (mode
 		return "", fmt.Errorf("failed to query provider from competition: %v", err)
 	}
 	// Generate the provider
-	provider, ok := r.providers[entProvider.ID]
-	if !ok {
-		return "", fmt.Errorf("failed to create provider from config: %v", err)
+	provider, err := r.providers.Get(entProvider.ID)
+	if err != nil {
+		return "", fmt.Errorf("failed to load provider: %v", err)
 	}
 	err = r.client.Action.Create().
 		SetIPAddress(clientIp).
@@ -2422,9 +2422,9 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 		return nil, fmt.Errorf("failed to query provider: %v", err)
 	}
 	// Generate the provider
-	provider, ok := r.providers[entProvider.ID]
-	if !ok {
-		return nil, fmt.Errorf("failed to create provider from config: %v", err)
+	provider, err := r.providers.Get(entProvider.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load provider: %v", err)
 	}
 	vmObjects, err := provider.ListVMs()
 	if err != nil {
@@ -2609,9 +2609,9 @@ func (r *subscriptionResolver) PowerState(ctx context.Context, id string) (<-cha
 			return
 		}
 		// Generate the provider
-		provider, ok := r.providers[entProvider.ID]
-		if !ok {
-			logrus.WithField("vmObjectId", id).Errorf("failed to create provider from config: %v", err)
+		provider, err := r.providers.Get(entProvider.ID)
+		if err != nil {
+			logrus.WithField("vmObjectId", id).Errorf("failed to load provider: %v", err)
 			return
 		}
 		previousPowerState := utils.Unknown
