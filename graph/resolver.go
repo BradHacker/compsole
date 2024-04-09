@@ -25,7 +25,7 @@ import (
 type Resolver struct {
 	client    *ent.Client
 	rdb       *redis.Client
-	providers providers.ProviderMap
+	providers *providers.ProviderMap
 }
 
 type ContextKey string
@@ -37,7 +37,7 @@ const (
 // NewSchema creates a graphql executable schema.
 func NewSchema(ctx context.Context, client *ent.Client, rdb *redis.Client) graphql.ExecutableSchema {
 	// Inject providers
-	compsoleProviders := providers.ProviderMap{}
+	compsoleProviders := &providers.ProviderMap{}
 	entProviders, err := client.Provider.Query().All(ctx)
 	if err != nil {
 		logrus.Fatalf("failed to startup graphql resolver: failed to query providers")

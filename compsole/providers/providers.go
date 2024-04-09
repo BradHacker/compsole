@@ -45,10 +45,10 @@ func ValidateConfig(providerType string, config string) error {
 }
 
 type ProviderMap struct {
-	*sync.Map
+	sync.Map
 }
 
-func (pm ProviderMap) Get(id uuid.UUID) (CompsoleProvider, error) {
+func (pm *ProviderMap) Get(id uuid.UUID) (CompsoleProvider, error) {
 	val, ok := pm.Load(id)
 	if !ok {
 		return nil, fmt.Errorf("provider %s not loaded", id)
@@ -60,6 +60,6 @@ func (pm ProviderMap) Get(id uuid.UUID) (CompsoleProvider, error) {
 	return p, nil
 }
 
-func (pm ProviderMap) Set(id uuid.UUID, p CompsoleProvider) {
+func (pm *ProviderMap) Set(id uuid.UUID, p CompsoleProvider) {
 	pm.Store(id, p)
 }
