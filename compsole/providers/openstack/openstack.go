@@ -22,7 +22,9 @@ import (
 // # TYPES #
 // #########
 type CompsoleProviderOpenstack struct {
-	Config OpenstackConfig
+	config         OpenstackConfig
+	providerClient *gophercloud.ProviderClient
+	computeClient  *gophercloud.ServiceClient
 }
 
 type OpenstackConfig struct {
@@ -53,7 +55,7 @@ const (
 	ID      string = "OPENSTACK"
 	Name    string = "Bradley Harker"
 	Author  string = "BradHacker"
-	Version string = "v0.1"
+	Version string = "v0.2"
 )
 
 func (provider CompsoleProviderOpenstack) ID() string      { return ID }
@@ -66,66 +68,78 @@ func (provider CompsoleProviderOpenstack) Version() string { return Version }
 // #############
 // NewOpenstackProvider creates a provider for the Openstack cloud provider
 func NewOpenstackProvider(config string) (provider CompsoleProviderOpenstack, err error) {
+	// Parse the configs
 	var providerConfig OpenstackConfig
 	err = json.Unmarshal([]byte(config), &providerConfig)
 	if err != nil {
 		err = fmt.Errorf("failed to unmarshal Openstack config: %v", err)
 		return
 	}
-	provider = CompsoleProviderOpenstack{
-		Config: providerConfig,
-	}
-	return
-}
 
-func (provider CompsoleProviderOpenstack) newAuthProvider() (*gophercloud.ProviderClient, error) {
-	u, err := url.Parse(provider.Config.AuthUrl)
+	// Generate an auth client
+	u, err := url.Parse(providerConfig.AuthUrl)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse auth_url \"%s\" from Openstack provider config", provider.Config.AuthUrl)
+		return CompsoleProviderOpenstack{}, fmt.Errorf("unable to parse auth_url \"%s\" from Openstack provider config", providerConfig.AuthUrl)
 	}
-	u.Path = path.Join(u.Path, provider.Config.IdentityVersion)
-
+	u.Path = path.Join(u.Path, providerConfig.IdentityVersion)
 	authOpts := gophercloud.AuthOptions{
 		IdentityEndpoint: u.String(),
-		Username:         provider.Config.Username,
-		Password:         provider.Config.Password,
-		TenantID:         provider.Config.ProjectID,
-		TenantName:       provider.Config.ProjectName,
+		Username:         providerConfig.Username,
+		Password:         providerConfig.Password,
+		TenantID:         providerConfig.ProjectID,
+		TenantName:       providerConfig.ProjectName,
 	}
-	if provider.Config.DomainName != "" {
-		authOpts.DomainName = provider.Config.DomainName
+	if providerConfig.DomainName != "" {
+		authOpts.DomainName = providerConfig.DomainName
 	} else {
-		authOpts.DomainID = provider.Config.DomainId
+		authOpts.DomainID = providerConfig.DomainId
 	}
-	return openstack.AuthenticatedClient(authOpts)
-}
-
-func (provider CompsoleProviderOpenstack) newComputeClient() (*gophercloud.ServiceClient, error) {
-	// Generate authenticated compute client for Openstack
-	gopherProvider, err := provider.newAuthProvider()
+	authClient, err := openstack.AuthenticatedClient(authOpts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate with Openstack: %v", err)
+		return CompsoleProviderOpenstack{}, fmt.Errorf("failed to create auth client: %v", err)
 	}
-	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
-		Region: provider.Config.RegionName,
+
+	// Generate a compute client
+	computeClient, err := openstack.NewComputeV2(authClient, gophercloud.EndpointOpts{
+		Region: providerConfig.RegionName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to make Openstack compute client: %v", err)
+		return CompsoleProviderOpenstack{}, fmt.Errorf("failed to make Openstack compute client: %v", err)
 	}
-	if provider.Config.NovaMicroversion != "" {
-		computeClient.Microversion = provider.Config.NovaMicroversion
+	if providerConfig.NovaMicroversion != "" {
+		computeClient.Microversion = providerConfig.NovaMicroversion
 	} else {
 		computeClient.Microversion = "2.8"
 	}
-	return computeClient, nil
+
+	return CompsoleProviderOpenstack{
+		config:         providerConfig,
+		providerClient: authClient,
+		computeClient:  computeClient,
+	}, nil
 }
 
+// func (provider CompsoleProviderOpenstack) newComputeClient() (*gophercloud.ServiceClient, error) {
+// 	computeClient, err := openstack.NewComputeV2(provider.providerClient, gophercloud.EndpointOpts{
+// 		Region: provider.config.RegionName,
+// 	})
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to make Openstack compute client: %v", err)
+// 	}
+// 	if provider.config.NovaMicroversion != "" {
+// 		computeClient.Microversion = provider.config.NovaMicroversion
+// 	} else {
+// 		computeClient.Microversion = "2.8"
+// 	}
+// 	return computeClient, nil
+// }
+
 func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error) {
-	// Create Openstack compute client
-	computeClient, err := provider.newComputeClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	}
+	// // Create Openstack compute client
+	// computeClient, err := provider.newComputeClient()
+	// if err != nil {
+	// 	return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	// }
 
 	// Determine the type of console we want to generate
 	var remoteConsoleProtocol remoteconsoles.ConsoleProtocol
@@ -152,7 +166,7 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 	}
 
 	// Create the remote console and return the URL
-	remoteConsole, err := remoteconsoles.Create(computeClient, vmObject.Identifier, remoteconsoles.CreateOpts{
+	remoteConsole, err := remoteconsoles.Create(provider.computeClient, vmObject.Identifier, remoteconsoles.CreateOpts{
 		Protocol: remoteConsoleProtocol,
 		Type:     remoteConsoleType,
 	}).Extract()
@@ -172,14 +186,14 @@ func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) 
 		extendedstatus.ServerExtendedStatusExt
 	}
 
-	// Create Openstack compute client
-	computeClient, err := provider.newComputeClient()
-	if err != nil {
-		return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	}
+	// // Create Openstack compute client
+	// computeClient, err := provider.newComputeClient()
+	// if err != nil {
+	// 	return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	// }
 
 	var serverResult ServerWithExt
-	err = servers.Get(computeClient, vmObject.Identifier).ExtractInto(&serverResult)
+	err := servers.Get(provider.computeClient, vmObject.Identifier).ExtractInto(&serverResult)
 	if err != nil {
 		return "", fmt.Errorf("failed to get Openstack server details: %v", err)
 	}
@@ -211,25 +225,22 @@ func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) 
 }
 
 func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
-	// Create Openstack compute client
-	computeClient, err := provider.newComputeClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	}
+	// // Create Openstack compute client
+	// computeClient, err := provider.newComputeClient()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	// }
 
-	serverPager := servers.List(computeClient, servers.ListOpts{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get list of Openstack instances: %v", err)
-	}
+	serverPager := servers.List(provider.computeClient, servers.ListOpts{})
 	serverList := make([]*ent.VmObject, 0)
-	err = serverPager.EachPage(func(page pagination.Page) (bool, error) {
+	err := serverPager.EachPage(func(page pagination.Page) (bool, error) {
 		list, err := servers.ExtractServers(page)
 		if err != nil {
 			return false, fmt.Errorf("failed to extract servers from page: %v", err)
 		}
 
 		for _, s := range list {
-			addressPager := servers.ListAddresses(computeClient, s.ID)
+			addressPager := servers.ListAddresses(provider.computeClient, s.ID)
 
 			ipAddresses := make([]string, 0)
 			err = addressPager.EachPage(func(p pagination.Page) (bool, error) {
@@ -267,17 +278,12 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 }
 
 func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebootType utils.RebootType) error {
-	// Generate authenticated compute client for Openstack
-	gopherProvider, err := provider.newAuthProvider()
-	if err != nil {
-		return fmt.Errorf("failed to authenticate with Openstack: %v", err)
-	}
-	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
-		Region: provider.Config.RegionName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to make Openstack compute client: %v", err)
-	}
+	// // Create Openstack compute client
+	// computeClient, err := provider.newComputeClient()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	// }
+
 	// Determine which type of reboot to requests
 	var rebootMethod servers.RebootMethod
 	switch rebootType {
@@ -289,7 +295,7 @@ func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebo
 		rebootMethod = servers.SoftReboot
 	}
 	// Reboot the server
-	err = servers.Reboot(computeClient, vmObject.Identifier, servers.RebootOpts{
+	err := servers.Reboot(provider.computeClient, vmObject.Identifier, servers.RebootOpts{
 		Type: rebootMethod,
 	}).ExtractErr()
 	if err != nil {
@@ -299,19 +305,14 @@ func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebo
 }
 
 func (provider CompsoleProviderOpenstack) PowerOnVM(vmObject *ent.VmObject) error {
-	// Generate authenticated compute client for Openstack
-	gopherProvider, err := provider.newAuthProvider()
-	if err != nil {
-		return fmt.Errorf("failed to authenticate with Openstack: %v", err)
-	}
-	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
-		Region: provider.Config.RegionName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to make Openstack compute client: %v", err)
-	}
+	// // Create Openstack compute client
+	// computeClient, err := provider.newComputeClient()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	// }
+
 	// Start the vm
-	err = startstop.Start(computeClient, vmObject.Identifier).ExtractErr()
+	err := startstop.Start(provider.computeClient, vmObject.Identifier).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("failed to start server: %v", err)
 	}
@@ -319,20 +320,14 @@ func (provider CompsoleProviderOpenstack) PowerOnVM(vmObject *ent.VmObject) erro
 }
 
 func (provider CompsoleProviderOpenstack) PowerOffVM(vmObject *ent.VmObject) error {
+	// // Create Openstack compute client
+	// computeClient, err := provider.newComputeClient()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to generate Openstack compute client: %v", err)
+	// }
 
-	// Generate authenticated compute client for Openstack
-	gopherProvider, err := provider.newAuthProvider()
-	if err != nil {
-		return fmt.Errorf("failed to authenticate with Openstack: %v", err)
-	}
-	computeClient, err := openstack.NewComputeV2(gopherProvider, gophercloud.EndpointOpts{
-		Region: provider.Config.RegionName,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to make Openstack compute client: %v", err)
-	}
 	// Stop the vm
-	err = startstop.Stop(computeClient, vmObject.Identifier).ExtractErr()
+	err := startstop.Stop(provider.computeClient, vmObject.Identifier).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("failed to stop server: %v", err)
 	}
