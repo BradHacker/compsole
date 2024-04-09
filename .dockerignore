@@ -1,0 +1,5 @@
+.caddy/
+.vscode/
+.gitlab/
+dev/
+ui/

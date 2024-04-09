@@ -1,6 +1,6 @@
 module github.com/BradHacker/compsole
 
-go 1.19
+go 1.21
 
 require (
 	entgo.io/contrib v0.2.0
