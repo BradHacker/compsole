@@ -95,8 +95,8 @@ Vagrant.configure("2") do |config|
 
     # Download and install golang
     cd /tmp
-    wget https://go.dev/dl/go1.18.3.linux-amd64.tar.gz
-    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.18.3.linux-amd64.tar.gz
+    wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.21.9.linux-amd64.tar.gz
     echo export 'PATH=$PATH:/usr/local/go/bin' >> /etc/profile
 
     # Disabled huge pages for Redis
