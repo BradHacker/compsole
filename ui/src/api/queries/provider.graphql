@@ -3,6 +3,7 @@ fragment ProviderFragment on Provider {
   Name
   Type
   Config
+  Loaded
 }
 
 query ListProviders {
@@ -43,4 +44,8 @@ mutation CreateProvider($provider: ProviderInput!) {
 
 mutation DeleteProvider($providerId: ID!) {
   deleteProvider(id: $providerId)
+}
+
+mutation LoadProvider($providerId: ID!) {
+  loadProvider(id: $providerId)
 }

@@ -35,6 +35,8 @@ type Provider {
   Name: String!
   Type: String!
   Config: String!
+
+  Loaded: Boolean! # Calculated value
 }
 
 enum Role {
@@ -261,6 +263,7 @@ type Mutation {
   createProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   updateProvider(input: ProviderInput!): Provider! @hasRole(roles: [ADMIN])
   deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
+  loadProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   #   Service Accounts
   createServiceAccount(input: ServiceAccountInput!): ServiceAccountDetails! @hasRole(roles: [ADMIN])
   updateServiceAccount(input: ServiceAccountInput!): ServiceAccount! @hasRole(roles: [ADMIN])

@@ -16,8 +16,8 @@ import {
   Button,
   ToggleButtonGroup,
   ToggleButton,
+  Box,
 } from "@mui/material";
-import { Box } from "@mui/system";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";

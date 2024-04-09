@@ -12,7 +12,6 @@ import (
 	"github.com/BradHacker/compsole/graph/model"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -26,7 +25,7 @@ import (
 type Resolver struct {
 	client    *ent.Client
 	rdb       *redis.Client
-	providers map[uuid.UUID]providers.CompsoleProvider
+	providers *providers.ProviderMap
 }
 
 type ContextKey string
@@ -38,7 +37,7 @@ const (
 // NewSchema creates a graphql executable schema.
 func NewSchema(ctx context.Context, client *ent.Client, rdb *redis.Client) graphql.ExecutableSchema {
 	// Inject providers
-	compsoleProviders := make(map[uuid.UUID]providers.CompsoleProvider)
+	compsoleProviders := &providers.ProviderMap{}
 	entProviders, err := client.Provider.Query().All(ctx)
 	if err != nil {
 		logrus.Fatalf("failed to startup graphql resolver: failed to query providers")
@@ -47,9 +46,10 @@ func NewSchema(ctx context.Context, client *ent.Client, rdb *redis.Client) graph
 		// Generate the provider
 		provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
 		if err != nil {
-			logrus.Fatalf("failed to create provider from config: %v", err)
+			logrus.Errorf("failed to create provider from config: %v", err)
+		} else {
+			compsoleProviders.Set(entProvider.ID, provider)
 		}
-		compsoleProviders[entProvider.ID] = provider
 	}
 
 	GQLConfig := generated.Config{

@@ -92,8 +92,8 @@ Copy the contents of the [ui/.env.example](./ui/.env.example) to a new file `ui/
 Set the environment variable as follows:
 
 ```env
-REACT_APP_SERVER_URL=http(s)://<fqdn of host>
-REACT_APP_WS_URL=ws(s)://fqdn of host>
+VITE_APP_SERVER_URL=http(s)://<fqdn of host>
+VITE_APP_WS_URL=ws(s)://fqdn of host>
 ```
 
 | _Note: be sure to use **both** `https` and `wss` if using SSL_

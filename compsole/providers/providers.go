@@ -3,10 +3,12 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/BradHacker/compsole/compsole/providers/openstack"
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
+	"github.com/google/uuid"
 )
 
 type CompsoleProvider interface {
@@ -40,4 +42,24 @@ func ValidateConfig(providerType string, config string) error {
 	default:
 		return fmt.Errorf("invalid provider type")
 	}
+}
+
+type ProviderMap struct {
+	sync.Map
+}
+
+func (pm *ProviderMap) Get(id uuid.UUID) (CompsoleProvider, error) {
+	val, ok := pm.Load(id)
+	if !ok {
+		return nil, fmt.Errorf("provider %s not loaded", id)
+	}
+	p, ok := val.(CompsoleProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider value is not a CompsoleProvider")
+	}
+	return p, nil
+}
+
+func (pm *ProviderMap) Set(id uuid.UUID, p CompsoleProvider) {
+	pm.Store(id, p)
 }

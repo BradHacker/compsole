@@ -1,4 +1,9 @@
-import { ArrowBackTwoTone, Save } from "@mui/icons-material";
+import {
+  ArrowBackTwoTone,
+  FiberManualRecord,
+  Replay,
+  Save,
+} from "@mui/icons-material";
 import {
   Container,
   TextField,
@@ -13,8 +18,8 @@ import {
   MenuItem,
   Select,
   InputAdornment,
+  Box,
 } from "@mui/material";
-import { Box } from "@mui/system";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -24,7 +29,9 @@ import {
   useCreateProviderMutation,
   ProviderInput,
   useValidateConfigLazyQuery,
+  useLoadProviderMutation,
 } from "../../api/generated/graphql";
+import { LoadingButton } from "@mui/lab";
 
 export const ProviderForm: React.FC = (): React.ReactElement => {
   const { id } = useParams();
@@ -35,6 +42,7 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       data: getProviderData,
       loading: getProviderLoading,
       error: getProviderError,
+      refetch: refetchGetProvider,
     },
   ] = useGetProviderLazyQuery();
   const [
@@ -53,6 +61,15 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
       error: createProviderError,
     },
   ] = useCreateProviderMutation();
+  const [
+    loadProvider,
+    {
+      data: loadProviderData,
+      loading: loadProviderLoading,
+      error: loadProviderError,
+      reset: resetLoadProvider,
+    },
+  ] = useLoadProviderMutation();
   const [
     validateConfig,
     {
@@ -81,6 +98,10 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
   }, [id, getProvider]);
 
   useEffect(() => {
+    if (!loadProviderLoading && loadProviderData)
+      enqueueSnackbar("Loaded provider", {
+        variant: "success",
+      });
     if (!updateProviderLoading && updateProviderData)
       enqueueSnackbar(
         `Updated provider "${updateProviderData.updateProvider.Name}"`,
@@ -104,6 +125,8 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
   }, [
     updateProviderData,
     updateProviderLoading,
+    loadProviderData,
+    loadProviderLoading,
     createProviderData,
     createProviderLoading,
     enqueueSnackbar,
@@ -129,17 +152,25 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           variant: "error",
         }
       );
+    if (loadProviderError)
+      enqueueSnackbar(`Failed to load provider: ${loadProviderError.message}`, {
+        variant: "error",
+      });
   }, [
     getProviderError,
     updateProviderError,
     createProviderError,
+    loadProviderError,
     enqueueSnackbar,
   ]);
 
   useEffect(() => {
     if (getProviderData)
       setProvider({
-        ...getProviderData.getProvider,
+        Config: getProviderData.getProvider.Config,
+        Name: getProviderData.getProvider.Name,
+        Type: getProviderData.getProvider.Type,
+        ID: getProviderData.getProvider.ID,
       } as ProviderInput);
     else
       setProvider({
@@ -149,6 +180,13 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
         Config: "",
       });
   }, [getProviderData]);
+
+  useEffect(() => {
+    if (loadProviderData?.loadProvider) {
+      resetLoadProvider();
+      refetchGetProvider();
+    }
+  }, [loadProviderData]);
 
   const submitProvider = () => {
     if (provider.ID)
@@ -209,11 +247,53 @@ export const ProviderForm: React.FC = (): React.ReactElement => {
           <Typography variant="h4" sx={{ mr: 2 }}>
             {id ? `Edit Provider: ` : "New Provider"}
           </Typography>
-          {id && !getProviderLoading && !getProviderError && (
-            <Typography variant="h5" component="code">
-              {getProviderData?.getProvider.Name ?? "N/A"}
-            </Typography>
+          {id && !getProviderLoading && getProviderData && (
+            <>
+              <Typography variant="h5" component="code">
+                {getProviderData.getProvider.Name ?? "N/A"}
+              </Typography>
+              <Typography variant="h6" component="span" sx={{ ml: 2 }}>
+                <FiberManualRecord
+                  sx={{
+                    height: "1rem",
+                    width: "1rem",
+                    mr: 1,
+                    color: getProviderData.getProvider.Loaded
+                      ? "#00ff00"
+                      : "#ff0000",
+                  }}
+                  titleAccess={
+                    getProviderData.getProvider.Loaded ? "Loaded" : "Not Loaded"
+                  }
+                />
+                {getProviderData.getProvider.Loaded ? "Loaded" : "Not Loaded"}
+              </Typography>
+            </>
           )}
+
+          <LoadingButton
+            color="warning"
+            // size="small"
+            variant="outlined"
+            startIcon={<Replay />}
+            loading={loadProviderLoading}
+            loadingPosition="start"
+            onClick={() =>
+              loadProvider({ variables: { providerId: id ?? "" } })
+            }
+            // disabled={isVmLocked()}
+            // sx={VmButtonStyles}
+            sx={{ ml: "auto" }}
+          >
+            Load Provider
+          </LoadingButton>
+          {/* <Button
+            color="warning"
+            size="small"
+            // aria-label="load provider"
+            onClick={loadProvider({ variables: { providerId: id ?? "" } })}
+            disabled={load}
+          ></Button> */}
         </Box>
       )}
       <Divider
