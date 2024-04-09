@@ -5,29 +5,31 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
-  Time: any;
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  Time: { input: any; output: any; }
 };
 
 export type AccountInput = {
-  FirstName: Scalars['String'];
-  LastName: Scalars['String'];
+  FirstName: Scalars['String']['input'];
+  LastName: Scalars['String']['input'];
 };
 
 export type Action = {
   __typename?: 'Action';
   ActionToUser?: Maybe<User>;
-  ID: Scalars['ID'];
-  IpAddress: Scalars['String'];
-  Message: Scalars['String'];
-  PerformedAt: Scalars['Time'];
+  ID: Scalars['ID']['output'];
+  IpAddress: Scalars['String']['output'];
+  Message: Scalars['String']['output'];
+  PerformedAt: Scalars['Time']['output'];
   Type: ActionType;
 };
 
@@ -52,12 +54,12 @@ export enum ActionType {
 
 export type ActionsResult = {
   __typename?: 'ActionsResult';
-  limit: Scalars['Int'];
-  offset: Scalars['Int'];
-  page: Scalars['Int'];
+  limit: Scalars['Int']['output'];
+  offset: Scalars['Int']['output'];
+  page: Scalars['Int']['output'];
   results: Array<Maybe<Action>>;
-  totalPages: Scalars['Int'];
-  totalResults: Scalars['Int'];
+  totalPages: Scalars['Int']['output'];
+  totalResults: Scalars['Int']['output'];
   types: Array<ActionType>;
 };
 
@@ -71,22 +73,22 @@ export type Competition = {
   __typename?: 'Competition';
   CompetitionToProvider: Provider;
   CompetitionToTeams: Array<Maybe<Team>>;
-  ID: Scalars['ID'];
-  Name: Scalars['String'];
+  ID: Scalars['ID']['output'];
+  Name: Scalars['String']['output'];
 };
 
 export type CompetitionInput = {
-  CompetitionToProvider: Scalars['ID'];
-  ID?: InputMaybe<Scalars['ID']>;
-  Name: Scalars['String'];
+  CompetitionToProvider: Scalars['ID']['input'];
+  ID?: InputMaybe<Scalars['ID']['input']>;
+  Name: Scalars['String']['input'];
 };
 
 export type CompetitionUser = {
   __typename?: 'CompetitionUser';
-  ID: Scalars['ID'];
-  Password: Scalars['String'];
+  ID: Scalars['ID']['output'];
+  Password: Scalars['String']['output'];
   UserToTeam: Team;
-  Username: Scalars['String'];
+  Username: Scalars['String']['output'];
 };
 
 export enum ConsoleType {
@@ -101,28 +103,28 @@ export type Mutation = {
   __typename?: 'Mutation';
   batchCreateTeams: Array<Team>;
   batchCreateVmObjects: Array<VmObject>;
-  batchLockout: Scalars['Boolean'];
-  changePassword: Scalars['Boolean'];
-  changeSelfPassword: Scalars['Boolean'];
+  batchLockout: Scalars['Boolean']['output'];
+  changePassword: Scalars['Boolean']['output'];
+  changeSelfPassword: Scalars['Boolean']['output'];
   createCompetition: Competition;
   createProvider: Provider;
   createServiceAccount: ServiceAccountDetails;
   createTeam: Team;
   createUser: User;
   createVmObject: VmObject;
-  deleteCompetition: Scalars['Boolean'];
-  deleteProvider: Scalars['Boolean'];
-  deleteServiceAccount: Scalars['Boolean'];
-  deleteTeam: Scalars['Boolean'];
-  deleteUser: Scalars['Boolean'];
-  deleteVmObject: Scalars['Boolean'];
+  deleteCompetition: Scalars['Boolean']['output'];
+  deleteProvider: Scalars['Boolean']['output'];
+  deleteServiceAccount: Scalars['Boolean']['output'];
+  deleteTeam: Scalars['Boolean']['output'];
+  deleteUser: Scalars['Boolean']['output'];
+  deleteVmObject: Scalars['Boolean']['output'];
   generateCompetitionUsers: Array<CompetitionUser>;
-  loadProvider: Scalars['Boolean'];
-  lockoutCompetition: Scalars['Boolean'];
-  lockoutVm: Scalars['Boolean'];
-  powerOff: Scalars['Boolean'];
-  powerOn: Scalars['Boolean'];
-  reboot: Scalars['Boolean'];
+  loadProvider: Scalars['Boolean']['output'];
+  lockoutCompetition: Scalars['Boolean']['output'];
+  lockoutVm: Scalars['Boolean']['output'];
+  powerOff: Scalars['Boolean']['output'];
+  powerOn: Scalars['Boolean']['output'];
+  reboot: Scalars['Boolean']['output'];
   updateAccount: User;
   updateCompetition: Competition;
   updateProvider: Provider;
@@ -144,19 +146,19 @@ export type MutationBatchCreateVmObjectsArgs = {
 
 
 export type MutationBatchLockoutArgs = {
-  locked: Scalars['Boolean'];
-  vmObjects: Array<Scalars['ID']>;
+  locked: Scalars['Boolean']['input'];
+  vmObjects: Array<Scalars['ID']['input']>;
 };
 
 
 export type MutationChangePasswordArgs = {
-  id: Scalars['ID'];
-  password: Scalars['String'];
+  id: Scalars['ID']['input'];
+  password: Scalars['String']['input'];
 };
 
 
 export type MutationChangeSelfPasswordArgs = {
-  password: Scalars['String'];
+  password: Scalars['String']['input'];
 };
 
 
@@ -191,71 +193,71 @@ export type MutationCreateVmObjectArgs = {
 
 
 export type MutationDeleteCompetitionArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationDeleteProviderArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationDeleteServiceAccountArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationDeleteTeamArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationDeleteUserArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationDeleteVmObjectArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationGenerateCompetitionUsersArgs = {
-  competitionId: Scalars['ID'];
-  usersPerTeam: Scalars['Int'];
+  competitionId: Scalars['ID']['input'];
+  usersPerTeam: Scalars['Int']['input'];
 };
 
 
 export type MutationLoadProviderArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type MutationLockoutCompetitionArgs = {
-  id: Scalars['ID'];
-  locked: Scalars['Boolean'];
+  id: Scalars['ID']['input'];
+  locked: Scalars['Boolean']['input'];
 };
 
 
 export type MutationLockoutVmArgs = {
-  id: Scalars['ID'];
-  locked: Scalars['Boolean'];
+  id: Scalars['ID']['input'];
+  locked: Scalars['Boolean']['input'];
 };
 
 
 export type MutationPowerOffArgs = {
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 };
 
 
 export type MutationPowerOnArgs = {
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 };
 
 
 export type MutationRebootArgs = {
   rebootType: RebootType;
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 };
 
 
@@ -304,31 +306,31 @@ export enum PowerState {
 
 export type PowerStateUpdate = {
   __typename?: 'PowerStateUpdate';
-  ID: Scalars['ID'];
+  ID: Scalars['ID']['output'];
   State: PowerState;
 };
 
 export type Provider = {
   __typename?: 'Provider';
-  Config: Scalars['String'];
-  ID: Scalars['ID'];
-  Loaded: Scalars['Boolean'];
-  Name: Scalars['String'];
-  Type: Scalars['String'];
+  Config: Scalars['String']['output'];
+  ID: Scalars['ID']['output'];
+  Loaded: Scalars['Boolean']['output'];
+  Name: Scalars['String']['output'];
+  Type: Scalars['String']['output'];
 };
 
 export type ProviderInput = {
-  Config: Scalars['String'];
-  ID?: InputMaybe<Scalars['ID']>;
-  Name: Scalars['String'];
-  Type: Scalars['String'];
+  Config: Scalars['String']['input'];
+  ID?: InputMaybe<Scalars['ID']['input']>;
+  Name: Scalars['String']['input'];
+  Type: Scalars['String']['input'];
 };
 
 export type Query = {
   __typename?: 'Query';
   actions: ActionsResult;
   competitions: Array<Competition>;
-  console: Scalars['String'];
+  console: Scalars['String']['output'];
   getCompetition: Competition;
   getProvider: Provider;
   getServiceAccount: ServiceAccount;
@@ -345,73 +347,73 @@ export type Query = {
   serviceAccounts: Array<ServiceAccount>;
   teams: Array<Team>;
   users: Array<User>;
-  validateConfig: Scalars['Boolean'];
+  validateConfig: Scalars['Boolean']['output'];
   vmObject: VmObject;
   vmObjects: Array<VmObject>;
 };
 
 
 export type QueryActionsArgs = {
-  limit: Scalars['Int'];
-  offset: Scalars['Int'];
+  limit: Scalars['Int']['input'];
+  offset: Scalars['Int']['input'];
   types: Array<ActionType>;
 };
 
 
 export type QueryConsoleArgs = {
   consoleType: ConsoleType;
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 };
 
 
 export type QueryGetCompetitionArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryGetProviderArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryGetServiceAccountArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryGetTeamArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryGetUserArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryGetVmObjectArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryListProviderVmsArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryPowerStateArgs = {
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 };
 
 
 export type QueryValidateConfigArgs = {
-  config: Scalars['String'];
-  type: Scalars['String'];
+  config: Scalars['String']['input'];
+  type: Scalars['String']['input'];
 };
 
 
 export type QueryVmObjectArgs = {
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 };
 
 export enum RebootType {
@@ -427,32 +429,32 @@ export enum Role {
 
 export type ServiceAccount = {
   __typename?: 'ServiceAccount';
-  Active: Scalars['Boolean'];
-  ApiKey: Scalars['String'];
-  DisplayName: Scalars['String'];
-  ID: Scalars['ID'];
+  Active: Scalars['Boolean']['output'];
+  ApiKey: Scalars['String']['output'];
+  DisplayName: Scalars['String']['output'];
+  ID: Scalars['ID']['output'];
 };
 
 export type ServiceAccountDetails = {
   __typename?: 'ServiceAccountDetails';
-  Active: Scalars['Boolean'];
-  ApiKey: Scalars['String'];
-  ApiSecret: Scalars['String'];
-  DisplayName: Scalars['String'];
-  ID: Scalars['ID'];
+  Active: Scalars['Boolean']['output'];
+  ApiKey: Scalars['String']['output'];
+  ApiSecret: Scalars['String']['output'];
+  DisplayName: Scalars['String']['output'];
+  ID: Scalars['ID']['output'];
 };
 
 export type ServiceAccountInput = {
-  Active: Scalars['Boolean'];
-  DisplayName: Scalars['String'];
-  ID?: InputMaybe<Scalars['ID']>;
+  Active: Scalars['Boolean']['input'];
+  DisplayName: Scalars['String']['input'];
+  ID?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SkeletonVmObject = {
   __typename?: 'SkeletonVmObject';
-  IPAddresses: Array<Scalars['String']>;
-  Identifier: Scalars['String'];
-  Name: Scalars['String'];
+  IPAddresses: Array<Scalars['String']['output']>;
+  Identifier: Scalars['String']['output'];
+  Name: Scalars['String']['output'];
 };
 
 export type Subscription = {
@@ -463,75 +465,75 @@ export type Subscription = {
 
 
 export type SubscriptionLockoutArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type SubscriptionPowerStateArgs = {
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 };
 
 export type Team = {
   __typename?: 'Team';
-  ID: Scalars['ID'];
-  Name?: Maybe<Scalars['String']>;
-  TeamNumber: Scalars['Int'];
+  ID: Scalars['ID']['output'];
+  Name?: Maybe<Scalars['String']['output']>;
+  TeamNumber: Scalars['Int']['output'];
   TeamToCompetition: Competition;
   TeamToVmObjects?: Maybe<Array<Maybe<VmObject>>>;
 };
 
 export type TeamInput = {
-  ID?: InputMaybe<Scalars['ID']>;
-  Name?: InputMaybe<Scalars['String']>;
-  TeamNumber: Scalars['Int'];
-  TeamToCompetition: Scalars['ID'];
+  ID?: InputMaybe<Scalars['ID']['input']>;
+  Name?: InputMaybe<Scalars['String']['input']>;
+  TeamNumber: Scalars['Int']['input'];
+  TeamToCompetition: Scalars['ID']['input'];
 };
 
 export type User = {
   __typename?: 'User';
-  FirstName: Scalars['String'];
-  ID: Scalars['ID'];
-  LastName: Scalars['String'];
+  FirstName: Scalars['String']['output'];
+  ID: Scalars['ID']['output'];
+  LastName: Scalars['String']['output'];
   Provider: AuthProvider;
   Role: Role;
   UserToTeam?: Maybe<Team>;
-  Username: Scalars['String'];
+  Username: Scalars['String']['output'];
 };
 
 export type UserInput = {
-  FirstName: Scalars['String'];
-  ID?: InputMaybe<Scalars['ID']>;
-  LastName: Scalars['String'];
+  FirstName: Scalars['String']['input'];
+  ID?: InputMaybe<Scalars['ID']['input']>;
+  LastName: Scalars['String']['input'];
   Provider: AuthProvider;
   Role: Role;
-  UserToTeam?: InputMaybe<Scalars['ID']>;
-  Username: Scalars['String'];
+  UserToTeam?: InputMaybe<Scalars['ID']['input']>;
+  Username: Scalars['String']['input'];
 };
 
 export type VmObject = {
   __typename?: 'VmObject';
-  ID: Scalars['ID'];
-  IPAddresses: Array<Scalars['String']>;
-  Identifier: Scalars['String'];
-  Locked?: Maybe<Scalars['Boolean']>;
-  Name: Scalars['String'];
+  ID: Scalars['ID']['output'];
+  IPAddresses: Array<Scalars['String']['output']>;
+  Identifier: Scalars['String']['output'];
+  Locked?: Maybe<Scalars['Boolean']['output']>;
+  Name: Scalars['String']['output'];
   VmObjectToTeam?: Maybe<Team>;
 };
 
 export type VmObjectInput = {
-  ID?: InputMaybe<Scalars['ID']>;
-  IPAddresses: Array<Scalars['String']>;
-  Identifier: Scalars['String'];
-  Locked?: InputMaybe<Scalars['Boolean']>;
-  Name: Scalars['String'];
-  VmObjectToTeam?: InputMaybe<Scalars['ID']>;
+  ID?: InputMaybe<Scalars['ID']['input']>;
+  IPAddresses: Array<Scalars['String']['input']>;
+  Identifier: Scalars['String']['input'];
+  Locked?: InputMaybe<Scalars['Boolean']['input']>;
+  Name: Scalars['String']['input'];
+  VmObjectToTeam?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type ActionFragmentFragment = { __typename?: 'Action', ID: string, IpAddress: string, Type: ActionType, Message: string, PerformedAt: any, ActionToUser?: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role } | null };
 
 export type ListActionsQueryVariables = Exact<{
-  offset: Scalars['Int'];
-  limit: Scalars['Int'];
+  offset: Scalars['Int']['input'];
+  limit: Scalars['Int']['input'];
   types: Array<ActionType> | ActionType;
 }>;
 
@@ -551,7 +553,7 @@ export type ListCompetitionsQueryVariables = Exact<{ [key: string]: never; }>;
 export type ListCompetitionsQuery = { __typename?: 'Query', competitions: Array<{ __typename?: 'Competition', ID: string, Name: string, CompetitionToTeams: Array<{ __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number } | null>, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } }> };
 
 export type GetCompetitionQueryVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -572,15 +574,15 @@ export type CreateCompetitionMutationVariables = Exact<{
 export type CreateCompetitionMutation = { __typename?: 'Mutation', createCompetition: { __typename?: 'Competition', ID: string, Name: string, CompetitionToProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string } } };
 
 export type LockoutCompetitionMutationVariables = Exact<{
-  competitionId: Scalars['ID'];
-  locked: Scalars['Boolean'];
+  competitionId: Scalars['ID']['input'];
+  locked: Scalars['Boolean']['input'];
 }>;
 
 
 export type LockoutCompetitionMutation = { __typename?: 'Mutation', lockoutCompetition: boolean };
 
 export type DeleteCompetitionMutationVariables = Exact<{
-  competitionId: Scalars['ID'];
+  competitionId: Scalars['ID']['input'];
 }>;
 
 
@@ -594,22 +596,22 @@ export type ListProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 export type ListProvidersQuery = { __typename?: 'Query', providers: Array<{ __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean }> };
 
 export type GetProviderQueryVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
 export type GetProviderQuery = { __typename?: 'Query', getProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean } };
 
 export type ValidateConfigQueryVariables = Exact<{
-  type: Scalars['String'];
-  config: Scalars['String'];
+  type: Scalars['String']['input'];
+  config: Scalars['String']['input'];
 }>;
 
 
 export type ValidateConfigQuery = { __typename?: 'Query', validateConfig: boolean };
 
 export type ListProviderVmsQueryVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -630,14 +632,14 @@ export type CreateProviderMutationVariables = Exact<{
 export type CreateProviderMutation = { __typename?: 'Mutation', createProvider: { __typename?: 'Provider', ID: string, Name: string, Type: string, Config: string, Loaded: boolean } };
 
 export type DeleteProviderMutationVariables = Exact<{
-  providerId: Scalars['ID'];
+  providerId: Scalars['ID']['input'];
 }>;
 
 
 export type DeleteProviderMutation = { __typename?: 'Mutation', deleteProvider: boolean };
 
 export type LoadProviderMutationVariables = Exact<{
-  providerId: Scalars['ID'];
+  providerId: Scalars['ID']['input'];
 }>;
 
 
@@ -653,7 +655,7 @@ export type ListServiceAccountsQueryVariables = Exact<{ [key: string]: never; }>
 export type ListServiceAccountsQuery = { __typename?: 'Query', serviceAccounts: Array<{ __typename?: 'ServiceAccount', ID: string, DisplayName: string, ApiKey: string, Active: boolean }> };
 
 export type GetServiceAccountQueryVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -674,7 +676,7 @@ export type CreateServiceAccountMutationVariables = Exact<{
 export type CreateServiceAccountMutation = { __typename?: 'Mutation', createServiceAccount: { __typename?: 'ServiceAccountDetails', ID: string, DisplayName: string, ApiKey: string, ApiSecret: string, Active: boolean } };
 
 export type DeleteServiceAccountMutationVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -688,7 +690,7 @@ export type ListTeamsQueryVariables = Exact<{ [key: string]: never; }>;
 export type ListTeamsQuery = { __typename?: 'Query', teams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
 
 export type GetTeamQueryVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -716,7 +718,7 @@ export type BatchCreateTeamsMutationVariables = Exact<{
 export type BatchCreateTeamsMutation = { __typename?: 'Mutation', batchCreateTeams: Array<{ __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } }> };
 
 export type DeleteTeamMutationVariables = Exact<{
-  teamId: Scalars['ID'];
+  teamId: Scalars['ID']['input'];
 }>;
 
 
@@ -739,7 +741,7 @@ export type ListUsersQueryVariables = Exact<{ [key: string]: never; }>;
 export type ListUsersQuery = { __typename?: 'Query', users: Array<{ __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
 
 export type GetUserQueryVariables = Exact<{
-  id: Scalars['ID'];
+  id: Scalars['ID']['input'];
 }>;
 
 
@@ -760,15 +762,15 @@ export type CreateUserMutationVariables = Exact<{
 export type CreateUserMutation = { __typename?: 'Mutation', createUser: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role, UserToTeam?: { __typename?: 'Team', ID: string, Name?: string | null, TeamNumber: number, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type ChangePasswordMutationVariables = Exact<{
-  id: Scalars['ID'];
-  newPassword: Scalars['String'];
+  id: Scalars['ID']['input'];
+  newPassword: Scalars['String']['input'];
 }>;
 
 
 export type ChangePasswordMutation = { __typename?: 'Mutation', changePassword: boolean };
 
 export type DeleteUserMutationVariables = Exact<{
-  userId: Scalars['ID'];
+  userId: Scalars['ID']['input'];
 }>;
 
 
@@ -782,15 +784,15 @@ export type UpdateAccountMutationVariables = Exact<{
 export type UpdateAccountMutation = { __typename?: 'Mutation', updateAccount: { __typename?: 'User', ID: string, Username: string, FirstName: string, LastName: string, Provider: AuthProvider, Role: Role } };
 
 export type ChangeSelfPasswordMutationVariables = Exact<{
-  newPassword: Scalars['String'];
+  newPassword: Scalars['String']['input'];
 }>;
 
 
 export type ChangeSelfPasswordMutation = { __typename?: 'Mutation', changeSelfPassword: boolean };
 
 export type GenerateCompetitionUsersMutationVariables = Exact<{
-  competitionId: Scalars['ID'];
-  usersPerTeam: Scalars['Int'];
+  competitionId: Scalars['ID']['input'];
+  usersPerTeam: Scalars['Int']['input'];
 }>;
 
 
@@ -809,14 +811,14 @@ export type AllVmObjectsQueryVariables = Exact<{ [key: string]: never; }>;
 export type AllVmObjectsQuery = { __typename?: 'Query', vmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
 
 export type GetVmObjectQueryVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
 export type GetVmObjectQuery = { __typename?: 'Query', vmObject: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type GetVmConsoleQueryVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
   consoleType: ConsoleType;
 }>;
 
@@ -824,14 +826,14 @@ export type GetVmConsoleQueryVariables = Exact<{
 export type GetVmConsoleQuery = { __typename?: 'Query', console: string };
 
 export type GetVmPowerStateQueryVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
 export type GetVmPowerStateQuery = { __typename?: 'Query', powerState: PowerState };
 
 export type RebootVmMutationVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
   rebootType: RebootType;
 }>;
 
@@ -839,14 +841,14 @@ export type RebootVmMutationVariables = Exact<{
 export type RebootVmMutation = { __typename?: 'Mutation', reboot: boolean };
 
 export type PowerOnVmMutationVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
 export type PowerOnVmMutation = { __typename?: 'Mutation', powerOn: boolean };
 
 export type PowerOffVmMutationVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
@@ -874,37 +876,37 @@ export type BatchCreateVmObjectsMutationVariables = Exact<{
 export type BatchCreateVmObjectsMutation = { __typename?: 'Mutation', batchCreateVmObjects: Array<{ __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null }> };
 
 export type LockoutVmMutationVariables = Exact<{
-  vmObjectId: Scalars['ID'];
-  locked: Scalars['Boolean'];
+  vmObjectId: Scalars['ID']['input'];
+  locked: Scalars['Boolean']['input'];
 }>;
 
 
 export type LockoutVmMutation = { __typename?: 'Mutation', lockoutVm: boolean };
 
 export type LockoutSubscriptionVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
 export type LockoutSubscription = { __typename?: 'Subscription', lockout: { __typename?: 'VmObject', ID: string, Identifier: string, Name: string, IPAddresses: Array<string>, Locked?: boolean | null, VmObjectToTeam?: { __typename?: 'Team', ID: string, TeamNumber: number, Name?: string | null, TeamToCompetition: { __typename?: 'Competition', ID: string, Name: string } } | null } };
 
 export type PowerStateSubscriptionVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
 export type PowerStateSubscription = { __typename?: 'Subscription', powerState: { __typename?: 'PowerStateUpdate', ID: string, State: PowerState } };
 
 export type DeleteVmObjectMutationVariables = Exact<{
-  vmObjectId: Scalars['ID'];
+  vmObjectId: Scalars['ID']['input'];
 }>;
 
 
 export type DeleteVmObjectMutation = { __typename?: 'Mutation', deleteVmObject: boolean };
 
 export type BatchLockoutMutationVariables = Exact<{
-  vmObjects: Array<Scalars['ID']> | Scalars['ID'];
-  locked: Scalars['Boolean'];
+  vmObjects: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+  locked: Scalars['Boolean']['input'];
 }>;
 
 
@@ -1056,7 +1058,7 @@ export const ListActionsDocument = gql`
  *   },
  * });
  */
-export function useListActionsQuery(baseOptions: Apollo.QueryHookOptions<ListActionsQuery, ListActionsQueryVariables>) {
+export function useListActionsQuery(baseOptions: Apollo.QueryHookOptions<ListActionsQuery, ListActionsQueryVariables> & ({ variables: ListActionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<ListActionsQuery, ListActionsQueryVariables>(ListActionsDocument, options);
       }
@@ -1064,8 +1066,13 @@ export function useListActionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListActionsQuery, ListActionsQueryVariables>(ListActionsDocument, options);
         }
+export function useListActionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListActionsQuery, ListActionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListActionsQuery, ListActionsQueryVariables>(ListActionsDocument, options);
+        }
 export type ListActionsQueryHookResult = ReturnType<typeof useListActionsQuery>;
 export type ListActionsLazyQueryHookResult = ReturnType<typeof useListActionsLazyQuery>;
+export type ListActionsSuspenseQueryHookResult = ReturnType<typeof useListActionsSuspenseQuery>;
 export type ListActionsQueryResult = Apollo.QueryResult<ListActionsQuery, ListActionsQueryVariables>;
 export const GetCompTeamSearchValuesDocument = gql`
     query GetCompTeamSearchValues {
@@ -1104,8 +1111,13 @@ export function useGetCompTeamSearchValuesLazyQuery(baseOptions?: Apollo.LazyQue
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>(GetCompTeamSearchValuesDocument, options);
         }
+export function useGetCompTeamSearchValuesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>(GetCompTeamSearchValuesDocument, options);
+        }
 export type GetCompTeamSearchValuesQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesQuery>;
 export type GetCompTeamSearchValuesLazyQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesLazyQuery>;
+export type GetCompTeamSearchValuesSuspenseQueryHookResult = ReturnType<typeof useGetCompTeamSearchValuesSuspenseQuery>;
 export type GetCompTeamSearchValuesQueryResult = Apollo.QueryResult<GetCompTeamSearchValuesQuery, GetCompTeamSearchValuesQueryVariables>;
 export const ListCompetitionsDocument = gql`
     query ListCompetitions {
@@ -1143,8 +1155,13 @@ export function useListCompetitionsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListCompetitionsQuery, ListCompetitionsQueryVariables>(ListCompetitionsDocument, options);
         }
+export function useListCompetitionsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListCompetitionsQuery, ListCompetitionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListCompetitionsQuery, ListCompetitionsQueryVariables>(ListCompetitionsDocument, options);
+        }
 export type ListCompetitionsQueryHookResult = ReturnType<typeof useListCompetitionsQuery>;
 export type ListCompetitionsLazyQueryHookResult = ReturnType<typeof useListCompetitionsLazyQuery>;
+export type ListCompetitionsSuspenseQueryHookResult = ReturnType<typeof useListCompetitionsSuspenseQuery>;
 export type ListCompetitionsQueryResult = Apollo.QueryResult<ListCompetitionsQuery, ListCompetitionsQueryVariables>;
 export const GetCompetitionDocument = gql`
     query GetCompetition($id: ID!) {
@@ -1170,7 +1187,7 @@ export const GetCompetitionDocument = gql`
  *   },
  * });
  */
-export function useGetCompetitionQuery(baseOptions: Apollo.QueryHookOptions<GetCompetitionQuery, GetCompetitionQueryVariables>) {
+export function useGetCompetitionQuery(baseOptions: Apollo.QueryHookOptions<GetCompetitionQuery, GetCompetitionQueryVariables> & ({ variables: GetCompetitionQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetCompetitionQuery, GetCompetitionQueryVariables>(GetCompetitionDocument, options);
       }
@@ -1178,8 +1195,13 @@ export function useGetCompetitionLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCompetitionQuery, GetCompetitionQueryVariables>(GetCompetitionDocument, options);
         }
+export function useGetCompetitionSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCompetitionQuery, GetCompetitionQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCompetitionQuery, GetCompetitionQueryVariables>(GetCompetitionDocument, options);
+        }
 export type GetCompetitionQueryHookResult = ReturnType<typeof useGetCompetitionQuery>;
 export type GetCompetitionLazyQueryHookResult = ReturnType<typeof useGetCompetitionLazyQuery>;
+export type GetCompetitionSuspenseQueryHookResult = ReturnType<typeof useGetCompetitionSuspenseQuery>;
 export type GetCompetitionQueryResult = Apollo.QueryResult<GetCompetitionQuery, GetCompetitionQueryVariables>;
 export const UpdateCompetitionDocument = gql`
     mutation UpdateCompetition($competition: CompetitionInput!) {
@@ -1341,8 +1363,13 @@ export function useListProvidersLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListProvidersQuery, ListProvidersQueryVariables>(ListProvidersDocument, options);
         }
+export function useListProvidersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListProvidersQuery, ListProvidersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListProvidersQuery, ListProvidersQueryVariables>(ListProvidersDocument, options);
+        }
 export type ListProvidersQueryHookResult = ReturnType<typeof useListProvidersQuery>;
 export type ListProvidersLazyQueryHookResult = ReturnType<typeof useListProvidersLazyQuery>;
+export type ListProvidersSuspenseQueryHookResult = ReturnType<typeof useListProvidersSuspenseQuery>;
 export type ListProvidersQueryResult = Apollo.QueryResult<ListProvidersQuery, ListProvidersQueryVariables>;
 export const GetProviderDocument = gql`
     query GetProvider($id: ID!) {
@@ -1368,7 +1395,7 @@ export const GetProviderDocument = gql`
  *   },
  * });
  */
-export function useGetProviderQuery(baseOptions: Apollo.QueryHookOptions<GetProviderQuery, GetProviderQueryVariables>) {
+export function useGetProviderQuery(baseOptions: Apollo.QueryHookOptions<GetProviderQuery, GetProviderQueryVariables> & ({ variables: GetProviderQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetProviderQuery, GetProviderQueryVariables>(GetProviderDocument, options);
       }
@@ -1376,8 +1403,13 @@ export function useGetProviderLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetProviderQuery, GetProviderQueryVariables>(GetProviderDocument, options);
         }
+export function useGetProviderSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetProviderQuery, GetProviderQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetProviderQuery, GetProviderQueryVariables>(GetProviderDocument, options);
+        }
 export type GetProviderQueryHookResult = ReturnType<typeof useGetProviderQuery>;
 export type GetProviderLazyQueryHookResult = ReturnType<typeof useGetProviderLazyQuery>;
+export type GetProviderSuspenseQueryHookResult = ReturnType<typeof useGetProviderSuspenseQuery>;
 export type GetProviderQueryResult = Apollo.QueryResult<GetProviderQuery, GetProviderQueryVariables>;
 export const ValidateConfigDocument = gql`
     query ValidateConfig($type: String!, $config: String!) {
@@ -1402,7 +1434,7 @@ export const ValidateConfigDocument = gql`
  *   },
  * });
  */
-export function useValidateConfigQuery(baseOptions: Apollo.QueryHookOptions<ValidateConfigQuery, ValidateConfigQueryVariables>) {
+export function useValidateConfigQuery(baseOptions: Apollo.QueryHookOptions<ValidateConfigQuery, ValidateConfigQueryVariables> & ({ variables: ValidateConfigQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<ValidateConfigQuery, ValidateConfigQueryVariables>(ValidateConfigDocument, options);
       }
@@ -1410,8 +1442,13 @@ export function useValidateConfigLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ValidateConfigQuery, ValidateConfigQueryVariables>(ValidateConfigDocument, options);
         }
+export function useValidateConfigSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ValidateConfigQuery, ValidateConfigQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ValidateConfigQuery, ValidateConfigQueryVariables>(ValidateConfigDocument, options);
+        }
 export type ValidateConfigQueryHookResult = ReturnType<typeof useValidateConfigQuery>;
 export type ValidateConfigLazyQueryHookResult = ReturnType<typeof useValidateConfigLazyQuery>;
+export type ValidateConfigSuspenseQueryHookResult = ReturnType<typeof useValidateConfigSuspenseQuery>;
 export type ValidateConfigQueryResult = Apollo.QueryResult<ValidateConfigQuery, ValidateConfigQueryVariables>;
 export const ListProviderVmsDocument = gql`
     query ListProviderVms($id: ID!) {
@@ -1439,7 +1476,7 @@ export const ListProviderVmsDocument = gql`
  *   },
  * });
  */
-export function useListProviderVmsQuery(baseOptions: Apollo.QueryHookOptions<ListProviderVmsQuery, ListProviderVmsQueryVariables>) {
+export function useListProviderVmsQuery(baseOptions: Apollo.QueryHookOptions<ListProviderVmsQuery, ListProviderVmsQueryVariables> & ({ variables: ListProviderVmsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<ListProviderVmsQuery, ListProviderVmsQueryVariables>(ListProviderVmsDocument, options);
       }
@@ -1447,8 +1484,13 @@ export function useListProviderVmsLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListProviderVmsQuery, ListProviderVmsQueryVariables>(ListProviderVmsDocument, options);
         }
+export function useListProviderVmsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListProviderVmsQuery, ListProviderVmsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListProviderVmsQuery, ListProviderVmsQueryVariables>(ListProviderVmsDocument, options);
+        }
 export type ListProviderVmsQueryHookResult = ReturnType<typeof useListProviderVmsQuery>;
 export type ListProviderVmsLazyQueryHookResult = ReturnType<typeof useListProviderVmsLazyQuery>;
+export type ListProviderVmsSuspenseQueryHookResult = ReturnType<typeof useListProviderVmsSuspenseQuery>;
 export type ListProviderVmsQueryResult = Apollo.QueryResult<ListProviderVmsQuery, ListProviderVmsQueryVariables>;
 export const UpdateProviderDocument = gql`
     mutation UpdateProvider($provider: ProviderInput!) {
@@ -1609,8 +1651,13 @@ export function useListServiceAccountsLazyQuery(baseOptions?: Apollo.LazyQueryHo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>(ListServiceAccountsDocument, options);
         }
+export function useListServiceAccountsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>(ListServiceAccountsDocument, options);
+        }
 export type ListServiceAccountsQueryHookResult = ReturnType<typeof useListServiceAccountsQuery>;
 export type ListServiceAccountsLazyQueryHookResult = ReturnType<typeof useListServiceAccountsLazyQuery>;
+export type ListServiceAccountsSuspenseQueryHookResult = ReturnType<typeof useListServiceAccountsSuspenseQuery>;
 export type ListServiceAccountsQueryResult = Apollo.QueryResult<ListServiceAccountsQuery, ListServiceAccountsQueryVariables>;
 export const GetServiceAccountDocument = gql`
     query GetServiceAccount($id: ID!) {
@@ -1636,7 +1683,7 @@ export const GetServiceAccountDocument = gql`
  *   },
  * });
  */
-export function useGetServiceAccountQuery(baseOptions: Apollo.QueryHookOptions<GetServiceAccountQuery, GetServiceAccountQueryVariables>) {
+export function useGetServiceAccountQuery(baseOptions: Apollo.QueryHookOptions<GetServiceAccountQuery, GetServiceAccountQueryVariables> & ({ variables: GetServiceAccountQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetServiceAccountQuery, GetServiceAccountQueryVariables>(GetServiceAccountDocument, options);
       }
@@ -1644,8 +1691,13 @@ export function useGetServiceAccountLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetServiceAccountQuery, GetServiceAccountQueryVariables>(GetServiceAccountDocument, options);
         }
+export function useGetServiceAccountSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetServiceAccountQuery, GetServiceAccountQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetServiceAccountQuery, GetServiceAccountQueryVariables>(GetServiceAccountDocument, options);
+        }
 export type GetServiceAccountQueryHookResult = ReturnType<typeof useGetServiceAccountQuery>;
 export type GetServiceAccountLazyQueryHookResult = ReturnType<typeof useGetServiceAccountLazyQuery>;
+export type GetServiceAccountSuspenseQueryHookResult = ReturnType<typeof useGetServiceAccountSuspenseQuery>;
 export type GetServiceAccountQueryResult = Apollo.QueryResult<GetServiceAccountQuery, GetServiceAccountQueryVariables>;
 export const UpdateServiceAccountDocument = gql`
     mutation UpdateServiceAccount($input: ServiceAccountInput!) {
@@ -1775,8 +1827,13 @@ export function useListTeamsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListTeamsQuery, ListTeamsQueryVariables>(ListTeamsDocument, options);
         }
+export function useListTeamsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListTeamsQuery, ListTeamsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListTeamsQuery, ListTeamsQueryVariables>(ListTeamsDocument, options);
+        }
 export type ListTeamsQueryHookResult = ReturnType<typeof useListTeamsQuery>;
 export type ListTeamsLazyQueryHookResult = ReturnType<typeof useListTeamsLazyQuery>;
+export type ListTeamsSuspenseQueryHookResult = ReturnType<typeof useListTeamsSuspenseQuery>;
 export type ListTeamsQueryResult = Apollo.QueryResult<ListTeamsQuery, ListTeamsQueryVariables>;
 export const GetTeamDocument = gql`
     query GetTeam($id: ID!) {
@@ -1802,7 +1859,7 @@ export const GetTeamDocument = gql`
  *   },
  * });
  */
-export function useGetTeamQuery(baseOptions: Apollo.QueryHookOptions<GetTeamQuery, GetTeamQueryVariables>) {
+export function useGetTeamQuery(baseOptions: Apollo.QueryHookOptions<GetTeamQuery, GetTeamQueryVariables> & ({ variables: GetTeamQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetTeamQuery, GetTeamQueryVariables>(GetTeamDocument, options);
       }
@@ -1810,8 +1867,13 @@ export function useGetTeamLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetTeamQuery, GetTeamQueryVariables>(GetTeamDocument, options);
         }
+export function useGetTeamSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTeamQuery, GetTeamQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetTeamQuery, GetTeamQueryVariables>(GetTeamDocument, options);
+        }
 export type GetTeamQueryHookResult = ReturnType<typeof useGetTeamQuery>;
 export type GetTeamLazyQueryHookResult = ReturnType<typeof useGetTeamLazyQuery>;
+export type GetTeamSuspenseQueryHookResult = ReturnType<typeof useGetTeamSuspenseQuery>;
 export type GetTeamQueryResult = Apollo.QueryResult<GetTeamQuery, GetTeamQueryVariables>;
 export const UpdateTeamDocument = gql`
     mutation UpdateTeam($team: TeamInput!) {
@@ -1974,8 +2036,13 @@ export function useGetCurrentUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCurrentUserQuery, GetCurrentUserQueryVariables>(GetCurrentUserDocument, options);
         }
+export function useGetCurrentUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCurrentUserQuery, GetCurrentUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCurrentUserQuery, GetCurrentUserQueryVariables>(GetCurrentUserDocument, options);
+        }
 export type GetCurrentUserQueryHookResult = ReturnType<typeof useGetCurrentUserQuery>;
 export type GetCurrentUserLazyQueryHookResult = ReturnType<typeof useGetCurrentUserLazyQuery>;
+export type GetCurrentUserSuspenseQueryHookResult = ReturnType<typeof useGetCurrentUserSuspenseQuery>;
 export type GetCurrentUserQueryResult = Apollo.QueryResult<GetCurrentUserQuery, GetCurrentUserQueryVariables>;
 export const ListUsersDocument = gql`
     query ListUsers {
@@ -2008,8 +2075,13 @@ export function useListUsersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ListUsersQuery, ListUsersQueryVariables>(ListUsersDocument, options);
         }
+export function useListUsersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ListUsersQuery, ListUsersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ListUsersQuery, ListUsersQueryVariables>(ListUsersDocument, options);
+        }
 export type ListUsersQueryHookResult = ReturnType<typeof useListUsersQuery>;
 export type ListUsersLazyQueryHookResult = ReturnType<typeof useListUsersLazyQuery>;
+export type ListUsersSuspenseQueryHookResult = ReturnType<typeof useListUsersSuspenseQuery>;
 export type ListUsersQueryResult = Apollo.QueryResult<ListUsersQuery, ListUsersQueryVariables>;
 export const GetUserDocument = gql`
     query GetUser($id: ID!) {
@@ -2035,7 +2107,7 @@ export const GetUserDocument = gql`
  *   },
  * });
  */
-export function useGetUserQuery(baseOptions: Apollo.QueryHookOptions<GetUserQuery, GetUserQueryVariables>) {
+export function useGetUserQuery(baseOptions: Apollo.QueryHookOptions<GetUserQuery, GetUserQueryVariables> & ({ variables: GetUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
       }
@@ -2043,8 +2115,13 @@ export function useGetUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
         }
+export function useGetUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUserQuery, GetUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
+        }
 export type GetUserQueryHookResult = ReturnType<typeof useGetUserQuery>;
 export type GetUserLazyQueryHookResult = ReturnType<typeof useGetUserLazyQuery>;
+export type GetUserSuspenseQueryHookResult = ReturnType<typeof useGetUserSuspenseQuery>;
 export type GetUserQueryResult = Apollo.QueryResult<GetUserQuery, GetUserQueryVariables>;
 export const UpdateUserDocument = gql`
     mutation UpdateUser($user: UserInput!) {
@@ -2307,8 +2384,13 @@ export function useMyVmObjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<MyVmObjectsQuery, MyVmObjectsQueryVariables>(MyVmObjectsDocument, options);
         }
+export function useMyVmObjectsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<MyVmObjectsQuery, MyVmObjectsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MyVmObjectsQuery, MyVmObjectsQueryVariables>(MyVmObjectsDocument, options);
+        }
 export type MyVmObjectsQueryHookResult = ReturnType<typeof useMyVmObjectsQuery>;
 export type MyVmObjectsLazyQueryHookResult = ReturnType<typeof useMyVmObjectsLazyQuery>;
+export type MyVmObjectsSuspenseQueryHookResult = ReturnType<typeof useMyVmObjectsSuspenseQuery>;
 export type MyVmObjectsQueryResult = Apollo.QueryResult<MyVmObjectsQuery, MyVmObjectsQueryVariables>;
 export const AllVmObjectsDocument = gql`
     query AllVmObjects {
@@ -2341,8 +2423,13 @@ export function useAllVmObjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<AllVmObjectsQuery, AllVmObjectsQueryVariables>(AllVmObjectsDocument, options);
         }
+export function useAllVmObjectsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<AllVmObjectsQuery, AllVmObjectsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<AllVmObjectsQuery, AllVmObjectsQueryVariables>(AllVmObjectsDocument, options);
+        }
 export type AllVmObjectsQueryHookResult = ReturnType<typeof useAllVmObjectsQuery>;
 export type AllVmObjectsLazyQueryHookResult = ReturnType<typeof useAllVmObjectsLazyQuery>;
+export type AllVmObjectsSuspenseQueryHookResult = ReturnType<typeof useAllVmObjectsSuspenseQuery>;
 export type AllVmObjectsQueryResult = Apollo.QueryResult<AllVmObjectsQuery, AllVmObjectsQueryVariables>;
 export const GetVmObjectDocument = gql`
     query GetVmObject($vmObjectId: ID!) {
@@ -2368,7 +2455,7 @@ export const GetVmObjectDocument = gql`
  *   },
  * });
  */
-export function useGetVmObjectQuery(baseOptions: Apollo.QueryHookOptions<GetVmObjectQuery, GetVmObjectQueryVariables>) {
+export function useGetVmObjectQuery(baseOptions: Apollo.QueryHookOptions<GetVmObjectQuery, GetVmObjectQueryVariables> & ({ variables: GetVmObjectQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetVmObjectQuery, GetVmObjectQueryVariables>(GetVmObjectDocument, options);
       }
@@ -2376,8 +2463,13 @@ export function useGetVmObjectLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetVmObjectQuery, GetVmObjectQueryVariables>(GetVmObjectDocument, options);
         }
+export function useGetVmObjectSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetVmObjectQuery, GetVmObjectQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetVmObjectQuery, GetVmObjectQueryVariables>(GetVmObjectDocument, options);
+        }
 export type GetVmObjectQueryHookResult = ReturnType<typeof useGetVmObjectQuery>;
 export type GetVmObjectLazyQueryHookResult = ReturnType<typeof useGetVmObjectLazyQuery>;
+export type GetVmObjectSuspenseQueryHookResult = ReturnType<typeof useGetVmObjectSuspenseQuery>;
 export type GetVmObjectQueryResult = Apollo.QueryResult<GetVmObjectQuery, GetVmObjectQueryVariables>;
 export const GetVmConsoleDocument = gql`
     query GetVmConsole($vmObjectId: ID!, $consoleType: ConsoleType!) {
@@ -2402,7 +2494,7 @@ export const GetVmConsoleDocument = gql`
  *   },
  * });
  */
-export function useGetVmConsoleQuery(baseOptions: Apollo.QueryHookOptions<GetVmConsoleQuery, GetVmConsoleQueryVariables>) {
+export function useGetVmConsoleQuery(baseOptions: Apollo.QueryHookOptions<GetVmConsoleQuery, GetVmConsoleQueryVariables> & ({ variables: GetVmConsoleQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetVmConsoleQuery, GetVmConsoleQueryVariables>(GetVmConsoleDocument, options);
       }
@@ -2410,8 +2502,13 @@ export function useGetVmConsoleLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetVmConsoleQuery, GetVmConsoleQueryVariables>(GetVmConsoleDocument, options);
         }
+export function useGetVmConsoleSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetVmConsoleQuery, GetVmConsoleQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetVmConsoleQuery, GetVmConsoleQueryVariables>(GetVmConsoleDocument, options);
+        }
 export type GetVmConsoleQueryHookResult = ReturnType<typeof useGetVmConsoleQuery>;
 export type GetVmConsoleLazyQueryHookResult = ReturnType<typeof useGetVmConsoleLazyQuery>;
+export type GetVmConsoleSuspenseQueryHookResult = ReturnType<typeof useGetVmConsoleSuspenseQuery>;
 export type GetVmConsoleQueryResult = Apollo.QueryResult<GetVmConsoleQuery, GetVmConsoleQueryVariables>;
 export const GetVmPowerStateDocument = gql`
     query GetVmPowerState($vmObjectId: ID!) {
@@ -2435,7 +2532,7 @@ export const GetVmPowerStateDocument = gql`
  *   },
  * });
  */
-export function useGetVmPowerStateQuery(baseOptions: Apollo.QueryHookOptions<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>) {
+export function useGetVmPowerStateQuery(baseOptions: Apollo.QueryHookOptions<GetVmPowerStateQuery, GetVmPowerStateQueryVariables> & ({ variables: GetVmPowerStateQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>(GetVmPowerStateDocument, options);
       }
@@ -2443,8 +2540,13 @@ export function useGetVmPowerStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>(GetVmPowerStateDocument, options);
         }
+export function useGetVmPowerStateSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>(GetVmPowerStateDocument, options);
+        }
 export type GetVmPowerStateQueryHookResult = ReturnType<typeof useGetVmPowerStateQuery>;
 export type GetVmPowerStateLazyQueryHookResult = ReturnType<typeof useGetVmPowerStateLazyQuery>;
+export type GetVmPowerStateSuspenseQueryHookResult = ReturnType<typeof useGetVmPowerStateSuspenseQuery>;
 export type GetVmPowerStateQueryResult = Apollo.QueryResult<GetVmPowerStateQuery, GetVmPowerStateQueryVariables>;
 export const RebootVmDocument = gql`
     mutation RebootVm($vmObjectId: ID!, $rebootType: RebootType!) {
@@ -2695,7 +2797,7 @@ export const LockoutDocument = gql`
  *   },
  * });
  */
-export function useLockoutSubscription(baseOptions: Apollo.SubscriptionHookOptions<LockoutSubscription, LockoutSubscriptionVariables>) {
+export function useLockoutSubscription(baseOptions: Apollo.SubscriptionHookOptions<LockoutSubscription, LockoutSubscriptionVariables> & ({ variables: LockoutSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useSubscription<LockoutSubscription, LockoutSubscriptionVariables>(LockoutDocument, options);
       }
@@ -2726,7 +2828,7 @@ export const PowerStateDocument = gql`
  *   },
  * });
  */
-export function usePowerStateSubscription(baseOptions: Apollo.SubscriptionHookOptions<PowerStateSubscription, PowerStateSubscriptionVariables>) {
+export function usePowerStateSubscription(baseOptions: Apollo.SubscriptionHookOptions<PowerStateSubscription, PowerStateSubscriptionVariables> & ({ variables: PowerStateSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useSubscription<PowerStateSubscription, PowerStateSubscriptionVariables>(PowerStateDocument, options);
       }
