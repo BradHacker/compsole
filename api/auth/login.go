@@ -80,18 +80,17 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 		).
 			WithUserToTeam().
 			Only(c)
-		if ent.IsNotFound(err) {
-			err = client.Action.Create().
-				SetIPAddress(clientIp).
-				SetType(action.TypeFAILED_SIGN_IN).
-				SetMessage(fmt.Sprintf("user \"%s\" does not exists", username)).
-				SetActionToUser(entUser).
-				Exec(c)
-			if err != nil {
-				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
-			}
-		}
 		if err != nil {
+			if ent.IsNotFound(err) {
+				err = client.Action.Create().
+					SetIPAddress(clientIp).
+					SetType(action.TypeFAILED_SIGN_IN).
+					SetMessage(fmt.Sprintf("user \"%s\" does not exists", username)).
+					Exec(c)
+				if err != nil {
+					logrus.Warnf("failed to create FAILED_SIGN_IN action: %v", err)
+				}
+			}
 			if secure_cookie {
 				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 			} else {
@@ -109,7 +108,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 				SetActionToUser(entUser).
 				Exec(c)
 			if err != nil {
-				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
+				logrus.Warnf("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 			if secure_cookie {
 				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
@@ -180,7 +179,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			SetActionToUser(entUser).
 			Exec(c)
 		if err != nil {
-			logrus.Warn("failed to create SIGN_IN action: %v", err)
+			logrus.Warnf("failed to create SIGN_IN action: %v", err)
 		}
 
 		entUser.Password = ""
@@ -289,7 +288,7 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 			SetActionToUser(entUser).
 			Exec(c)
 		if err != nil {
-			logrus.Warn("failed to create SIGN_OUT action: %v", err)
+			logrus.Warnf("failed to create SIGN_OUT action: %v", err)
 		}
 
 		_, err = client.Token.Delete().Where(token.TokenEQ(authCookie)).Exec(c)
@@ -300,16 +299,6 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
 			}
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err})
-			return
-		}
-
-		if err != nil {
-			if secure_cookie {
-				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
 			return
 		}
 

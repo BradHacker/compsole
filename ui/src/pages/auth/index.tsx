@@ -13,6 +13,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LocalLogin } from '../../api'
 import Logo from '../../res/logo512.png'
 import { useEffect } from 'react'
+import { useSnackbar } from 'notistack'
 
 export const Auth: React.FC = (): React.ReactElement => {
   return (
@@ -36,6 +37,7 @@ export const Auth: React.FC = (): React.ReactElement => {
 export const Signin: React.FC = (): React.ReactElement => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { enqueueSnackbar } = useSnackbar()
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -43,26 +45,34 @@ export const Signin: React.FC = (): React.ReactElement => {
     LocalLogin(
       data.get('username')?.toString() ?? '',
       data.get('password')?.toString() ?? ''
-    ).then(() => {
-      if (location?.state) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((location.state as any).from instanceof Location) {
-          if (
-            location.state &&
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ((location?.state as any).from as Location).pathname.indexOf(
-              '/auth/'
-            ) >= 0
-          ) {
-            navigate('/')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } else navigate((location.state as any).from as Location)
+    ).then(
+      () => {
+        if (location?.state) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } else if (typeof (location.state as any).from === 'string')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          navigate((location.state as any).from)
-      } else navigate('/')
-    }, console.error)
+          if ((location.state as any).from instanceof Location) {
+            if (
+              location.state &&
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ((location?.state as any).from as Location).pathname.indexOf(
+                '/auth/'
+              ) >= 0
+            ) {
+              navigate('/')
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } else navigate((location.state as any).from as Location)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } else if (typeof (location.state as any).from === 'string')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            navigate((location.state as any).from)
+        } else navigate('/')
+      },
+      (err: { error?: string }) => {
+        enqueueSnackbar({
+          message: err.error || 'Unknown error occurred',
+          variant: 'error',
+        })
+      }
+    )
   }
 
   // Set the title of the tab only on first load
