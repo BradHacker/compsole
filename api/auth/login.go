@@ -302,16 +302,6 @@ func Logout(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 
-		if err != nil {
-			if secure_cookie {
-				c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
-			} else {
-				c.SetCookie("auth-cookie", "", 0, "/", hostname, false, false)
-			}
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Error updating token"})
-			return
-		}
-
 		if secure_cookie {
 			c.SetCookie("auth-cookie", "", 0, "/", hostname, true, true)
 		} else {
