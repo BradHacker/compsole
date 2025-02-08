@@ -7,6 +7,7 @@ RUN --mount=type=cache,target="/root/.cache/go-build" \
     go build -o compsole_server server.go
 
 FROM debian:bookworm
+RUN apt update && apt install -y ca-certificates
 WORKDIR /app
 COPY --from=builder /app/compsole_server .
 CMD ["./compsole_server"]
