@@ -106,9 +106,7 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
     })
   const { enqueueSnackbar } = useSnackbar()
   const [consoleUrl, setConsoleUrl] = useState<string>('')
-  const [consoleType, setConsoleType] = useState<ConsoleType>(
-    ConsoleType.Serial
-  )
+  const [consoleType, setConsoleType] = useState<ConsoleType>(ConsoleType.Novnc)
   const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false)
   const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = useState(false)
   // const rebootTypeMenuAnchorRef = useRef<HTMLButtonElement>(null);
