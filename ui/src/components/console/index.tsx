@@ -64,8 +64,8 @@ export default function Console({
   return (
     <Box
       sx={{
+        flexGrow: '1',
         width: '100%',
-        height: 'calc(100vh - 10rem)',
       }}
       {...props}
     >

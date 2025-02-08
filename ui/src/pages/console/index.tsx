@@ -31,6 +31,7 @@ import {
   Typography,
   Box,
   SxProps,
+  Stack,
 } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
 import { useSnackbar } from 'notistack'
@@ -408,6 +409,9 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
       component="main"
       sx={{
         p: 2,
+        minHeight: 'calc(100vh - 64px)',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <Grid
@@ -415,6 +419,7 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
         spacing={2}
         sx={{
           mb: 1,
+          height: '100%',
         }}
       >
         <Grid
@@ -612,7 +617,7 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
           </Popper>
         </Grid>
       </Grid>
-      {shouldShowConsole() ? (
+      {!fullscreenConsole && shouldShowConsole() ? (
         <Console
           consoleType={consoleType}
           providerType={
@@ -625,8 +630,8 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
         <Paper
           elevation={2}
           sx={{
+            flexGrow: '1',
             width: '100%',
-            height: 'calc(100vh - 10rem)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -675,19 +680,17 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
         }}
       >
         <Paper
-          elevation={2}
+          elevation={1}
           sx={{
             width: '100%',
             height: '100%',
             padding: 1,
           }}
         >
-          <Grid
-            container
-            spacing={1}
-            direction="column"
+          <Stack
             sx={{
               height: '100%',
+              gap: 1,
             }}
           >
             {/* VM Metadata */}
@@ -705,55 +708,71 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
                 md={4}
                 xs={12}
                 sx={{
-                  padding: 1,
-                  boxSizing: 'border-box',
                   display: 'flex',
                   alignItems: 'center',
+                  gap: '1rem',
                 }}
               >
-                <Typography
-                  variant="h5"
+                <Box
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
-                    mr: 2,
+                    flexDirection: 'column',
                   }}
                 >
-                  <FiberManualRecord
-                    sx={{
-                      height: '1rem',
-                      width: '1rem',
-                      mr: 1,
-                      color: getPowerStateColor(
-                        powerStateData?.powerState.State
-                      ),
-                    }}
-                    titleAccess={getPowerStateString(
-                      powerStateData?.powerState.State
-                    )}
-                  />
-                  {getVmObjectLoading || !getVmObjectData ? (
-                    <Skeleton />
-                  ) : (
-                    getVmObjectData.vmObject.Name
-                  )}
-                </Typography>
-                {getVmObjectLoading || !getVmObjectData ? (
-                  <Skeleton />
-                ) : (
                   <Typography
-                    variant="caption"
-                    component="code"
+                    variant="h5"
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      flexShrink: 1,
+                      mr: 2,
                     }}
                   >
-                    {getVmObjectData.vmObject.IPAddresses?.join(', ') ??
-                      'No IP Addresses Found'}
+                    <FiberManualRecord
+                      sx={{
+                        height: '1rem',
+                        width: '1rem',
+                        mr: 1,
+                        color: getPowerStateColor(
+                          powerStateData?.powerState.State
+                        ),
+                      }}
+                      titleAccess={getPowerStateString(
+                        powerStateData?.powerState.State
+                      )}
+                    />
+                    {getVmObjectLoading || !getVmObjectData ? (
+                      <Skeleton />
+                    ) : (
+                      getVmObjectData.vmObject.Name
+                    )}
                   </Typography>
-                )}
+                  {getVmObjectLoading || !getVmObjectData ? (
+                    <Skeleton />
+                  ) : (
+                    <Typography variant="subtitle2" color="text.secondary">
+                      {getVmObjectData.vmObject.IPAddresses?.join(', ') ??
+                        'No IP Addresses Found'}
+                    </Typography>
+                  )}
+                </Box>
+                <ConsoleTypeSelect
+                  providerType={
+                    getVmObjectData?.vmObject.VmObjectToTeam?.TeamToCompetition
+                      .CompetitionToProvider.Type ?? ''
+                  }
+                  value={consoleType}
+                  onChange={(v) => setConsoleType(v as ConsoleType)}
+                  size="small"
+                  sx={{
+                    minWidth: '6rem',
+                  }}
+                  MenuProps={{
+                    sx: {
+                      zIndex: 1304,
+                    },
+                  }}
+                  autoWidth
+                />
               </Grid>
               {/* VM Controls */}
               <Grid
@@ -902,51 +921,47 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
               </Grid>
             </Grid>
             {/* VM Console */}
-            <Grid item md={true} xs={8} sx={{ width: '100%', padding: 0 }}>
-              {shouldShowConsole() ? (
-                fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
-                  <iframe
-                    id="console"
-                    title="console"
-                    src={consoleUrl}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '100%',
-                    }}
-                  />
-                ) : (
-                  <Skeleton width="100%" height="100%" />
-                )
+            {shouldShowConsole() ? (
+              fullscreenConsole && !getVmConsoleLoading && consoleUrl ? (
+                <Console
+                  consoleType={consoleType}
+                  providerType={
+                    getVmObjectData?.vmObject.VmObjectToTeam?.TeamToCompetition
+                      .CompetitionToProvider.Type ?? ''
+                  }
+                  vmObjectId={getVmObjectData?.vmObject.ID ?? ''}
+                />
               ) : (
-                <Paper
-                  elevation={6}
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'column',
-                  }}
-                >
-                  {isVmLocked() ? (
-                    <>
-                      <LockTwoTone />
-                      <Typography variant="subtitle1">VM is Locked</Typography>
-                    </>
-                  ) : (
-                    <>
-                      {getPowerStateIcon(powerStateData?.powerState.State)}
-                      <Typography variant="subtitle1">
-                        {getPowerStateString(powerStateData?.powerState.State)}
-                      </Typography>
-                    </>
-                  )}
-                </Paper>
-              )}
-            </Grid>
-          </Grid>
+                <Skeleton width="100%" height="100%" />
+              )
+            ) : (
+              <Paper
+                elevation={2}
+                sx={{
+                  flexGrow: '1',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                }}
+              >
+                {isVmLocked() ? (
+                  <>
+                    <LockTwoTone />
+                    <Typography variant="subtitle1">VM is Locked</Typography>
+                  </>
+                ) : (
+                  <>
+                    {getPowerStateIcon(powerStateData?.powerState.State)}
+                    <Typography variant="subtitle1">
+                      {getPowerStateString(powerStateData?.powerState.State)}
+                    </Typography>
+                  </>
+                )}
+              </Paper>
+            )}
+          </Stack>
         </Paper>
       </Box>
     </Container>
