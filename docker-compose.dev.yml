@@ -1,55 +1,64 @@
 version: "3.4"
 
 services:
-  ui:
-    build:
-      context: ./ui
-      dockerfile: ./Dockerfile
-    ports:
-      - 80:80
+  proxy:
+    image: caddy:2.7.6-alpine
     restart: unless-stopped
-    networks:
-      - compsole-backend
-    # depends_on:
-    #   - backend
+    network_mode: host
     volumes:
-      - /app/node_modules/
-  backend:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    restart: unless-stopped
-    networks:
-      - compsole-backend
-    ports:
-      - 8080:8080
-    depends_on:
-      - db
-    environment:
-      # Server
-      - GRAPHQL_HOSTNAME=localhost
-      - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000
-      - PORT=:8080
-      # Disable this for no SSL
-      - HTTPS_ENABLED=false
-      - DEFAULT_ADMIN_USERNAME=compsole
-      - DEFAULT_ADMIN_PASSWORD=compsole
-      - GIN_MODE=debug # set to 'debug' for development
-      # Timeout in minutes
-      - COOKIE_TIMEOUT=180
-      # Window is in hours (time after invalid session to refresh REST tokens)
-      - REFRESH_WINDOW=8
-      # Change this to a randomly generated value (>= 64 bytes encouraged)
-      - JWT_SECRET=secret
-      # Database
-      - PG_URI=postgresql://compsole:compsole@db/compsole
-      # Redis
-      - REDIS_URI=redis:6379
-      - REDIS_PASSWORD=
+      - ./Caddyfile.dev:/etc/caddy/Caddyfile
+      - compsole-caddy-data:/data
+      - compsole-caddy-config:/config
+    env_file: .env
+  # ui:
+  #   build:
+  #     context: ./ui
+  #     dockerfile: ./Dockerfile
+  #   ports:
+  #     - 80:80
+  #   restart: unless-stopped
+  #   networks:
+  #     - compsole-backend
+  #   # depends_on:
+  #   #   - backend
+  #   volumes:
+  #     - /app/node_modules/
+  # backend:
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile
+  #   restart: unless-stopped
+  #   networks:
+  #     - compsole-backend
+  #   ports:
+  #     - 8080:8080
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     # Server
+  #     - GRAPHQL_HOSTNAME=localhost
+  #     - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:3000
+  #     - PORT=:8080
+  #     # Disable this for no SSL
+  #     - HTTPS_ENABLED=false
+  #     - DEFAULT_ADMIN_USERNAME=compsole
+  #     - DEFAULT_ADMIN_PASSWORD=compsole
+  #     - GIN_MODE=debug # set to 'debug' for development
+  #     # Timeout in minutes
+  #     - COOKIE_TIMEOUT=180
+  #     # Window is in hours (time after invalid session to refresh REST tokens)
+  #     - REFRESH_WINDOW=8
+  #     # Change this to a randomly generated value (>= 64 bytes encouraged)
+  #     - JWT_SECRET=secret
+  #     # Database
+  #     - PG_URI=postgresql://compsole:compsole@db/compsole
+  #     # Redis
+  #     - REDIS_URI=redis:6379
+  #     - REDIS_PASSWORD=
   db:
     image: library/postgres:14.4-alpine
-    # ports:
-    #   - 5432:5432
+    ports:
+      - 5432:5432
     restart: unless-stopped
     networks:
       - compsole-backend
@@ -66,14 +75,17 @@ services:
       - compsole-backend
     volumes:
       - redis-data:/data
-    # ports:
-    #   - "6379:6379"
+    ports:
+      - "6379:6379"
 
 volumes:
   compsole-db:
     driver: local
   redis-data:
     driver: local
+  compsole-caddy-data:
+    driver: local
+  compsole-caddy-config:
 
 networks:
   compsole-backend:
