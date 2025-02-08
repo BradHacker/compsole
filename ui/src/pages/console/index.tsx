@@ -50,6 +50,8 @@ import {
   useRebootVmMutation,
 } from '../../api/generated/graphql'
 import { UserContext } from '../../user-context'
+import ConsoleTypeSelect from '../../components/console-type'
+import Console from '../../components/console'
 
 const VmButtonStyles: SxProps<Theme> = {
   '.MuiButton-startIcon': {
@@ -68,7 +70,7 @@ const VmButtonStyles: SxProps<Theme> = {
   },
 }
 
-export const Console: React.FC = (): React.ReactElement => {
+export const ConsolePage: React.FC = (): React.ReactElement => {
   const { user } = useContext(UserContext)
   const { id } = useParams()
   const [
@@ -103,8 +105,8 @@ export const Console: React.FC = (): React.ReactElement => {
     })
   const { enqueueSnackbar } = useSnackbar()
   const [consoleUrl, setConsoleUrl] = useState<string>('')
-  const [consoleType, _setConsoleType] = useState<ConsoleType>(
-    ConsoleType.Novnc
+  const [consoleType, setConsoleType] = useState<ConsoleType>(
+    ConsoleType.Serial
   )
   const [fullscreenConsole, setFullscreenConsole] = useState<boolean>(false)
   const [rebootTypeMenuOpen, setRebootTypeMenuOpen] = useState(false)
@@ -415,39 +417,62 @@ export const Console: React.FC = (): React.ReactElement => {
           mb: 1,
         }}
       >
-        <Grid item md={4} xs={12}>
-          <Typography
-            variant="h5"
+        <Grid
+          item
+          md={4}
+          xs={12}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+          }}
+        >
+          <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: 'column',
             }}
           >
-            <FiberManualRecord
-              sx={{
-                height: '1rem',
-                width: '1rem',
-                mr: 1,
-                color: getPowerStateColor(powerStateData?.powerState.State),
-              }}
-              titleAccess={getPowerStateString(
-                powerStateData?.powerState.State
+            <Typography variant="h5">
+              <FiberManualRecord
+                sx={{
+                  height: '1rem',
+                  width: '1rem',
+                  mr: 1,
+                  color: getPowerStateColor(powerStateData?.powerState.State),
+                }}
+                titleAccess={getPowerStateString(
+                  powerStateData?.powerState.State
+                )}
+              />
+              {getVmObjectLoading || !getVmObjectData ? (
+                <Skeleton />
+              ) : (
+                getVmObjectData.vmObject.Name
               )}
-            />
-            {getVmObjectLoading || !getVmObjectData ? (
-              <Skeleton />
-            ) : (
-              getVmObjectData.vmObject.Name
-            )}
-          </Typography>
-          <Typography variant="subtitle2" color="text.secondary">
-            {getVmObjectLoading || !getVmObjectData ? (
-              <Skeleton />
-            ) : (
-              getVmObjectData.vmObject.IPAddresses?.join(', ') ??
-              'No IP Addresses Found'
-            )}
-          </Typography>
+            </Typography>
+            <Typography variant="subtitle2" color="text.secondary">
+              {getVmObjectLoading || !getVmObjectData ? (
+                <Skeleton />
+              ) : (
+                getVmObjectData.vmObject.IPAddresses?.join(', ') ??
+                'No IP Addresses Found'
+              )}
+            </Typography>
+          </Box>
+          <ConsoleTypeSelect
+            providerType={
+              getVmObjectData?.vmObject.VmObjectToTeam?.TeamToCompetition
+                .CompetitionToProvider.Type ?? ''
+            }
+            value={consoleType}
+            onChange={(v) => setConsoleType(v as ConsoleType)}
+            size="small"
+            sx={{
+              minWidth: '6rem',
+            }}
+            autoWidth
+          />
         </Grid>
         <Grid
           item
@@ -588,19 +613,14 @@ export const Console: React.FC = (): React.ReactElement => {
         </Grid>
       </Grid>
       {shouldShowConsole() ? (
-        !getVmConsoleLoading && consoleUrl ? (
-          <iframe
-            id="console"
-            title="console"
-            src={consoleUrl}
-            style={{
-              width: '100%',
-              height: 'calc(100vh - 10rem)',
-            }}
-          />
-        ) : (
-          <Skeleton width="100%" height="800px" />
-        )
+        <Console
+          consoleType={consoleType}
+          providerType={
+            getVmObjectData?.vmObject.VmObjectToTeam?.TeamToCompetition
+              .CompetitionToProvider.Type ?? ''
+          }
+          vmObjectId={getVmObjectData?.vmObject.ID ?? ''}
+        />
       ) : (
         <Paper
           elevation={2}
