@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -16,18 +17,18 @@ type CompsoleProvider interface {
 	Name() string
 	Author() string
 	Version() string
-	GetConsoleUrl(vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error)
-	GetPowerState(vmObject *ent.VmObject) (utils.PowerState, error)
-	ListVMs() ([]*ent.VmObject, error)
-	RestartVM(vmObject *ent.VmObject, rebootType utils.RebootType) error
-	PowerOnVM(vmObject *ent.VmObject) error
-	PowerOffVM(vmObject *ent.VmObject) error
+	GetConsoleUrl(ctx context.Context, vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error)
+	GetPowerState(ctx context.Context, vmObject *ent.VmObject) (utils.PowerState, error)
+	ListVMs(ctx context.Context) ([]*ent.VmObject, error)
+	RestartVM(ctx context.Context, vmObject *ent.VmObject, rebootType utils.RebootType) error
+	PowerOnVM(ctx context.Context, vmObject *ent.VmObject) error
+	PowerOffVM(ctx context.Context, vmObject *ent.VmObject) error
 }
 
-func NewProvider(providerType string, config string) (provider CompsoleProvider, err error) {
+func NewProvider(ctx context.Context, providerType string, config string) (provider CompsoleProvider, err error) {
 	switch providerType {
 	case openstack.ID:
-		return openstack.NewOpenstackProvider(config)
+		return openstack.NewOpenstackProvider(ctx, config)
 	default:
 		err = fmt.Errorf("invalid provider type")
 		return
