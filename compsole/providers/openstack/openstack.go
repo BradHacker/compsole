@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -9,13 +10,11 @@ import (
 
 	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/extendedstatus"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/remoteconsoles"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/startstop"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/gophercloud/gophercloud/pagination"
+	"github.com/gophercloud/gophercloud/v2"
+	"github.com/gophercloud/gophercloud/v2/openstack"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/remoteconsoles"
+	"github.com/gophercloud/gophercloud/v2/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/v2/pagination"
 )
 
 // #########
@@ -67,7 +66,7 @@ func (provider CompsoleProviderOpenstack) Version() string { return Version }
 // # FUNCTIONS #
 // #############
 // NewOpenstackProvider creates a provider for the Openstack cloud provider
-func NewOpenstackProvider(config string) (provider CompsoleProviderOpenstack, err error) {
+func NewOpenstackProvider(ctx context.Context, config string) (provider CompsoleProviderOpenstack, err error) {
 	// Parse the configs
 	var providerConfig OpenstackConfig
 	err = json.Unmarshal([]byte(config), &providerConfig)
@@ -94,7 +93,7 @@ func NewOpenstackProvider(config string) (provider CompsoleProviderOpenstack, er
 	} else {
 		authOpts.DomainID = providerConfig.DomainId
 	}
-	authClient, err := openstack.AuthenticatedClient(authOpts)
+	authClient, err := openstack.AuthenticatedClient(ctx, authOpts)
 	if err != nil {
 		return CompsoleProviderOpenstack{}, fmt.Errorf("failed to create auth client: %v", err)
 	}
@@ -119,28 +118,7 @@ func NewOpenstackProvider(config string) (provider CompsoleProviderOpenstack, er
 	}, nil
 }
 
-// func (provider CompsoleProviderOpenstack) newComputeClient() (*gophercloud.ServiceClient, error) {
-// 	computeClient, err := openstack.NewComputeV2(provider.providerClient, gophercloud.EndpointOpts{
-// 		Region: provider.config.RegionName,
-// 	})
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to make Openstack compute client: %v", err)
-// 	}
-// 	if provider.config.NovaMicroversion != "" {
-// 		computeClient.Microversion = provider.config.NovaMicroversion
-// 	} else {
-// 		computeClient.Microversion = "2.8"
-// 	}
-// 	return computeClient, nil
-// }
-
-func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error) {
-	// // Create Openstack compute client
-	// computeClient, err := provider.newComputeClient()
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	// }
-
+func (provider CompsoleProviderOpenstack) GetConsoleUrl(ctx context.Context, vmObject *ent.VmObject, consoleType utils.ConsoleType) (string, error) {
 	// Determine the type of console we want to generate
 	var remoteConsoleProtocol remoteconsoles.ConsoleProtocol
 	var remoteConsoleType remoteconsoles.ConsoleType
@@ -166,7 +144,7 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 	}
 
 	// Create the remote console and return the URL
-	remoteConsole, err := remoteconsoles.Create(provider.computeClient, vmObject.Identifier, remoteconsoles.CreateOpts{
+	remoteConsole, err := remoteconsoles.Create(ctx, provider.computeClient, vmObject.Identifier, remoteconsoles.CreateOpts{
 		Protocol: remoteConsoleProtocol,
 		Type:     remoteConsoleType,
 	}).Extract()
@@ -174,26 +152,16 @@ func (provider CompsoleProviderOpenstack) GetConsoleUrl(vmObject *ent.VmObject, 
 		return "", fmt.Errorf("failed to create Openstack remote console: %v", err)
 	}
 	finalURL := remoteConsole.URL
-	if !strings.Contains(finalURL, "scale=true") {
+	// Add auto-scaling to NoVNC urls
+	if consoleType == NOVNC && !strings.Contains(finalURL, "scale=true") {
 		finalURL = finalURL + "&scale=true"
 	}
 	return finalURL, nil
 }
 
-func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) (utils.PowerState, error) {
-	type ServerWithExt struct {
-		servers.Server
-		extendedstatus.ServerExtendedStatusExt
-	}
-
-	// // Create Openstack compute client
-	// computeClient, err := provider.newComputeClient()
-	// if err != nil {
-	// 	return "", fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	// }
-
-	var serverResult ServerWithExt
-	err := servers.Get(provider.computeClient, vmObject.Identifier).ExtractInto(&serverResult)
+func (provider CompsoleProviderOpenstack) GetPowerState(ctx context.Context, vmObject *ent.VmObject) (utils.PowerState, error) {
+	var serverResult servers.Server
+	err := servers.Get(ctx, provider.computeClient, vmObject.Identifier).ExtractInto(&serverResult)
 	if err != nil {
 		return "", fmt.Errorf("failed to get Openstack server details: %v", err)
 	}
@@ -201,22 +169,22 @@ func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) 
 	var powerState utils.PowerState
 	switch serverResult.PowerState {
 	// No State
-	case extendedstatus.NOSTATE:
+	case servers.NOSTATE:
 		powerState = utils.Unknown
 	// Running
-	case extendedstatus.RUNNING:
+	case servers.RUNNING:
 		powerState = utils.PoweredOn
 	// Paused
-	case extendedstatus.PAUSED:
+	case servers.PAUSED:
 		powerState = utils.Suspended
 	// Shutdown
-	case extendedstatus.SHUTDOWN:
+	case servers.SHUTDOWN:
 		powerState = utils.PoweredOff
 	// Crashed
-	case extendedstatus.CRASHED:
+	case servers.CRASHED:
 		powerState = utils.Unknown
 	// Suspended
-	case extendedstatus.SUSPENDED:
+	case servers.SUSPENDED:
 		powerState = utils.Suspended
 	default:
 		powerState = utils.Unknown
@@ -224,16 +192,10 @@ func (provider CompsoleProviderOpenstack) GetPowerState(vmObject *ent.VmObject) 
 	return powerState, nil
 }
 
-func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
-	// // Create Openstack compute client
-	// computeClient, err := provider.newComputeClient()
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	// }
-
+func (provider CompsoleProviderOpenstack) ListVMs(ctx context.Context) ([]*ent.VmObject, error) {
 	serverPager := servers.List(provider.computeClient, servers.ListOpts{})
 	serverList := make([]*ent.VmObject, 0)
-	err := serverPager.EachPage(func(page pagination.Page) (bool, error) {
+	err := serverPager.EachPage(ctx, func(ctx context.Context, page pagination.Page) (bool, error) {
 		list, err := servers.ExtractServers(page)
 		if err != nil {
 			return false, fmt.Errorf("failed to extract servers from page: %v", err)
@@ -243,7 +205,7 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 			addressPager := servers.ListAddresses(provider.computeClient, s.ID)
 
 			ipAddresses := make([]string, 0)
-			err = addressPager.EachPage(func(p pagination.Page) (bool, error) {
+			err = addressPager.EachPage(ctx, func(ctx context.Context, p pagination.Page) (bool, error) {
 				addressList, err := servers.ExtractAddresses(p)
 				if err != nil {
 					return false, fmt.Errorf("failed to extract ip addresses from page: %v", err)
@@ -277,13 +239,7 @@ func (provider CompsoleProviderOpenstack) ListVMs() ([]*ent.VmObject, error) {
 	return serverList, nil
 }
 
-func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebootType utils.RebootType) error {
-	// // Create Openstack compute client
-	// computeClient, err := provider.newComputeClient()
-	// if err != nil {
-	// 	return fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	// }
-
+func (provider CompsoleProviderOpenstack) RestartVM(ctx context.Context, vmObject *ent.VmObject, rebootType utils.RebootType) error {
 	// Determine which type of reboot to requests
 	var rebootMethod servers.RebootMethod
 	switch rebootType {
@@ -295,7 +251,7 @@ func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebo
 		rebootMethod = servers.SoftReboot
 	}
 	// Reboot the server
-	err := servers.Reboot(provider.computeClient, vmObject.Identifier, servers.RebootOpts{
+	err := servers.Reboot(ctx, provider.computeClient, vmObject.Identifier, servers.RebootOpts{
 		Type: rebootMethod,
 	}).ExtractErr()
 	if err != nil {
@@ -304,30 +260,18 @@ func (provider CompsoleProviderOpenstack) RestartVM(vmObject *ent.VmObject, rebo
 	return nil
 }
 
-func (provider CompsoleProviderOpenstack) PowerOnVM(vmObject *ent.VmObject) error {
-	// // Create Openstack compute client
-	// computeClient, err := provider.newComputeClient()
-	// if err != nil {
-	// 	return fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	// }
-
+func (provider CompsoleProviderOpenstack) PowerOnVM(ctx context.Context, vmObject *ent.VmObject) error {
 	// Start the vm
-	err := startstop.Start(provider.computeClient, vmObject.Identifier).ExtractErr()
+	err := servers.Start(ctx, provider.computeClient, vmObject.Identifier).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("failed to start server: %v", err)
 	}
 	return nil
 }
 
-func (provider CompsoleProviderOpenstack) PowerOffVM(vmObject *ent.VmObject) error {
-	// // Create Openstack compute client
-	// computeClient, err := provider.newComputeClient()
-	// if err != nil {
-	// 	return fmt.Errorf("failed to generate Openstack compute client: %v", err)
-	// }
-
+func (provider CompsoleProviderOpenstack) PowerOffVM(ctx context.Context, vmObject *ent.VmObject) error {
 	// Stop the vm
-	err := startstop.Stop(provider.computeClient, vmObject.Identifier).ExtractErr()
+	err := servers.Stop(ctx, provider.computeClient, vmObject.Identifier).ExtractErr()
 	if err != nil {
 		return fmt.Errorf("failed to stop server: %v", err)
 	}

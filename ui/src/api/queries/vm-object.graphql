@@ -11,6 +11,11 @@ fragment VmObjectFragment on VmObject {
     TeamToCompetition {
       ID
       Name
+      CompetitionToProvider {
+        ID
+        Name
+        Type
+      }
     }
   }
 }

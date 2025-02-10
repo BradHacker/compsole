@@ -28,3 +28,6 @@ dev/
 
 # Docker production
 docker-compose.prod.yml
+
+# Docker local development
+Caddyfile.dev

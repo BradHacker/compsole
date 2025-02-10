@@ -12,8 +12,6 @@ services:
     restart: unless-stopped
     networks:
       - compsole-backend
-    depends_on:
-      - backend
     volumes:
       - /app/node_modules/
       - ./ui/docker_files/caddyfile:/etc/caddy/Caddyfile

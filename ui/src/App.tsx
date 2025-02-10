@@ -196,7 +196,7 @@ function App() {
           </Toolbar>
         </AppBar>
       </Box>
-      <Box sx={{ pt: '64px' }}>
+      <Box sx={{ pt: '64px', minHeight: 'calc(100vh)' }}>
         <Outlet />
       </Box>
     </UserContext.Provider>

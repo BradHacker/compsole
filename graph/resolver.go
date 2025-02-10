@@ -44,7 +44,7 @@ func NewSchema(ctx context.Context, client *ent.Client, rdb *redis.Client) graph
 	}
 	for _, entProvider := range entProviders {
 		// Generate the provider
-		provider, err := providers.NewProvider(entProvider.Type, entProvider.Config)
+		provider, err := providers.NewProvider(ctx, entProvider.Type, entProvider.Config)
 		if err != nil {
 			logrus.Errorf("failed to create provider from config: %v", err)
 		} else {

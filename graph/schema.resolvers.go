@@ -111,7 +111,7 @@ func (r *mutationResolver) Reboot(ctx context.Context, vmObjectID string, reboot
 		logrus.Warnf("failed to log REBOOT: %v", err)
 	}
 	// Reboot the VM
-	return true, provider.RestartVM(entVmObject, utils.RebootType(rebootType))
+	return true, provider.RestartVM(ctx, entVmObject, utils.RebootType(rebootType))
 }
 
 // PowerOn is the resolver for the powerOn field.
@@ -181,7 +181,7 @@ func (r *mutationResolver) PowerOn(ctx context.Context, vmObjectID string) (bool
 		logrus.Warnf("failed to log POWER_ON: %v", err)
 	}
 	// Power on the VM
-	return true, provider.PowerOnVM(entVmObject)
+	return true, provider.PowerOnVM(ctx, entVmObject)
 }
 
 // PowerOff is the resolver for the powerOff field.
@@ -251,7 +251,7 @@ func (r *mutationResolver) PowerOff(ctx context.Context, vmObjectID string) (boo
 		logrus.Warnf("failed to log POWER_OFF: %v", err)
 	}
 	// Power on the VM
-	return true, provider.PowerOffVM(entVmObject)
+	return true, provider.PowerOffVM(ctx, entVmObject)
 }
 
 // UpdateAccount is the resolver for the updateAccount field.
@@ -1453,7 +1453,7 @@ func (r *mutationResolver) LoadProvider(ctx context.Context, id string) (bool, e
 		return false, fmt.Errorf("failed to query provider: %v", err)
 	}
 	// Generate the provider
-	p, err := providers.NewProvider(entProvider.Type, entProvider.Config)
+	p, err := providers.NewProvider(ctx, entProvider.Type, entProvider.Config)
 	if err != nil {
 		return false, fmt.Errorf("failed to create provider from config: %v", err)
 	}
@@ -1856,7 +1856,7 @@ func (r *queryResolver) Console(ctx context.Context, vmObjectID string, consoleT
 	if err != nil {
 		logrus.Warnf("failed to log CONSOLE_ACCESS: %v", err)
 	}
-	return provider.GetConsoleUrl(entVmObject, utils.ConsoleType(consoleType))
+	return provider.GetConsoleUrl(ctx, entVmObject, utils.ConsoleType(consoleType))
 }
 
 // Me is the resolver for the me field.
@@ -1996,7 +1996,7 @@ func (r *queryResolver) PowerState(ctx context.Context, vmObjectID string) (mode
 	if err != nil {
 		logrus.Warnf("failed to log POWER_STATE: %v", err)
 	}
-	vmPowerState, err := provider.GetPowerState(entVmObject)
+	vmPowerState, err := provider.GetPowerState(ctx, entVmObject)
 	if err != nil {
 		return model.PowerStateUnknown, fmt.Errorf("failed to get vm object power state")
 	}
@@ -2479,7 +2479,7 @@ func (r *queryResolver) ListProviderVms(ctx context.Context, id string) ([]*mode
 	if err != nil {
 		return nil, fmt.Errorf("failed to load provider: %v", err)
 	}
-	vmObjects, err := provider.ListVMs()
+	vmObjects, err := provider.ListVMs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list vms from provider: %v", err)
 	}
@@ -2671,7 +2671,7 @@ func (r *subscriptionResolver) PowerState(ctx context.Context, id string) (<-cha
 		for {
 			select {
 			case <-ticker.C:
-				latestPowerState, err := provider.GetPowerState(entVmObject)
+				latestPowerState, err := provider.GetPowerState(ctx, entVmObject)
 				if err != nil {
 					logrus.WithField("vmObjectId", id).Warnf("failed to get vm power state: %v", err)
 				}
