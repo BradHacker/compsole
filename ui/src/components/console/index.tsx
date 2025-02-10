@@ -66,6 +66,7 @@ export default function Console({
       sx={{
         flexGrow: '1',
         width: '100%',
+        display: 'flex',
       }}
       {...props}
     >

@@ -6,7 +6,8 @@ export default function OpenStackNoVNC({ consoleUrl }: { consoleUrl: string }) {
       src={consoleUrl}
       style={{
         width: '100%',
-        height: '100%',
+        flexGrow: '1',
+        display: 'block',
       }}
     />
   )
