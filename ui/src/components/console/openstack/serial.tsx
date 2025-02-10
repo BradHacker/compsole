@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useXTerm } from 'react-xtermjs'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
+import { Box, Typography } from '@mui/material'
+import { WarningAmber } from '@mui/icons-material'
 
 import '@xterm/xterm/css/xterm.css'
 
@@ -77,5 +79,23 @@ export default function OpenStackSerial({
     }
   }, [term, consoleUrl])
 
-  return <div ref={termRef} style={{ width: '100%', height: '100%' }}></div>
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        flexGrow: '1',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Typography
+        sx={{ color: '#ea9a97', display: 'flex', gap: 1, padding: 1 }}
+      >
+        <WarningAmber /> Warning: Only one user can use the serial console at a
+        time. Additional users will see a blank console until the first
+        disconnects.
+      </Typography>
+      <div ref={termRef} style={{ flexGrow: '1' }}></div>
+    </Box>
+  )
 }

@@ -404,6 +404,7 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
 
   return (
     <Container
+      maxWidth={false}
       component="main"
       sx={{
         p: 2,
@@ -436,7 +437,10 @@ export const ConsolePage: React.FC = (): React.ReactElement => {
               flexDirection: 'column',
             }}
           >
-            <Typography variant="h5">
+            <Typography
+              variant="h5"
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
               <FiberManualRecord
                 sx={{
                   height: '1rem',
