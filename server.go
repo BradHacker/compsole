@@ -233,10 +233,10 @@ func main() {
 
 	router.Use(api.UnauthenticatedMiddleware())
 
-	authGroup := router.Group("/auth")
-	auth.RegisterAuthEndpoints(client, authGroup)
-
 	apiGroup := router.Group("/api")
+
+	authGroup := apiGroup.Group("/auth")
+	auth.RegisterAuthEndpoints(client, authGroup)
 
 	gqlApi := apiGroup.Group("/graphql")
 	gqlApi.Use(api.Middleware(client))
@@ -252,10 +252,8 @@ func main() {
 
 	// Swagger Docs
 	router.GET("/api/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-	// router.GET("/swagger/rest/*any", ginSwagger.WrapHandler(swaggerfiles.NewHandler(), ginSwagger.InstanceName("rest")))
-	// router.GET("/swagger/auth/*any", ginSwagger.WrapHandler(swaggerfiles.NewHandler(), ginSwagger.InstanceName("auth")))
 
-	logrus.Infof("Starting Compsole Server on port " + port)
+	logrus.Infof("Starting Compsole Server on port %s", port)
 
 	if err := router.Run(port); err != nil {
 		logrus.Errorf("failed to start gin router")
