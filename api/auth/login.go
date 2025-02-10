@@ -30,7 +30,7 @@ import (
 //	@Produce		json
 //	@Success		200	{object}	auth.UserModel
 //	@Header			200	{string}	Cookie	"`auth-cookie` contains the session token"
-//	@Router			/auth/local/login [post]
+//	@Router			/api/auth/local/login [post]
 func LocalLogin(client *ent.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		hostname, ok := os.LookupEnv("GRAPHQL_HOSTNAME")

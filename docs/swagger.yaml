@@ -439,7 +439,7 @@ info:
 
     #### Basic Auth
 
-    Use the [`/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.
+    Use the [`/api/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.
 
     #### Api Key Auth
 
@@ -458,7 +458,7 @@ info:
   title: Compsole API
   version: "1.0"
 paths:
-  /auth/local/login:
+  /api/auth/local/login:
     post:
       consumes:
       - application/json

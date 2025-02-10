@@ -6,7 +6,7 @@ There are two methods of authenticating to the Compsole API. **Basic Auth** is u
 
 #### Basic Auth
 
-Use the [`/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.
+Use the [`/api/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.
 
 #### Api Key Auth
 

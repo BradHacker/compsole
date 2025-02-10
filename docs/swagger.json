@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is the Compsole API documentation.\n\n### Authenticating\n\nThere are two methods of authenticating to the Compsole API. **Basic Auth** is used solely for the purpose of the Compsole UI. **Api Key Auth** is used for service accounts to authenticate prior to accessing the REST endpoints.\n\n#### Basic Auth\n\nUse the [`/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.\n\n#### Api Key Auth\n\nAPI Key Authentication is more complicated.\n\n1. You must retreive your `api_key` and `api_secret` from the Compsole UI after creating a service account.\n2. Use the [`/rest/token`](#operations-Auth_API-post_rest_login) endpoint to retrieve an API Token to use in requests\n3. Place the API Token into the `Authorization` header like so: `Authorization: Bearer \u003capi token here...\u003e`\n\n##### Refresh Tokens\n\nRefresh tokens can be used to renew a session without re-authenticating. The refresh token should be set in the `refresh-token` cookie already, so you can simply make a `POST` request to `/rest/token/refresh` and receive a new API token from this endpoint.\n",
+        "description": "This is the Compsole API documentation.\n\n### Authenticating\n\nThere are two methods of authenticating to the Compsole API. **Basic Auth** is used solely for the purpose of the Compsole UI. **Api Key Auth** is used for service accounts to authenticate prior to accessing the REST endpoints.\n\n#### Basic Auth\n\nUse the [`/api/auth/local/login`](#operations-Auth_API-post_auth_local_login) endpoint below to authenticate from the Compsole UI.\n\n#### Api Key Auth\n\nAPI Key Authentication is more complicated.\n\n1. You must retreive your `api_key` and `api_secret` from the Compsole UI after creating a service account.\n2. Use the [`/rest/token`](#operations-Auth_API-post_rest_login) endpoint to retrieve an API Token to use in requests\n3. Place the API Token into the `Authorization` header like so: `Authorization: Bearer \u003capi token here...\u003e`\n\n##### Refresh Tokens\n\nRefresh tokens can be used to renew a session without re-authenticating. The refresh token should be set in the `refresh-token` cookie already, so you can simply make a `POST` request to `/rest/token/refresh` and receive a new API token from this endpoint.\n",
         "title": "Compsole API",
         "contact": {
             "name": "BradHacker",
@@ -15,7 +15,7 @@
     },
     "basePath": "/api",
     "paths": {
-        "/auth/local/login": {
+        "/api/auth/local/login": {
             "post": {
                 "description": "Login with a local account",
                 "consumes": [
