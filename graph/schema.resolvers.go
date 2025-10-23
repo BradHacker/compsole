@@ -316,7 +316,13 @@ func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password stri
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	err = entUser.Update().SetPassword(password).Exec(ctx)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	if err != nil {
+		return false, fmt.Errorf("failed to hash default admin password")
+	}
+	newPassword := string(hashedPassword[:])
+
+	err = entUser.Update().SetPassword(newPassword).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to update self password: %v", err)
 	}
