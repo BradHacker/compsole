@@ -1,9 +1,15 @@
 package utils
 
 import (
+	srand "crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
 	"fmt"
 	"math/rand"
+	"os"
+	"strings"
 
+	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,7 +26,41 @@ func NewPassword() string {
 }
 
 // HashPassword takes a plaintext password and returns the hashed version of it.
+//
+// By default, it uses Argon2id for hashing. If the environment variable
+// PASSWORD_HASH_ALGO is set to "bcrypt", it will use bcrypt instead.
 func HashPassword(password string) (string, error) {
+	if os.Getenv("PASSWORD_HASH_ALGO") == "bcrypt" {
+		return hashBcrypt(password)
+	}
+	return hashArgon2(password)
+}
+
+var (
+	argon2Prefix = "$argon2id$"
+	bcryptPrefix = "$2"
+)
+
+// CheckPassword compares a plaintext password with a hashed password
+// and returns nil if they match, or an error if they do not.
+//
+// It supports both Argon2id and bcrypt hashed passwords.
+func CheckPassword(password, hashedPassword string) error {
+	var err error
+	if strings.HasPrefix(hashedPassword, argon2Prefix) {
+		err = verifyArgon2(password, hashedPassword)
+	} else if strings.HasPrefix(hashedPassword, bcryptPrefix) {
+		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	} else {
+
+	}
+	if err != nil {
+		return fmt.Errorf("password verification failed: %w", err)
+	}
+	return nil
+}
+
+func hashBcrypt(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
 	if err != nil {
 		return "", fmt.Errorf("failed to hash default admin password: %w", err)
@@ -29,12 +69,98 @@ func HashPassword(password string) (string, error) {
 	return newPassword, nil
 }
 
-// CheckPassword compares a plaintext password with a hashed password
-// and returns nil if they match, or an error if they do not.
-func CheckPassword(password, hashedPassword string) error {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	if err != nil {
-		return fmt.Errorf("password does not match: %w", err)
+// Recommended parameters for Argon2id
+var (
+	memory      uint32 = 64 * 1024 // 64MB
+	iterations  uint32 = 1
+	parallelism uint8  = 4
+	keyLen      uint32 = 32 // 32 bytes for a 256-bit key
+)
+
+type argon2Params struct {
+	memory      uint32
+	iterations  uint32
+	parallelism uint8
+	saltLength  uint32
+	keyLength   uint32
+}
+
+var ErrInvalidArgon2Hash = fmt.Errorf("invalid argon2 hash")
+var ErrIncompatibleArgon2Version = fmt.Errorf("incompatible argon2 version")
+
+func hashArgon2(password string) (string, error) {
+	salt := make([]byte, 16) // 16-byte salt
+	if _, err := srand.Read(salt); err != nil {
+		return "", fmt.Errorf("failed to generate salt for argon2: %w", err)
 	}
-	return nil
+
+	derivedKey := argon2.IDKey([]byte(password), salt, iterations, memory, parallelism, keyLen)
+
+	return encodeArgon2Hash(&argon2Params{
+		memory:      memory,
+		iterations:  iterations,
+		parallelism: parallelism,
+		saltLength:  uint32(len(salt)),
+		keyLength:   uint32(len(derivedKey)),
+	}, salt, derivedKey), nil
+}
+
+func verifyArgon2(password, encodedHash string) error {
+	p, salt, hash, err := decodeArgon2Hash(encodedHash)
+	if err != nil {
+		return fmt.Errorf("failed to decode argon2 hash: %w", err)
+	}
+
+	derivedKey := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, p.parallelism, p.keyLength)
+
+	if subtle.ConstantTimeCompare(hash, derivedKey) == 1 {
+		return nil
+	}
+	return fmt.Errorf("password verification failed: %w", err)
+}
+
+func encodeArgon2Hash(p *argon2Params, salt, hash []byte) string {
+	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
+	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
+
+	encodedHash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
+		argon2.Version, p.memory, p.iterations, p.parallelism, b64Salt, b64Hash)
+
+	return encodedHash
+}
+
+func decodeArgon2Hash(encodedHash string) (p *argon2Params, salt, hash []byte, err error) {
+	vals := strings.Split(encodedHash, "$")
+	if len(vals) != 6 {
+		return nil, nil, nil, ErrInvalidArgon2Hash
+	}
+
+	var version int
+	_, err = fmt.Sscanf(vals[2], "v=%d", &version)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if version != argon2.Version {
+		return nil, nil, nil, ErrIncompatibleArgon2Version
+	}
+
+	p = &argon2Params{}
+	_, err = fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.iterations, &p.parallelism)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	salt, err = base64.RawStdEncoding.Strict().DecodeString(vals[4])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.saltLength = uint32(len(salt))
+
+	hash, err = base64.RawStdEncoding.Strict().DecodeString(vals[5])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.keyLength = uint32(len(hash))
+
+	return p, salt, hash, nil
 }

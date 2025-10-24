@@ -127,7 +127,7 @@ func generateAndReturnServiceToken(c *gin.Context, client *ent.Client, entServic
 		SetActionToServiceAccount(entServiceAccount).
 		Exec(c)
 	if err != nil {
-		logrus.Warn("failed to create SIGN_IN action: %v", err)
+		logrus.Warnf("failed to create SIGN_IN action: %v", err)
 	}
 
 	if secureCookie {
@@ -197,7 +197,7 @@ func ServiceLogin(client *ent.Client) gin.HandlerFunc {
 				SetMessage(fmt.Sprintf("service account failed login for api_key: \"%s\"", apiKey)).
 				Exec(c)
 			if err != nil {
-				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
+				logrus.Warnf("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 		}
 		if err != nil {
@@ -280,7 +280,7 @@ func ServiceTokenRefresh(client *ent.Client) gin.HandlerFunc {
 				SetMessage(fmt.Sprintf("service account failed token refresh for api_key: \"%s\"", apiKey)).
 				Exec(c)
 			if err != nil {
-				logrus.Warn("failed to create FAILED_SIGN_IN action: %v", err)
+				logrus.Warnf("failed to create FAILED_SIGN_IN action: %v", err)
 			}
 		}
 		if err != nil {
