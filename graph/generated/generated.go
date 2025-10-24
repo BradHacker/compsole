@@ -1575,7 +1575,8 @@ directive @hasRole(roles: [Role!]!) on FIELD_DEFINITION
 
 type Query {
   # Shared actions
-  console(vmObjectId: ID!, consoleType: ConsoleType!): String! @hasRole(roles: [ADMIN, USER])
+  console(vmObjectId: ID!, consoleType: ConsoleType!): String!
+    @hasRole(roles: [ADMIN, USER])
   me: User! @hasRole(roles: [ADMIN, USER])
   vmObject(vmObjectId: ID!): VmObject! @hasRole(roles: [ADMIN, USER])
   powerState(vmObjectId: ID!): PowerState! @hasRole(roles: [ADMIN, USER])
@@ -1599,13 +1600,15 @@ type Query {
   #   Providers
   providers: [Provider!]! @hasRole(roles: [ADMIN])
   getProvider(id: ID!): Provider! @hasRole(roles: [ADMIN])
-  validateConfig(type: String!, config: String!): Boolean! @hasRole(roles: [ADMIN])
+  validateConfig(type: String!, config: String!): Boolean!
+    @hasRole(roles: [ADMIN])
   listProviderVms(id: ID!): [SkeletonVmObject!]! @hasRole(roles: [ADMIN])
   #   Service Accounts
   serviceAccounts: [ServiceAccount!]! @hasRole(roles: [ADMIN])
   getServiceAccount(id: ID!): ServiceAccount! @hasRole(roles: [ADMIN])
   # Logging
-  actions(offset: Int!, limit: Int!, types: [ActionType!]!): ActionsResult! @hasRole(roles: [ADMIN])
+  actions(offset: Int!, limit: Int!, types: [ActionType!]!): ActionsResult!
+    @hasRole(roles: [ADMIN])
 }
 
 enum RebootType {
@@ -1621,6 +1624,10 @@ input UserInput {
   Role: Role!
   Provider: AuthProvider!
   UserToTeam: ID
+  """
+  Value will be ignore on update operations. Use ChangePassword mutation instead.
+  """
+  Password: String!
 }
 
 input AccountInput {
@@ -1665,7 +1672,8 @@ input ServiceAccountInput {
 
 type Mutation {
   # Shared actions
-  reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean! @hasRole(roles: [ADMIN, USER])
+  reboot(vmObjectId: ID!, rebootType: RebootType!): Boolean!
+    @hasRole(roles: [ADMIN, USER])
   powerOn(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   powerOff(vmObjectId: ID!): Boolean! @hasRole(roles: [ADMIN, USER])
   updateAccount(input: AccountInput!): User! @hasRole(roles: [ADMIN, USER])
@@ -1676,19 +1684,25 @@ type Mutation {
   updateUser(input: UserInput!): User! @hasRole(roles: [ADMIN])
   deleteUser(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   changePassword(id: ID!, password: String!): Boolean! @hasRole(roles: [ADMIN])
-  generateCompetitionUsers(competitionId: ID!, usersPerTeam: Int!): [CompetitionUser!]! @hasRole(roles: [ADMIN])
+  generateCompetitionUsers(
+    competitionId: ID!
+    usersPerTeam: Int!
+  ): [CompetitionUser!]! @hasRole(roles: [ADMIN])
   #   Teams
   createTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   batchCreateTeams(input: [TeamInput!]!): [Team!]! @hasRole(roles: [ADMIN])
   updateTeam(input: TeamInput!): Team! @hasRole(roles: [ADMIN])
   deleteTeam(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   #   Competitions
-  createCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
-  updateCompetition(input: CompetitionInput!): Competition! @hasRole(roles: [ADMIN])
+  createCompetition(input: CompetitionInput!): Competition!
+    @hasRole(roles: [ADMIN])
+  updateCompetition(input: CompetitionInput!): Competition!
+    @hasRole(roles: [ADMIN])
   deleteCompetition(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   #   VMObjects
   createVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
-  batchCreateVmObjects(input: [VmObjectInput!]!): [VmObject!]! @hasRole(roles: [ADMIN])
+  batchCreateVmObjects(input: [VmObjectInput!]!): [VmObject!]!
+    @hasRole(roles: [ADMIN])
   updateVmObject(input: VmObjectInput!): VmObject! @hasRole(roles: [ADMIN])
   deleteVmObject(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   #   Providers
@@ -1697,13 +1711,17 @@ type Mutation {
   deleteProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   loadProvider(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   #   Service Accounts
-  createServiceAccount(input: ServiceAccountInput!): ServiceAccountDetails! @hasRole(roles: [ADMIN])
-  updateServiceAccount(input: ServiceAccountInput!): ServiceAccount! @hasRole(roles: [ADMIN])
+  createServiceAccount(input: ServiceAccountInput!): ServiceAccountDetails!
+    @hasRole(roles: [ADMIN])
+  updateServiceAccount(input: ServiceAccountInput!): ServiceAccount!
+    @hasRole(roles: [ADMIN])
   deleteServiceAccount(id: ID!): Boolean! @hasRole(roles: [ADMIN])
   # Lockout
   lockoutVm(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
-  batchLockout(vmObjects: [ID!]!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
-  lockoutCompetition(id: ID!, locked: Boolean!): Boolean! @hasRole(roles: [ADMIN])
+  batchLockout(vmObjects: [ID!]!, locked: Boolean!): Boolean!
+    @hasRole(roles: [ADMIN])
+  lockoutCompetition(id: ID!, locked: Boolean!): Boolean!
+    @hasRole(roles: [ADMIN])
 }
 
 type PowerStateUpdate {
@@ -12064,7 +12082,7 @@ func (ec *executionContext) unmarshalInputUserInput(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"ID", "Username", "FirstName", "LastName", "Role", "Provider", "UserToTeam"}
+	fieldsInOrder := [...]string{"ID", "Username", "FirstName", "LastName", "Role", "Provider", "UserToTeam", "Password"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12124,6 +12142,14 @@ func (ec *executionContext) unmarshalInputUserInput(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("UserToTeam"))
 			it.UserToTeam, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "Password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("Password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}

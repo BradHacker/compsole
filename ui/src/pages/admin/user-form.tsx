@@ -1,4 +1,5 @@
 import {
+  Add,
   AdminPanelSettingsTwoTone,
   ArrowBackTwoTone,
   LockResetTwoTone,
@@ -78,6 +79,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
     Provider: AuthProvider.Local, // TODO: Add other providers
     Role: Role.Undefined,
     UserToTeam: undefined,
+    Password: '',
   })
   const [viewTeam, setViewTeam] = useState<
     GetCompTeamSearchValuesQuery['teams'][0] | null
@@ -183,6 +185,7 @@ export const UserForm: React.FC = (): React.ReactElement => {
         LastName: '',
         Provider: AuthProvider.Local, // TODO: Add other providers
         Role: Role.Undefined,
+        Password: '',
       })
   }, [getUserData, getCompTeamSearchValuesData])
 
@@ -363,57 +366,73 @@ export const UserForm: React.FC = (): React.ReactElement => {
             },
           }}
         />
+        {(!id || id === 'new') && (
+          <TextField
+            required
+            label="Password"
+            type="password"
+            variant="filled"
+            value={user.Password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setUser({ ...user, Password: e.target.value })
+            }
+          />
+        )}
       </Box>
-      <Divider
-        sx={{
-          my: 2,
-        }}
-      />
-      <Typography variant="h6">Change Password</Typography>
-      <Box
-        component="form"
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          '& .MuiTextField-root': {
-            m: 1,
-            minWidth: '45%',
-            flexGrow: 1,
-          },
-        }}
-        noValidate
-        autoComplete="off"
-      >
-        <TextField
-          label="New Password"
-          type="password"
-          variant="filled"
-          value={newPassword}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setNewPassword(e.target.value)
-          }
-        />
-        <TextField
-          label="Confirm New Password"
-          type="password"
-          variant="filled"
-          value={confirmPassword}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setConfirmPassword(e.target.value)
-          }
-        />
-        <Button
-          type="button"
-          variant="contained"
-          startIcon={<LockResetTwoTone />}
-          sx={{
-            m: 1,
-          }}
-          onClick={submitPasswordChange}
-        >
-          Change Password
-        </Button>
-      </Box>
+      {id && id !== 'new' && (
+        <>
+          <Divider
+            sx={{
+              my: 2,
+            }}
+          />
+          <Typography variant="h6">Change Password</Typography>
+          <Box
+            component="form"
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              '& .MuiTextField-root': {
+                m: 1,
+                minWidth: '45%',
+                flexGrow: 1,
+              },
+            }}
+            noValidate
+            autoComplete="off"
+          >
+            <TextField
+              label="New Password"
+              type="password"
+              variant="filled"
+              value={newPassword}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewPassword(e.target.value)
+              }
+            />
+            <TextField
+              label="Confirm New Password"
+              type="password"
+              variant="filled"
+              value={confirmPassword}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setConfirmPassword(e.target.value)
+              }
+            />
+            <Button
+              type="button"
+              variant="contained"
+              startIcon={<LockResetTwoTone />}
+              sx={{
+                m: 1,
+              }}
+              onClick={submitPasswordChange}
+            >
+              Change Password
+            </Button>
+          </Box>
+        </>
+      )}
       <Box
         sx={{
           position: 'fixed',
@@ -425,10 +444,10 @@ export const UserForm: React.FC = (): React.ReactElement => {
         <Fab
           disabled={updateUserLoading || createUserLoading}
           color="secondary"
-          aria-label="save"
+          aria-label={id && id !== 'new' ? 'Save' : 'Add'}
           onClick={submitUser}
         >
-          <Save />
+          {id && id !== 'new' ? <Save /> : <Add />}
         </Fab>
         {(updateUserLoading || createUserLoading) && (
           <CircularProgress

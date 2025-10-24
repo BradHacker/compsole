@@ -28,7 +28,6 @@ import (
 	"github.com/sirupsen/logrus"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"golang.org/x/crypto/bcrypt"
 )
 
 //	@title			Compsole API
@@ -132,9 +131,9 @@ func main() {
 		logrus.Warn("No admin account found, creating default admin...")
 		defaultUsername := os.Getenv("DEFAULT_ADMIN_USERNAME")
 		defaultPassword := os.Getenv("DEFAULT_ADMIN_PASSWORD")
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), 8)
+		hashedPassword, err := utils.HashPassword(defaultPassword)
 		if err != nil {
-			logrus.Errorf("failed to hash default admin password")
+			logrus.Errorf("failed to hash default admin password: %v", err)
 			return
 		}
 		password := string(hashedPassword[:])
