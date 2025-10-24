@@ -3601,6 +3601,22 @@
             "deprecationReason": null
           },
           {
+            "name": "Password",
+            "description": "Value will be ignore on update operations. Use ChangePassword mutation instead.",
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "Provider",
             "description": null,
             "type": {

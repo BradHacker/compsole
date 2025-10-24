@@ -504,6 +504,8 @@ export type UserInput = {
   FirstName: Scalars['String']['input'];
   ID?: InputMaybe<Scalars['ID']['input']>;
   LastName: Scalars['String']['input'];
+  /** Value will be ignore on update operations. Use ChangePassword mutation instead. */
+  Password: Scalars['String']['input'];
   Provider: AuthProvider;
   Role: Role;
   UserToTeam?: InputMaybe<Scalars['ID']['input']>;

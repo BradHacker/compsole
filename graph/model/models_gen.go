@@ -85,6 +85,8 @@ type UserInput struct {
 	Role       Role         `json:"Role"`
 	Provider   AuthProvider `json:"Provider"`
 	UserToTeam *string      `json:"UserToTeam"`
+	// Value will be ignore on update operations. Use ChangePassword mutation instead.
+	Password string `json:"Password"`
 }
 
 type VMObjectInput struct {

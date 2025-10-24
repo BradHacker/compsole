@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/BradHacker/compsole/api"
+	"github.com/BradHacker/compsole/compsole/utils"
 	"github.com/BradHacker/compsole/ent"
 	"github.com/BradHacker/compsole/ent/action"
 	"github.com/BradHacker/compsole/ent/token"
@@ -16,7 +17,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // LocalLogin godoc
@@ -100,7 +100,7 @@ func LocalLogin(client *ent.Client) gin.HandlerFunc {
 			return
 		}
 		// Compare the stored hashed password, with the hashed version of the password that was received
-		if err = bcrypt.CompareHashAndPassword([]byte(entUser.Password), []byte(password)); err != nil {
+		if err = utils.CheckPassword(password, entUser.Password); err != nil {
 			err = client.Action.Create().
 				SetIPAddress(clientIp).
 				SetType(action.TypeFAILED_SIGN_IN).

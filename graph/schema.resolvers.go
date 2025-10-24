@@ -26,7 +26,6 @@ import (
 	"github.com/BradHacker/compsole/graph/model"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // ID is the resolver for the ID field.
@@ -316,13 +315,12 @@ func (r *mutationResolver) ChangeSelfPassword(ctx context.Context, password stri
 	if err != nil {
 		logrus.Warnf("failed to log API_CALL: %v", err)
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return false, fmt.Errorf("failed to hash default admin password")
+		return false, fmt.Errorf("failed to hash password: %v", err)
 	}
-	newPassword := string(hashedPassword[:])
 
-	err = entUser.Update().SetPassword(newPassword).Exec(ctx)
+	err = entUser.Update().SetPassword(hashedPassword).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to update self password: %v", err)
 	}
@@ -382,9 +380,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.UserInput
 			return nil, fmt.Errorf("failed to query team: %v", err)
 		}
 	}
+	hashedPassword, err := utils.HashPassword(input.Password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash user password: %v", err)
+	}
 	entUserCreate := r.client.User.Create().
 		SetUsername(strings.ToLower(input.Username)).
-		SetPassword("").
+		SetPassword(hashedPassword).
 		SetFirstName(input.FirstName).
 		SetLastName(input.LastName).
 		SetRole(user.Role(input.Role)).
@@ -562,17 +564,16 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, id string, passwo
 	if err != nil {
 		return false, fmt.Errorf("failed to parse UUID: %v", err)
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
-		return false, fmt.Errorf("failed to hash default admin password")
+		return false, fmt.Errorf("failed to hash password: %v", err)
 	}
-	newPassword := string(hashedPassword[:])
 
 	entUser, err := r.client.User.Query().Where(user.IDEQ(userUuid)).Only(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to query user: %v", err)
 	}
-	err = entUser.Update().SetPassword(newPassword).Exec(ctx)
+	err = entUser.Update().SetPassword(hashedPassword).Exec(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to update password: %v", err)
 	}
@@ -644,7 +645,7 @@ func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competi
 			}
 			// password = randomly generated (noun + num + adj + num + noun)
 			password := utils.NewPassword()
-			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+			hashedPassword, err := utils.HashPassword(password)
 			if err != nil {
 				logrus.Errorf("failed to create user: %v", err)
 				continue
@@ -653,7 +654,7 @@ func (r *mutationResolver) GenerateCompetitionUsers(ctx context.Context, competi
 				SetFirstName("Team").
 				SetLastName(strconv.Itoa(entTeam.TeamNumber)).
 				SetUsername(strings.ToLower(username)).
-				SetPassword(string(hashedPassword)).
+				SetPassword(hashedPassword).
 				SetProvider(user.ProviderLOCAL).
 				SetRole(user.RoleUSER).
 				SetUserToTeam(entTeam).
